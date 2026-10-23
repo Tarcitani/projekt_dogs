@@ -47,6 +47,10 @@ public final class TierIdentity {
     /** Diâmetro físico do núcleo de magma (a coroa de chamas ultrapassa um pouco essa medida). */
     public static final float ROYAL_FIREBALL_SIZE = 2.4F;
     public static final double ROYAL_FIREBALL_MIN_RANGE = 6;
+    /** Genki-dama do Soberano: uma bola só, mais rápida (cai de ~35 blocos de altura) e com explosão em área. */
+    public static final double GENKI_SPEED = 0.9;
+    public static final float GENKI_DAMAGE_MULTIPLIER = 1.8F;
+    public static final double GENKI_BLAST_RADIUS = 5;
     public static final int BOSS_LAUGH_TICKS = 80;
     public static final int RAGE_CRY_INTERVAL = 100;
     public static final int MAGMA_TRAIL_RADIUS = 2;
@@ -93,7 +97,8 @@ public final class TierIdentity {
         living.setCustomName(title(living, tier, element));
         living.setCustomNameVisible(true);
         // Só o Monarca tem contorno brilhante: é visto através das paredes.
-        living.setGlowingTag(tier == MobTier.BOSS);
+        // O Soberano não: o contorno atravessando as paredes entregava a posição dele e poluía a cena.
+        living.setGlowingTag(tier == MobTier.BOSS && !(living instanceof Sovereign));
 
         if (living instanceof PathfinderMob mob) TierBrain.install(mob);
         sync(living);

@@ -2,7 +2,7 @@
   "parent": "solomod:broken_seal",
   "display": {
     "icon": {
-      "id": "solomod:sovereign_spawn_egg"
+      "id": "solomod:sovereign_head"
     },
     "title": {
       "translate": "advancements.solomod.defeat_sovereign.title"

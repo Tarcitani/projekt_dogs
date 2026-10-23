@@ -3,6 +3,7 @@ package com.tarcitani.solomod.client.model;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.tarcitani.solomod.client.MobAnimations;
+import com.tarcitani.solomod.entity.Sovereign;
 import com.tarcitani.solomod.entity.TierMob;
 import com.tarcitani.solomod.mob.MobAnim;
 import net.minecraft.client.model.HierarchicalModel;
@@ -105,8 +106,14 @@ public abstract class TierMobModel extends HierarchicalModel<TierMob> {
         // Em fúria, as decorações (chamas, anéis...) aceleram.
         animateDecor(MobAnimations.isRaging(entity) ? age * 2.2F : age);
         float dissolve = entity.dissolveProgress(partial);
-        alpha = 1.0F - dissolve * dissolve;
-        if (dissolve > 0) dissolve(dissolve);
+        if (entity instanceof Sovereign) {
+            // O Soberano não se desfaz em cinzas: ele morre "bugando".
+            alpha = 1.0F;
+            if (dissolve > 0) glitch(dissolve, age);
+        } else {
+            alpha = 1.0F - dissolve * dissolve;
+            if (dissolve > 0) dissolve(dissolve);
+        }
     }
 
     /**
@@ -161,6 +168,45 @@ public abstract class TierMobModel extends HierarchicalModel<TierMob> {
             part.yRot += (i % 2 == 0 ? 3F : -3F) * e;
             part.zRot += ((i * 7) % 3 - 1) * 2F * e;
         }
+    }
+
+    /**
+     * Morte do Soberano: o modelo "trava". A cada 2 ticks é sorteado um quadro novo e o anterior fica congelado
+     * (aspecto de programa travando); em cada quadro, uma fração crescente das peças salta para um lugar
+     * aleatório, gira e muda de escala, o corpo todo treme de lado e pisca (some quase por completo em alguns
+     * quadros). No último décimo ele some de vez. O sorteio vem do número do quadro, então o mesmo quadro
+     * sempre sai igual (sem tremida entre o desenho do corpo e das camadas).
+     */
+    private void glitch(float p, float age) {
+        int frame = (int) (age * 0.5F);
+        java.util.Random whole = new java.util.Random(frame * 7919L);
+        float chance = 0.15F + 0.75F * p;
+        float spread = 4F + 40F * p;
+        for (int i = 0; i < fragments.size(); i++) {
+            java.util.Random r = new java.util.Random(frame * 31L + i * 131L);
+            if (r.nextFloat() >= chance) continue;
+            ModelPart part = fragments.get(i);
+            part.x += (r.nextFloat() - 0.5F) * 2F * spread;
+            part.y += (r.nextFloat() - 0.5F) * 2F * spread * 0.6F;
+            part.z += (r.nextFloat() - 0.5F) * 2F * spread;
+            part.xRot += (r.nextFloat() - 0.5F) * 2.4F * p;
+            part.yRot += (r.nextFloat() - 0.5F) * 2.4F * p;
+            part.zRot += (r.nextFloat() - 0.5F) * 2.4F * p;
+            if (r.nextFloat() < 0.35F) {
+                part.xScale = 0.4F + r.nextFloat() * 1.4F;
+                part.yScale = 0.4F + r.nextFloat() * 1.4F;
+                part.zScale = 0.4F + r.nextFloat() * 1.4F;
+            }
+        }
+        // O corpo inteiro "rasga" de lado em alguns quadros.
+        if (whole.nextFloat() < 0.3F + 0.4F * p) root.x += (whole.nextFloat() - 0.5F) * 2F * (6F + 30F * p);
+        alpha = whole.nextFloat() < p * 0.45F ? 0.12F : 1.0F;
+        if (p > 0.9F) alpha *= (1F - p) * 10F;
+    }
+
+    /** O quadro "congelado" do glitch (o mesmo número usado no sorteio): as camadas de cor o repetem. */
+    public static int glitchFrame(float age) {
+        return (int) (age * 0.5F);
     }
 
     @Override

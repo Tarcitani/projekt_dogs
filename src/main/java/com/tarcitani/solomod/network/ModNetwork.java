@@ -24,6 +24,7 @@ public final class ModNetwork {
         registrar.playToClient(MobAnimPayload.TYPE, MobAnimPayload.STREAM_CODEC, MobAnimPayload::handle);
         registrar.playToClient(PlayerAnimPayload.TYPE, PlayerAnimPayload.STREAM_CODEC, PlayerAnimPayload::handle);
         registrar.playToClient(CinematicPayload.TYPE, CinematicPayload.STREAM_CODEC, CinematicPayload::handle);
+        registrar.playToClient(ShakePayload.TYPE, ShakePayload.STREAM_CODEC, ShakePayload::handle);
         // Cliente -> servidor (botões da tela de Maestria, giro da espada longa)
         registrar.playToServer(SpendPointsPayload.TYPE, SpendPointsPayload.STREAM_CODEC, SpendPointsPayload::handle);
         registrar.playToServer(TestActionPayload.TYPE, TestActionPayload.STREAM_CODEC, TestActionPayload::handle);
@@ -43,6 +44,16 @@ public final class ModNetwork {
     /** Cinemática de chefe (morte do Monarca, agonia ou morte do Soberano) para um jogador. */
     public static void sendCinematic(ServerPlayer player, CinematicPayload payload) {
         PacketDistributor.sendToPlayer(player, payload);
+    }
+
+    /** Treme a tela de todos os jogadores a até {@code radius} blocos de {@code at}, mais fraco com a distância. */
+    public static void sendShake(net.minecraft.server.level.ServerLevel level, net.minecraft.world.phys.Vec3 at,
+                                 double radius, float intensity, int duration) {
+        for (ServerPlayer player : level.players()) {
+            double d = Math.sqrt(player.distanceToSqr(at));
+            if (d > radius) continue;
+            PacketDistributor.sendToPlayer(player, new ShakePayload(intensity * (float) (1.0 - 0.7 * d / radius), duration));
+        }
     }
 
     /** Envia os stats atuais do servidor para o próprio jogador. */

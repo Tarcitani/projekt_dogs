@@ -34,7 +34,9 @@ public record CinematicPayload(int entityId, int duration, Kind kind, Component 
         /** Estágio do Soberano: close no rosto (zoom forte) enquanto ele agoniza. */
         CLOSE_UP,
         /** Soberano caiu: como DEFEAT, e no fim abre os créditos. */
-        FINALE;
+        FINALE,
+        /** Soberano ri de um jogador que acabou de matar: close no rosto, como CLOSE_UP. */
+        LAUGH;
 
         private static final IntFunction<Kind> BY_ID = ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.ZERO);
         public static final StreamCodec<ByteBuf, Kind> STREAM_CODEC = ByteBufCodecs.idMapper(BY_ID, Enum::ordinal);

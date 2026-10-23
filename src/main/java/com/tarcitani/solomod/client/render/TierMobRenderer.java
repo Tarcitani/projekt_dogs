@@ -31,16 +31,13 @@ import java.util.function.Function;
  * <p>Camadas: textura base + brilho emissivo (olhos, gemas, chamas) na cor do elemento + aura de energia
  * vermelha enquanto o chefe está em Fúria. Durante a desintegração do Colosso o corpo fica translúcido.
  *
- * <p>{@link #single} é para criatura sem variantes (o Soberano): uma malha só, desenhada numa escala maior,
- * com o brilho passeando pelas cores dos cinco Monarcas.
+ * <p>{@link #single} é para criatura sem variantes (o Soberano): uma malha só, desenhada numa escala maior e
+ * SEM a camada de brilho (nem o contorno brilhante: ver {@code TierIdentity}). Só a aura de Fúria fica.
  */
 public class TierMobRenderer extends MobRenderer<TierMob, TierMobModel> {
     private record Variant(TierMobModel model, ResourceLocation texture, ResourceLocation glow) {}
 
     private static final ResourceLocation RAGE_SWIRL = ResourceLocation.withDefaultNamespace("textures/entity/creeper/creeper_armor.png");
-
-    /** Cores do brilho do Soberano, uma por Monarca (Colosso, fogo, água, terra, ar). */
-    private static final int[] PRISM = {0xE8C547, 0xFF6A1F, 0x3FA9F5, 0x8BC34A, 0xE6F7FF};
 
     private final Map<ElementType, Variant> variants = new EnumMap<>(ElementType.class);
     private final int signatureColor;
@@ -60,7 +57,7 @@ public class TierMobRenderer extends MobRenderer<TierMob, TierMobModel> {
     /** Criatura sem variantes elementais: só a malha {@code name}, desenhada na escala dada. */
     public static TierMobRenderer single(EntityRendererProvider.Context context, String name,
                                          Function<ModelPart, TierMobModel> modelFactory, float shadow, float scale) {
-        return new TierMobRenderer(context, name, modelFactory, shadow, PRISM[0], false, scale);
+        return new TierMobRenderer(context, name, modelFactory, shadow, 0xE8C547, false, scale);
     }
 
     private TierMobRenderer(EntityRendererProvider.Context context, String name, Function<ModelPart, TierMobModel> modelFactory,
@@ -81,8 +78,9 @@ public class TierMobRenderer extends MobRenderer<TierMob, TierMobModel> {
         }
         current = variants.get(ElementType.NONE);
         this.model = current.model();
-        addLayer(new GlowLayer(this));
+        if (elemental) addLayer(new GlowLayer(this));
         addLayer(new RageLayer(this));
+        addLayer(new GlitchLayer(this));
     }
 
     private static ResourceLocation texture(String id) {
@@ -123,12 +121,41 @@ public class TierMobRenderer extends MobRenderer<TierMob, TierMobModel> {
                            float limbAmount, float partial, float age, float headYaw, float headPitch) {
             boolean rage = MobAnimations.isRaging(entity);
             ElementType element = entity.element();
-            int rgb = rage ? 0xFF2A10 : !elemental ? prism(age)
-                    : element == ElementType.NONE ? signatureColor : ClientSetup.tintFor(element);
+            int rgb = rage ? 0xFF2A10 : element == ElementType.NONE ? signatureColor : ClientSetup.tintFor(element);
             // Pulsação; o brilho é aditivo, então "apagar" = escurecer a cor.
             float k = (rage ? 0.85F + 0.15F * Mth.sin(age * 0.6F) : 0.7F + 0.3F * Mth.sin(age * 0.12F)) * getParentModel().alpha();
             getParentModel().renderToBuffer(pose, buffers.getBuffer(RenderType.eyes(current.glow())), 0xF000F0,
                     OverlayTexture.NO_OVERLAY, scale(rgb, k));
+        }
+    }
+
+    /**
+     * Separação de cores da morte do Soberano (glitch): em alguns quadros o modelo é desenhado de novo, uma vez
+     * em vermelho deslocado para um lado e outra em ciano deslocado para o outro, com transparência.
+     */
+    private final class GlitchLayer extends RenderLayer<TierMob, TierMobModel> {
+        GlitchLayer(RenderLayerParent<TierMob, TierMobModel> parent) {
+            super(parent);
+        }
+
+        @Override
+        public void render(PoseStack pose, MultiBufferSource buffers, int light, TierMob entity, float limbSwing,
+                           float limbAmount, float partial, float age, float headYaw, float headPitch) {
+            float p = entity.dissolveProgress(partial);
+            if (p <= 0F || !(entity instanceof com.tarcitani.solomod.entity.Sovereign)) return;
+            java.util.Random r = new java.util.Random(TierMobModel.glitchFrame(age) * 104729L);
+            if (r.nextFloat() > 0.25F + 0.6F * p) return;
+            // Já na escala 7: 0,1 de translação são ~0,7 bloco. Quanto mais perto do fim, mais separado.
+            float shift = (0.04F + 0.1F * p) * (0.5F + r.nextFloat());
+            float fade = p > 0.9F ? (1F - p) * 10F : 1F;
+            for (int side = -1; side <= 1; side += 2) {
+                pose.pushPose();
+                pose.translate(side * shift, 0, 0);
+                int rgb = side < 0 ? 0xFF2840 : 0x28F0FF;
+                getParentModel().renderToBuffer(pose, buffers.getBuffer(RenderType.entityTranslucentEmissive(current.texture())),
+                        0xF000F0, OverlayTexture.NO_OVERLAY, (((int) (150 * fade)) << 24) | rgb);
+                pose.popPose();
+            }
         }
     }
 
@@ -149,18 +176,6 @@ public class TierMobRenderer extends MobRenderer<TierMob, TierMobModel> {
                     0xF000F0, OverlayTexture.NO_OVERLAY, scale(0xFF2010, 0.9F));
             pose.popPose();
         }
-    }
-
-    /** Passa de uma cor de Monarca para a próxima a cada 2 s. */
-    private static int prism(float age) {
-        float pos = age / 40F;
-        int i = Math.floorMod((int) pos, PRISM.length);
-        int a = PRISM[i], b = PRISM[(i + 1) % PRISM.length];
-        float f = pos - (float) Math.floor(pos);
-        int r = (int) Mth.lerp(f, (a >> 16) & 0xFF, (b >> 16) & 0xFF);
-        int g = (int) Mth.lerp(f, (a >> 8) & 0xFF, (b >> 8) & 0xFF);
-        int bl = (int) Mth.lerp(f, a & 0xFF, b & 0xFF);
-        return (r << 16) | (g << 8) | bl;
     }
 
     private static int scale(int rgb, float k) {

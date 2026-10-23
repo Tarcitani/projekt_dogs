@@ -177,5 +177,12 @@
   "credits.solomod.made_with": "Feito com",
   "credits.solomod.thanks": "Obrigado por jogar!",
   "credits.solomod.to_be_continued": "Continua...",
-  "credits.solomod.skip": "ESPAÇO acelera · ESC sai"
+  "credits.solomod.skip": "ESPAÇO acelera · ESC sai",
+  "message.solomod.sovereign_focus": "⚠ O Soberano escolheu você!",
+  "cinematic.solomod.laugh": "O SOBERANO RI DE VOCÊ",
+  "cinematic.solomod.laugh.line": "Ainda não é digno.",
+  "item.solomod.unknown_boss": "???",
+  "item.solomod.sovereign_head": "Cabeça do Soberano",
+  "advancements.solomod.sovereign_unknown.title": "???",
+  "advancements.solomod.sovereign_unknown.description": "Algo está acordando..."
 }

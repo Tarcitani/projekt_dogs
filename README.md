@@ -66,7 +66,7 @@ O **Rei Vulcânico** lança bolas de fogo lentas com modelo 3D próprio de magma
 <td valign="top">
 
 ### 👑 O Soberano
-Chefe final gigante, feito de pedaços dos cinco Monarcas. **6 estágios**: a cada um ele agoniza num **close cinemático** e desperta um ataque novo; no último entra em **Fúria até morrer**. Derrotá-lo encerra o mod com **créditos**.
+Chefe final gigante, feito de pedaços dos cinco Monarcas. **6 estágios**: a cada um ele agoniza num **close cinemático** e desperta um ataque novo; no último entra em **Fúria até morrer**, usando só o **raio do peito** e caindo ajoelhado, cansado, depois dele. Joga genki-dama de fogo, pisa o chão, chama tornados e se adapta a **vários jogadores**. Derrotá-lo encerra o mod com **créditos**.
 
 </td>
 <td valign="top">

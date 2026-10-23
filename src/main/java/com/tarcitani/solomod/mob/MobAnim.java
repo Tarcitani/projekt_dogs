@@ -49,7 +49,21 @@ public enum MobAnim {
     /** Stun: agachado e ofegante, recuperando o fôlego (nome preservado por compatibilidade). */
     KNOCKED_DOWN,
     /** Chefe venceu um jogador: joga a cabeça para trás e ri, zombando dele. */
-    LAUGH;
+    LAUGH,
+    /** Soberano, bola de fogo: braços unidos para o alto carregando e arremesso para baixo (genki-dama). */
+    GENKI,
+    /** Soberano, pisão: ergue a perna e esmaga o chão. */
+    STOMP,
+    /** Soberano, tornados: flutua de braços abertos. */
+    FLOAT,
+    /** Soberano, raio do peito: firme, peito para a frente e braços abertos para trás. */
+    BEAM,
+    /** Soberano, voo curto (para longe ou para perto do jogador): braços um pouco abertos, pernas recolhidas. */
+    HOP,
+    /** Soberano, pulão: agacha, salta e desce esmagando o chão. */
+    JUMP,
+    /** Soberano, corrida frenética: corpo todo inclinado, braços e pernas num exagero. */
+    SPRINT;
 
     private static final IntFunction<MobAnim> BY_ID =
             ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.ZERO);

@@ -200,6 +200,27 @@ public class TierMob extends Monster {
     }
 
     /**
+     * Partículas e sons de cada tick da desintegração (servidor). O padrão: cinzas que "descem" da coroa até
+     * os pés. O Soberano sobrescreve para morrer "bugando" (ver {@link Sovereign#dissolveEffects}).
+     */
+    protected void dissolveEffects(ServerLevel server, int ticks) {
+        float p = ticks / (float) DISSOLVE_TICKS;
+        // A desintegração "desce" da coroa até os pés: a faixa de cinzas acompanha.
+        double y = getY() + getBbHeight() * (1.0 - p);
+        double w = getBbWidth() * 0.6;
+        server.sendParticles(ParticleTypes.WHITE_ASH, getX(), y, getZ(), 30, w, 0.4, w, 0.05);
+        server.sendParticles(ParticleTypes.ASH, getX(), y, getZ(), 20, w, 0.4, w, 0.02);
+        server.sendParticles(ParticleTypes.SOUL, getX(), y, getZ(), 2, w, 0.3, w, 0.04);
+        server.sendParticles(ParticleTypes.END_ROD, getX(), y, getZ(), 3, w, 0.3, w, 0.08);
+        if (ticks % 12 == 0) {
+            server.playSound(null, getX(), y, getZ(), SoundEvents.SOUL_ESCAPE.value(), SoundSource.HOSTILE, 2.0F, 0.6F);
+        }
+        if (ticks % 20 == 0) {
+            server.playSound(null, getX(), getY(), getZ(), SoundEvents.AMETHYST_CLUSTER_BREAK, SoundSource.HOSTILE, 2.0F, 0.5F);
+        }
+    }
+
+    /**
      * Colosso: em vez de tombar e sumir em 1 s, se desfaz por 5 s. O deathTime vanilla não sobe, então
      * o corpo não tomba nem fica vermelho — o modelo cuida da animação. Roda nos dois lados.
      */
@@ -211,20 +232,7 @@ public class TierMob extends Monster {
         }
         dissolveTicks++;
         if (level() instanceof ServerLevel server) {
-            float p = dissolveTicks / (float) DISSOLVE_TICKS;
-            // A desintegração "desce" da coroa até os pés: a faixa de cinzas acompanha.
-            double y = getY() + getBbHeight() * (1.0 - p);
-            double w = getBbWidth() * 0.6;
-            server.sendParticles(ParticleTypes.WHITE_ASH, getX(), y, getZ(), 30, w, 0.4, w, 0.05);
-            server.sendParticles(ParticleTypes.ASH, getX(), y, getZ(), 20, w, 0.4, w, 0.02);
-            server.sendParticles(ParticleTypes.SOUL, getX(), y, getZ(), 2, w, 0.3, w, 0.04);
-            server.sendParticles(ParticleTypes.END_ROD, getX(), y, getZ(), 3, w, 0.3, w, 0.08);
-            if (dissolveTicks % 12 == 0) {
-                server.playSound(null, getX(), y, getZ(), SoundEvents.SOUL_ESCAPE.value(), SoundSource.HOSTILE, 2.0F, 0.6F);
-            }
-            if (dissolveTicks % 20 == 0) {
-                server.playSound(null, getX(), getY(), getZ(), SoundEvents.AMETHYST_CLUSTER_BREAK, SoundSource.HOSTILE, 2.0F, 0.5F);
-            }
+            dissolveEffects(server, dissolveTicks);
             if (dissolveTicks >= DISSOLVE_TICKS && !isRemoved()) {
                 server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1, getZ(), 1, 0, 0, 0, 0);
                 server.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, getX(), getY() + 1, getZ(), 80, 1.2, 1.5, 1.2, 0.15);

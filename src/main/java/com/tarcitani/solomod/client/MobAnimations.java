@@ -251,6 +251,52 @@ public final class MobAnimations {
                 lean(pose, yaw, 10F * k);
                 shake(pose, age, 0.05F * k * size);
             }
+            case GENKI -> {
+                // Inclina para trás carregando e para a frente no arremesso (os braços ficam no modelo).
+                float back = Mth.clamp(t / 0.7F, 0F, 1F) * (1F - Mth.clamp((t - 0.7F) / 0.1F, 0F, 1F));
+                float fwd = Mth.clamp((t - 0.7F) / 0.1F, 0F, 1F) * (1F - Mth.clamp((t - 0.85F) / 0.15F, 0F, 1F));
+                lean(pose, yaw, -9F * back + 14F * fwd);
+                shake(pose, age, 0.08F * back);
+            }
+            case STOMP -> {
+                float lift = Mth.sin(Mth.clamp(t / 0.6F, 0F, 1F) * Mth.HALF_PI) * (1F - Mth.clamp((t - 0.6F) / 0.08F, 0F, 1F));
+                float impact = t > 0.6F ? 1F - Mth.clamp((t - 0.6F) / 0.15F, 0F, 1F) : 0F;
+                lean(pose, yaw, -6F * lift);
+                pose.scale(1F + 0.08F * impact, 1F - 0.1F * impact, 1F + 0.08F * impact);
+            }
+            case FLOAT -> {
+                // Sobe ~3,5 blocos (a caixa de colisão fica no chão) e balança no ar.
+                float k = Math.min(1F, t * 6F) * Math.min(1F, (1F - t) * 6F);
+                pose.translate(0, 3.5F * k + Mth.sin(age * 0.15F) * 0.25F * k, 0);
+            }
+            case JUMP -> {
+                // Agacha (primeiros 30%), estica no ar e achata ao pousar (o salto de verdade é do servidor).
+                float crouch = Mth.clamp(t / 0.3F, 0F, 1F) * (1F - Mth.clamp((t - 0.3F) / 0.06F, 0F, 1F));
+                float air = Mth.clamp((t - 0.3F) / 0.06F, 0F, 1F) * (1F - Mth.clamp((t - 0.72F) / 0.08F, 0F, 1F));
+                float land = Mth.clamp((t - 0.72F) / 0.08F, 0F, 1F) * (1F - Mth.clamp((t - 0.85F) / 0.15F, 0F, 1F));
+                pose.scale(1F + 0.1F * crouch + 0.12F * land, 1F - 0.16F * crouch + 0.06F * air - 0.14F * land,
+                        1F + 0.1F * crouch + 0.12F * land);
+                shake(pose, age, 0.1F * crouch);
+            }
+            case SPRINT -> {
+                // Exagero: corpo todo inclinado, quicando a cada passada e balançando de lado.
+                float k = Math.min(1F, t * 10F) * Math.min(1F, (1F - t) * 10F);
+                lean(pose, yaw, 34F * k);
+                pose.translate(0, Math.abs(Mth.sin(age * 0.9F)) * 0.9F * k, 0);
+                roll(pose, yaw, Mth.sin(age * 0.9F) * 5F * k);
+                stretchForward(pose, yaw, 1F + 0.12F * k);
+            }
+            case HOP -> {
+                // Voo curto: sobe com o corpo levemente inclinado para trás; o deslocamento real é do servidor.
+                float k = Math.min(1F, t * 8F) * Math.min(1F, (1F - t) * 8F);
+                lean(pose, yaw, -6F * k);
+            }
+            case BEAM -> {
+                float k = Math.min(1F, t * 6F) * Math.min(1F, (1F - t) * 6F);
+                lean(pose, yaw, -7F * k);
+                // Depois da carga (primeiro quinto) o corpo vibra com o raio.
+                shake(pose, age, 0.1F * Mth.clamp((t - 0.2F) * 5F, 0F, 1F) * k);
+            }
             case LAUGH -> {
                 float k = Math.min(1F, t * 8F) * Math.min(1F, (1F - t) * 8F);
                 lean(pose, yaw, (-6F + Mth.sin(age * 0.9F) * 2F) * k);

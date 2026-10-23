@@ -18,6 +18,9 @@ import net.minecraft.server.level.ServerPlayer;
  *       forma; a tela mostra o progresso (0/5).</li>
  *   <li>{@code broken_seal}: SECRETA (oculta até ser ganha). Vem junto com a anterior e insinua que os
  *       Monarcas mantinham algo selado — o Soberano.</li>
+ *   <li>{@code sovereign_unknown}: oculta e mostrada como "???" (ícone de interrogações) assim que os cinco
+ *       Monarcas caem; é concedida e REVOGADA pelo código. Ao derrotar o Soberano ela some e aparece
+ *       {@code defeat_sovereign}, com a cabeça dele.</li>
  *   <li>{@code defeat_sovereign}: SECRETA. Derrotar o Soberano (o fim da versão de testes).</li>
  * </ul>
  *
@@ -30,6 +33,7 @@ public final class ModAdvancements {
     public static final ResourceLocation DEFEAT_ALL = id("defeat_all_monarchs");
     public static final ResourceLocation BROKEN_SEAL = id("broken_seal");
     public static final ResourceLocation DEFEAT_SOVEREIGN = id("defeat_sovereign");
+    public static final ResourceLocation SOVEREIGN_UNKNOWN = id("sovereign_unknown");
 
     /**
      * Concede a conquista do Monarca daquele elemento e o critério dele no desafio mestre. Com os cinco,
@@ -42,12 +46,21 @@ public final class ModAdvancements {
         AdvancementHolder all = player.server.getAdvancements().get(DEFEAT_ALL);
         if (all != null && player.getAdvancements().getOrStartProgress(all).isDone()) {
             grant(player, BROKEN_SEAL, "sealed");
+            // O "???" só vale enquanto o Soberano não caiu (senão voltaria depois de revogado).
+            if (!isDone(player, DEFEAT_SOVEREIGN)) grant(player, SOVEREIGN_UNKNOWN, "seen");
         }
+    }
+
+    private static boolean isDone(ServerPlayer player, ResourceLocation id) {
+        AdvancementHolder holder = player.server.getAdvancements().get(id);
+        return holder != null && player.getAdvancements().getOrStartProgress(holder).isDone();
     }
 
     /** Derrotar o Soberano também quebra o selo (para a conquista ter o pai visível na árvore). */
     public static void awardSovereignDefeat(ServerPlayer player) {
         grant(player, BROKEN_SEAL, "sealed");
+        AdvancementHolder unknown = player.server.getAdvancements().get(SOVEREIGN_UNKNOWN);
+        if (unknown != null) player.getAdvancements().revoke(unknown, "seen");
         grant(player, DEFEAT_SOVEREIGN, "defeated");
     }
 

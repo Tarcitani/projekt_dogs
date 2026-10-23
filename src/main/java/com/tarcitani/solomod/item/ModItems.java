@@ -36,6 +36,9 @@ public final class ModItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(SoloMod.MOD_ID);
     /** Item visual da conquista Cinzas do Vulcão; arte gerada por tools/gen_boss_icons.ps1. */
     public static final DeferredItem<Item> MONARCH_FIRE_HEAD = ITEMS.registerSimpleItem("monarch_fire_head");
+    /** Ícones da conquista do Soberano: "???" antes de derrotá-lo e a cabeça dele depois. Só aparecem nas conquistas. */
+    public static final DeferredItem<Item> UNKNOWN_BOSS = ITEMS.registerSimpleItem("unknown_boss");
+    public static final DeferredItem<Item> SOVEREIGN_HEAD = ITEMS.registerSimpleItem("sovereign_head");
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, SoloMod.MOD_ID);
 
     public static final Map<WeaponClass, DeferredItem<ModularWeaponItem>> WEAPONS = new EnumMap<>(WeaponClass.class);

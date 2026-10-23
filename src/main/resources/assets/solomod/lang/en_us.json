@@ -177,5 +177,12 @@
   "credits.solomod.made_with": "Made with",
   "credits.solomod.thanks": "Thanks for playing!",
   "credits.solomod.to_be_continued": "To be continued...",
-  "credits.solomod.skip": "SPACE speeds up · ESC exits"
+  "credits.solomod.skip": "SPACE speeds up · ESC exits",
+  "message.solomod.sovereign_focus": "⚠ The Sovereign has chosen you!",
+  "cinematic.solomod.laugh": "THE SOVEREIGN LAUGHS AT YOU",
+  "cinematic.solomod.laugh.line": "Not worthy yet.",
+  "item.solomod.unknown_boss": "???",
+  "item.solomod.sovereign_head": "Sovereign's Head",
+  "advancements.solomod.sovereign_unknown.title": "???",
+  "advancements.solomod.sovereign_unknown.description": "Something is awakening..."
 }

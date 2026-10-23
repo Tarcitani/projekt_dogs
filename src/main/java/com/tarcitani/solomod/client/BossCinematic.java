@@ -31,7 +31,7 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
  *   <li>{@code FINALE}: quando a cena acaba, abre os {@link CreditsScreen créditos}.</li>
  * </ul>
  * O jogador continua podendo andar; só a câmera é guiada (a mira real não muda).
- * O foco do Soberano acompanha a escala visual ampliada, não apenas a caixa física.
+ * O foco do Soberano usa a altura da caixa dele (rosto e tronco em frações dela).
  */
 @EventBusSubscriber(modid = SoloMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class BossCinematic {
@@ -60,12 +60,15 @@ public final class BossCinematic {
 
     /** No close, o rosto; nas mortes, o meio do corpo (que se desfaz de cima para baixo). */
     private static Vec3 focusOn(Entity boss) {
-        double visualScale = boss instanceof Sovereign ? Sovereign.RENDER_SCALE / 1.4 : 1;
-        return boss.position().add(0, boss.getBbHeight() * visualScale * (kind == CinematicPayload.Kind.CLOSE_UP ? 0.85 : 0.6), 0);
+        // A caixa do Soberano (24 blocos) vai até o topo da cabeça: rosto a 93% da altura, tronco a 70%.
+        boolean sovereign = boss instanceof Sovereign;
+        double factor = closeUp() ? (sovereign ? 0.93 : 0.85) : (sovereign ? 0.7 : 0.6);
+        return boss.position().add(0, boss.getBbHeight() * factor, 0);
     }
 
+    /** Cenas de rosto (zoom forte, letreiro menor): a agonia e a risada. */
     private static boolean closeUp() {
-        return kind == CinematicPayload.Kind.CLOSE_UP;
+        return kind == CinematicPayload.Kind.CLOSE_UP || kind == CinematicPayload.Kind.LAUGH;
     }
 
     private static float elapsed(float partial) {

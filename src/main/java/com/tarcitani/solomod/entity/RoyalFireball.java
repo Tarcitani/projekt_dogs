@@ -30,6 +30,10 @@ import java.util.UUID;
  * aceleração. Um golpe direto do jogador a rebate na direção da mira a 0,45 bloco/tick. Se voltar
  * ao conjurador, causa dano atribuído ao jogador e o deixa agachado por 100 ticks, salvo na Fúria
  * e durante rugidos/agonia. Na Fúria o dano continua valendo, mas não causa stun.
+ *
+ * <p>A genki-dama do Soberano ({@link #launchGenki}) sai de cima das mãos dele, desce sobre o jogador e
+ * explode em área ao tocar o chão. Como o Soberano é imune a fogo, rebatê-la nele só o atordoa (não
+ * causa dano).
  * Modelo 3D próprio de 2,4 blocos (núcleo, crosta de magma e coroas orbitais), sem item vanilla.
  * Núcleo luminoso, espiral de chamas, fumaça e faíscas indicam o trajeto; impactos não destroem blocos.
  * Dono original, reflexão, dano e idade persistem em NBT; toda colisão/reflexão é decidida pelo servidor.
@@ -39,6 +43,8 @@ public final class RoyalFireball extends Projectile {
     private boolean reflected;
     private float damage = 12;
     private int age;
+    /** Raio da explosão ao acertar o chão ou alguém (0 = só o dano direto). */
+    private double blastRadius;
 
     public RoyalFireball(EntityType<? extends RoyalFireball> type, Level level) {
         super(type, level);
@@ -58,6 +64,23 @@ public final class RoyalFireball extends Projectile {
         ball.setDeltaMovement(aim.subtract(ball.getBoundingBox().getCenter()).normalize().scale(TierIdentity.ROYAL_FIREBALL_SPEED));
         level.addFreshEntity(ball);
         Hazards.sound(level, ball.position(), SoundEvents.BLAZE_SHOOT, 2F, 0.65F);
+    }
+
+    /**
+     * Genki-dama: nasce em {@code origin} (acima das mãos erguidas), voa até {@code aim} (os pés do jogador
+     * focado) a {@code speed} e explode num raio {@code blastRadius}. Continua rebatível.
+     */
+    public static void launchGenki(ServerLevel level, LivingEntity boss, Vec3 origin, Vec3 aim, float damage,
+                                   double speed, double blastRadius) {
+        RoyalFireball ball = new RoyalFireball(ModEntities.ROYAL_FIREBALL.get(), level);
+        ball.caster = boss.getUUID();
+        ball.setOwner(boss);
+        ball.damage = damage;
+        ball.blastRadius = blastRadius;
+        ball.setPos(origin.x, origin.y - ball.getBbHeight() / 2, origin.z);
+        ball.setDeltaMovement(aim.subtract(ball.getBoundingBox().getCenter()).normalize().scale(speed));
+        level.addFreshEntity(ball);
+        Hazards.sound(level, ball.position(), SoundEvents.BLAZE_SHOOT, 3F, 0.5F);
     }
 
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {}
@@ -96,7 +119,8 @@ public final class RoyalFireball extends Projectile {
                 return;
             }
             TierBrain casterBrain = TierBrain.of(boss);
-            if (casterBrain instanceof SovereignBrain && casterBrain.phase() != 2 && casterBrain.phase() != SovereignBrain.STAGES) {
+            if (casterBrain instanceof SovereignBrain && casterBrain.phase() != SovereignBrain.FIRE_STAGE
+                    && casterBrain.phase() != SovereignBrain.STAGES) {
                 discard();
                 return;
             }
@@ -138,16 +162,33 @@ public final class RoyalFireball extends Projectile {
             if (reflected && victim.getUUID().equals(caster) && getOwner() instanceof Player player) {
                 TierBrain brain = TierBrain.of(victim);
                 if (brain != null) brain.stunFromFireball(TierIdentity.ROYAL_FIREBALL_STUN_TICKS);
-                victim.hurt(damageSources().indirectMagic(this, player), damage);
+                // O Soberano é imune a fogo: a bola devolvida só o atordoa, sem dano.
+                if (!(victim instanceof Sovereign)) victim.hurt(damageSources().indirectMagic(this, player), damage);
             } else if (getOwner() instanceof LivingEntity owner) {
                 Hazards.hit(owner, victim, damage, ElementType.FIRE, 3, true);
             }
         }
+        explode(server);
         burst(ParticleTypes.FLAME, 45);
         burst(ParticleTypes.LAVA, 12);
         burst(ParticleTypes.EXPLOSION, 2);
         Hazards.sound(server, position(), SoundEvents.GENERIC_EXPLODE.value(), 1.5F, 1.1F);
         discard();
+    }
+
+    /** Explosão em área da genki-dama (só a bola de quem a lançou; a rebatida não explode em quem a rebateu). */
+    private void explode(ServerLevel server) {
+        if (blastRadius <= 0 || reflected || !(getOwner() instanceof LivingEntity owner)) return;
+        Vec3 center = getBoundingBox().getCenter();
+        for (LivingEntity e : Hazards.enemiesIn(server, owner, new net.minecraft.world.phys.AABB(center, center)
+                .inflate(blastRadius, blastRadius, blastRadius))) {
+            if (e.position().distanceToSqr(center) > blastRadius * blastRadius) continue;
+            Hazards.hit(owner, e, damage * 0.6F, ElementType.FIRE, 3, true);
+            Hazards.push(e, e.position().subtract(center).multiply(1, 0, 1).normalize().scale(0.8).add(0, 0.5, 0));
+        }
+        burst(ParticleTypes.EXPLOSION_EMITTER, 1);
+        burst(ParticleTypes.FLAME, 120);
+        burst(ParticleTypes.LAVA, 30);
     }
 
     private void burst(net.minecraft.core.particles.ParticleOptions particle, int count) {
@@ -162,6 +203,7 @@ public final class RoyalFireball extends Projectile {
         tag.putBoolean("Reflected", reflected);
         tag.putFloat("Damage", damage);
         tag.putInt("Age", age);
+        tag.putDouble("Blast", blastRadius);
     }
 
     @Override
@@ -171,5 +213,6 @@ public final class RoyalFireball extends Projectile {
         reflected = tag.getBoolean("Reflected");
         damage = tag.getFloat("Damage");
         age = tag.getInt("Age");
+        blastRadius = tag.getDouble("Blast");
     }
 }

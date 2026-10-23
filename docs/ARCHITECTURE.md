@@ -91,7 +91,7 @@ flowchart LR
 
 | Arquivo | O que é |
 |---|---|
-| `ModAdvancements.java` | Concessão das conquistas. `awardBossDefeat(player, element)` dá `defeat_monarch_<elemento>` e o critério `monarch_<elemento>` do desafio mestre `defeat_all_monarchs`; com os cinco, dá a secreta `broken_seal`. `awardSovereignDefeat(player)` dá a secreta `defeat_sovereign` (e o selo, se faltava). Os critérios são `minecraft:impossible` (só o código concede). Chamado por `MonarchBrain.onDeath` e `SovereignBrain.onDeath`. |
+| `ModAdvancements.java` | Concessão das conquistas. `awardBossDefeat(player, element)` dá `defeat_monarch_<elemento>` e o critério `monarch_<elemento>` do desafio mestre `defeat_all_monarchs`; com os cinco, dá a secreta `broken_seal`. `awardSovereignDefeat(player)` dá a secreta `defeat_sovereign` (e o selo, se faltava). Os critérios são `minecraft:impossible` (só o código concede). Também controla o ícone oculto `sovereign_unknown` ("???"): concedido com os 5 Monarcas e **revogado** ao derrotar o Soberano, quando surge `defeat_sovereign` com a cabeça dele. Chamado por `MonarchBrain.onDeath` e `SovereignBrain.onDeath`. |
 
 ### `item/` — itens
 
@@ -123,9 +123,11 @@ flowchart LR
 | Arquivo | O que é |
 |---|---|
 | `TierMob.java` | Criatura própria de cada tier (`extends Monster`). Guarda o elemento em `SynchedEntityData` (o cliente escolhe modelo e textura com ele). Sem perfil ao nascer → recebe um elemento aleatório. O Monarca e o Soberano (tier BOSS) têm a morte de desintegração (`DISSOLVE_TICKS=100`). **O combate não fica aqui**, fica no `TierBrain`. |
-| `Sovereign.java` | O Soberano, chefe final (`extends TierMob`, tier BOSS, sempre sem elemento). Atributos base próprios (`BASE_HEALTH`, `BASE_DAMAGE`), `RENDER_SCALE`, sons e imunidade a fogo. O combate fica em `mob/SovereignBrain`. |
+| `Sovereign.java` | O Soberano, chefe final (`extends TierMob`, tier BOSS, sempre sem elemento). Atributos base próprios (`BASE_HEALTH`, `BASE_DAMAGE`), `RENDER_SCALE`, hitbox (`HITBOX_WIDTH`/`HITBOX_HEIGHT`/`EYE_HEIGHT`, menor que o modelo de propósito, explicado na Javadoc), sons e imunidade a fogo e a sufocamento (`isInvulnerableTo`). O combate fica em `mob/SovereignBrain`. |
+| `SovereignTornado.java` | Tornado 3D do Soberano (`extends Entity`, sem colisão, não salvo): persegue um jogador a 0,13 bloco/tick, dura 11 s e lança quem encosta no pé (~11 blocos: o dano é da queda). Lógica só no servidor. Substituiu o antigo tornado de partículas. |
+| `WaterOrb.java` | Esfera de água 3D do Soberano (`extends Entity`, não salva) em três modos: `ORBIT` (gira nele), `HOMING` (persegue o jogador e explode em respingo; um golpe direto a estoura) e `WAVE` (só visual: a crista do Maremoto). |
 | `ThrownDagger.java` | Adaga arremessada (`extends AbstractArrow`): voa girando, crava, volta como bumerangue quando o dono chama. |
-| `RoyalFireball.java` | Entidade `royal_fireball` (`Projectile`): bola de 2,4 blocos, lenta e rebatível. Colisão volumétrica e reflexão no servidor; devolvida causa dano mágico do jogador e tenta `TierBrain.stunFromFireball(100)` (bloqueado na Fúria). NBT guarda conjurador, reflexão, dano e idade. Modelo próprio em `RoyalFireballRenderer`, sem item vanilla. Bolas do Soberano são removidas fora dos estágios 2/6. |
+| `RoyalFireball.java` | Entidade `royal_fireball` (`Projectile`): bola de 2,4 blocos, lenta e rebatível. Colisão volumétrica e reflexão no servidor; devolvida causa dano mágico do jogador e tenta `TierBrain.stunFromFireball(100)` (bloqueado na Fúria). NBT guarda conjurador, reflexão, dano e idade. Modelo próprio em `RoyalFireballRenderer` (cubos no estilo do Minecraft, sem item vanilla). `launchGenki` é a genki-dama do Soberano: nasce acima das mãos, desce sobre o jogador e explode em área (`blastRadius`). Devolvida ao Soberano, só o atordoa (imune a fogo). As bolas do Soberano são removidas fora do estágio 2. |
 | `ModEntities.java` | Registra `minion`, `elite`, `guardian`, `monarch`, `sovereign`, `thrown_dagger` e `royal_fireball`, além dos atributos. `forTier(tier)` devolve o tipo da criatura do tier (BOSS = Monarca). |
 
 ### `mob/` — IA e identidade dos mobs (servidor)
@@ -138,8 +140,8 @@ flowchart LR
 | `EliteBrain.java` | OP: guarda lateral, aparar e contra-atacar, Investida, Golpe Triplo. |
 | `GuardianBrain.java` | SUB_BOSS: controle de distância, orbes, Repulsão, Salto, Translocar, Invocação + ataques de Fúria. |
 | `MonarchBrain.java` | BOSS: 3 fases, leitura do estilo do jogador (perto/longe), barra de chefe, todos os ataques do chefe + Fúria. Guarda quem causou dano e, na morte, concede as conquistas a esses jogadores. O maior arquivo de IA. |
-| `SovereignBrain.java` | O Soberano: 6 estágios de vida, agonia invulnerável com close (`CinematicPayload` `CLOSE_UP`) a cada estágio, um ataque novo por estágio (`StageMove`), Fúria sem fim no 6º, trava de vida por estágio em `onHurt`, cinemática final + créditos e conquista na morte. `skipToStage` para o `/modtest`. |
-| `Hazards.java` | Ataques que existem no mundo por alguns ticks sem ser entidade: orbes, áreas marcadas (meteoros), ondas de choque. Simulados no servidor e desenhados com partículas. Também tem helpers de dano em área (`enemiesIn`, `hit`, `push`) e sons. |
+| `SovereignBrain.java` | O Soberano: 6 estágios de vida, agonia invulnerável com close (`CinematicPayload` `CLOSE_UP`) a cada estágio, um ataque novo por estágio (`StageMove`: Punho, Genki-dama, Maremoto, Raízes, Pisão, Tornados), Fúria sem fim no 6º com o Raio do Peito (`ChestBeam`, prioridade, termina em `kneel`) e os poderes dos Monarcas um por vez, voos curtos (`Hop`: recuo antes do raio, avanço contra kite/preso), **escolha por prioridade** (`Move.urgency`: pisão/punho quando colado, voo, raio) e leitura de como o jogador luta (pressão melee/ranged, combo pós-pisão), trava de vida por estágio em `onHurt`, **estágio restaurado pela vida** ao reinstalar o cérebro (`stageFromHealth`), padrões de vários jogadores (foco rotativo, grupo junto/espalhado, `damageTakenMultiplier` por jogador), movimento direto sem pathfinding (`chase`), risada com cinemática, cinemática final + créditos e conquista na morte. `skipToStage` para o `/modtest`. |
+| `Hazards.java` | Ataques que existem no mundo por alguns ticks sem ser entidade: orbes, áreas marcadas (meteoros), ondas de choque, tornados e `QuakeBlocks` (terremoto: blocos do chão viram `FallingBlockEntity` e voltam). Simulados no servidor e desenhados com partículas. Também tem helpers de dano em área (`enemiesIn`, `hit`, `push`) e sons. |
 | `MobAnim.java` | Enum das animações de ação dos mobs (`WINDUP, LUNGE, DASH, COMBO, CAST, LEAP, SLAM, ROAR..., AGONY`). O servidor diz **qual** animação e por quanto tempo; o cliente desenha. |
 | `MobEvents.java` | Liga tudo ao ciclo de vida: reinstala o brain quando um mob salvo é carregado, tick, dano (Fúria, aparar, invulnerabilidade), morte, envia a identidade a quem começa a ver o mob, tick de `Hazards`. |
 
@@ -153,9 +155,10 @@ Todos registrados em `ModNetwork.register` (protocolo `"1"`).
 | `HitFeedbackPayload` | S → C | número de dano flutuante (`kind`: 0 normal, 1 vantagem, 2 desvantagem, 3 habilidade, 4 crítico) |
 | `MobAnimPayload` | S → C | identidade do mob (tier, elemento, fase, fúria) + animação de ação |
 | `PlayerAnimPayload` | S → C | animação de habilidade de um jogador |
-| `CinematicPayload` | S → C | cinemática de chefe: `kind` (`DEFEAT` morte do Monarca, `CLOSE_UP` agonia do Soberano, `FINALE` morte do Soberano + créditos), cabeçalho e título |
+| `CinematicPayload` | S → C | cinemática de chefe: `kind` (`DEFEAT` morte do Monarca, `CLOSE_UP` agonia do Soberano, `FINALE` morte do Soberano + créditos, `LAUGH` risada dele ao matar um jogador), cabeçalho e título |
 | `SpendPointsPayload` | C → S | botões +1/+5 da tela de Maestria (o servidor revalida) |
 | `TestActionPayload` | C → S | botões da aba Teste (exige OP); também tem `spawnTierMob` e `mark` |
+| `ShakePayload` | S → C | tremor de câmera (`client/ScreenShake`): força inicial e duração; `ModNetwork.sendShake` envia a quem está perto, mais fraco com a distância |
 | `SpinAttackPayload` | C → S | clique de ataque da espada longa → giro 360° |
 | `ModNetwork` | — | registro + helpers `syncStats`, `sendHit`, `sendMobAnim`, `sendPlayerAnim`, `sendCinematic` |
 
@@ -179,6 +182,7 @@ Todos registrados em `ModNetwork.register` (protocolo `"1"`).
 | `PlayerAnimations.java` | Animações das habilidades no jogador (giro, estocada, mortal) e troca do ataque da espada longa por `SpinAttackPayload`. |
 | `BossCinematic.java` | Cinemáticas de chefe (faixas, câmera, zoom, letreiro). Close forte no rosto no `CLOSE_UP`; no fim do `FINALE` abre os créditos. |
 | `CreditsScreen.java` | Créditos do fim da versão de testes: texto rolando (`credits.solomod.*`), música de créditos, ESPAÇO acelera, ESC fecha. |
+| `ScreenShake.java` | Tremor de câmera (guinada, inclinação e rolagem) disparado por `ShakePayload`: terremoto do pisão, pouso dos voos, soco do Soberano. Não muda a mira. |
 
 ### `client/model/` e `client/render/`
 
@@ -186,9 +190,10 @@ Todos registrados em `ModNetwork.register` (protocolo `"1"`).
 |---|---|
 | `TierMobModel.java` | Base dos modelos (`HierarchicalModel`): anima as partes com nomes conhecidos (`body`, `head`, `arm_r`...), as decorativas por prefixo e a desintegração. |
 | `MinionModel` / `EliteModel` / `GuardianModel` / `MonarchModel` | Poses e animações de cada tier. Uma classe anima as 5 formas (base + 4 elementos) da criatura. |
-| `SovereignModel.java` | O Soberano: herda do `MonarchModel` (mesmos nomes de partes) e acrescenta a pose de agonia e o tremor da coroa. |
+| `SovereignModel.java` | O Soberano: herda do `MonarchModel` (mesmos nomes de partes) e acrescenta as poses de agonia, genki-dama (braços unidos no alto), pisão, flutuar com braços abertos (tornados) e raio do peito, além do tremor da coroa. |
 | `MobMeshes.java` | ⚠️ **Gerado** por `tools/gen_mob_art.py`. Malhas (cubos + UV) das 20 formas e do Soberano. Não edite à mão. |
-| `TierMobRenderer.java` | Troca de modelo e textura conforme o elemento. Camadas: base + brilho emissivo + aura de Fúria. `single(...)` é para criatura sem variantes (o Soberano): malha única, escala maior e brilho que passa pelas cores dos Monarcas. |
+| `SovereignTornadoRenderer` / `WaterOrbRenderer` / `EffectMesh` | Renderers procedurais dos efeitos 3D do Soberano **no estilo do Minecraft (só cubos e barras retas, nada redondo)**: o tornado é uma pilha de 14 anéis quadrados girando em degraus; a esfera de água é um cubo dentro de cubo dentro de cubo com cubinhos em órbita. `EffectMesh` tem `cube`, `box` e `squareRing`. Texturas 16x16 de `tools/gen_sovereign_effects.py`. |
+| `TierMobRenderer.java` | Troca de modelo e textura conforme o elemento. Camadas: base + brilho emissivo + aura de Fúria. `single(...)` é para criatura sem variantes (o Soberano): malha única, escala maior e **sem a camada de brilho** (só a aura de Fúria). |
 | `ThrownDaggerRenderer.java` | Desenha a adaga voando, girando ou cravada. |
 | `RoyalFireballRenderer.java` | Malha procedural exclusiva: núcleo facetado, crosta vazada, dois anéis de plasma e seis fragmentos orbitais, com luz máxima e texturas próprias. |
 
@@ -218,9 +223,11 @@ Dados do servidor ficam em `src/main/resources/data/solomod/`:
 | `gen_mob_art.py` | `textures/entity/*.png` e `client/model/MobMeshes.java` | spec das 4 formas base; a mesma spec gera UV e textura, então os dois nunca saem de sincronia |
 | `mob_variants.py` | — (importado por `gen_mob_art.py`) | as 16 formas elementais e o Soberano (`sovereign()`) |
 | `gen_boss_icons.ps1` | `textures/item/monarch_fire_head.png` | Cabeça do Rei Vulcânico em pixel art 16×16 RGBA para o item-ícone de Cinzas do Vulcão; usa System.Drawing no Windows, sem dependências Python. |
-| `gen_royal_fireball.ps1` | `textures/entity/royal_fireball.png` e `royal_fireball_core.png` | Texturas originais de crosta vazada e núcleo de magma (64×32 RGBA), determinísticas, para a malha procedural; não reutilizam arte do Ghast. |
+| `gen_royal_fireball.ps1` | `textures/entity/royal_fireball.png` e `royal_fireball_core.png` | Texturas originais 16×16 de pixels grandes (crosta de basalto com lava e núcleo de magma), determinísticas, para a malha de cubos; não reutilizam arte do Ghast. |
 | `gen_weapon_models.py` | modelos 3D (rapieira/claymore), textura de peças, contorno fantasma da adaga, modelos dos ovos (incluindo o do Soberano) | ponto de entrada das armas |
 | `gen_weapon_elements.py` | — (importado por `gen_weapon_models.py`) | versões elementais das armas 2D e 3D |
+| `gen_sovereign_effects.py` | `textures/entity/sovereign_tornado.png`, `water_orb.png`, `water_orb_core.png` | texturas 16x16 de pixels grandes dos efeitos 3D do Soberano (a mesma saída sempre: ruído por hash de x, y) |
+| `gen_sovereign_icons.py` | `textures/item/sovereign_head.png` e `unknown_boss.png` | ícones 16x16 das conquistas do Soberano (a cabeça e o "???"); o desenho são as matrizes no próprio script |
 
 Rode da raiz: `python tools/gen_mob_art.py` e `python tools/gen_weapon_models.py`.
 
@@ -234,7 +241,11 @@ Velocidade de ida/volta, diâmetro, alcance mínimo, duração da recuperação,
 
 **Magma da investida:** `MonarchBrain.Charge` e `EndlessCharge` chamam `Hazards.magmaTrail` apenas no Fogo. O servidor consulta `canEntityGrief`, substitui trechos expostos de blocos naturais por magma permanente e não toca blocos com dados. Atribuição em memória por dimensão (até 4096 posições, limpa ao parar o servidor) permite rir quando um jogador morre no rastro. Raio e chance ficam em `TierIdentity.MAGMA_TRAIL_*`.
 
-**Escala do Soberano:** `Sovereign.RENDER_SCALE=7` é cinco vezes o modelo anterior (1,4); a caixa física permanece independente. `getBoundingBoxForCulling` amplia a região visível e `BossCinematic.focusOn` ajusta o foco ao novo tamanho.
+**Escala e hitbox do Soberano:** `Sovereign.RENDER_SCALE=7` (modelo de ~31 blocos); a hitbox é de propósito menor (8 x 24): `EntitySectionStorage` só consulta seções a ±2 blocos da região buscada, então caixas bem mais largas criam pontos cegos de acerto. `getBoundingBoxForCulling` amplia a região visível e `BossCinematic.focusOn` usa frações da altura da caixa (rosto 93%, tronco 70%). Partículas altas ou distantes (genki-dama, raio) usam `Hazards.farParticles`, porque `sendParticles` comum só chega a 32 blocos.
+
+**Morte "bugando":** `TierMob.tickDeath` chama o gancho `dissolveEffects` (o `Sovereign` o sobrescreve com faíscas, estática e bipes). No cliente, `TierMobModel.glitch` (peças saltando, escala e piscar, sorteio determinístico por quadro de 2 ticks, para corpo e camadas coincidirem) e `TierMobRenderer.GlitchLayer` (cópias vermelha e ciano deslocadas). Só vale para `Sovereign`; os Monarcas continuam desintegrando.
+
+**Estágio não é salvo:** `TierBrain` não é persistido, então `SovereignBrain` deriva o estágio da vida ao ser instalado (`stageFromHealth`) e retoma a Fúria com `resumeRage` (sem grito). Sem isso, recarregar o chefe repetia todas as agonias. Qualquer estado novo do Soberano deve poder ser reconstruído da vida ou ser aceito como perdido.
 
 ---
 
@@ -268,7 +279,7 @@ sequenceDiagram
 3. Quando um mob salvo é carregado do mundo, `MobEvents.onJoin` reinstala o brain, porque os goals não são salvos, só o perfil.
 4. A cada ataque especial o brain envia `MobAnimPayload` → `client/MobAnimations` anima.
 5. Na morte, `PlayerEvents.onKill` dá XP ao jogador conforme o tier. Se for o Monarca, `MonarchBrain.onDeath` dispara a cinemática e `ModAdvancements.awardBossDefeat` para quem causou dano a ele.
-6. O Soberano (`SovereignBrain`) é diferente: a cada 1/6 da vida para no limite, agoniza (`CinematicPayload` `CLOSE_UP`) e libera um ataque; no 6º estágio entra em Fúria sem fim. Na morte manda `CinematicPayload` `FINALE`, e o cliente abre `CreditsScreen` quando a cena acaba.
+6. O Soberano (`SovereignBrain`) é diferente: a cada 1/6 da vida para no limite, agoniza (`CinematicPayload` `CLOSE_UP`) e libera um ataque; no 6º estágio entra em Fúria sem fim e usa só o raio do peito, ajoelhando em seguida (`kneel`). Na morte manda `CinematicPayload` `FINALE`, e o cliente abre `CreditsScreen` quando a cena acaba.
 
 ### Stats
 

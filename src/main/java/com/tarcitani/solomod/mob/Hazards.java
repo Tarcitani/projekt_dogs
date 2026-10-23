@@ -9,6 +9,7 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -16,6 +17,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -34,7 +36,7 @@ import java.util.UUID;
 
 /**
  * Ataques que vivem no mundo por alguns ticks, independentes do mob que os criou:
- * orbes elementais, áreas marcadas no chão (meteoros) e ondas de choque.
+ * orbes elementais, áreas marcadas no chão (meteoros), ondas de choque e terremotos de blocos.
  *
  * <p>São simulados no servidor e desenhados com partículas: não precisam de entidade, modelo nem renderer.
  * O rastro da investida de Fogo também converte piso natural exposto em magma permanente; respeita
@@ -134,6 +136,18 @@ public final class Hazards {
     public static void push(Entity e, Vec3 velocity) {
         e.push(velocity.x, velocity.y, velocity.z);
         e.hurtMarked = true;
+    }
+
+    /**
+     * Partículas que todos os jogadores veem até 128 blocos. O envio normal só chega a 32 blocos, pouco para
+     * os efeitos do Soberano: as mãos erguidas ficam a 34 blocos de altura e o raio parte do peito, a 15.
+     */
+    public static <T extends ParticleOptions> void farParticles(ServerLevel level, T type, double x, double y, double z,
+                                                                int count, double ox, double oy, double oz, double speed) {
+        for (ServerPlayer player : level.players()) {
+            if (player.distanceToSqr(x, y, z) > 128 * 128) continue;
+            level.sendParticles(player, type, true, x, y, z, count, ox, oy, oz, speed);
+        }
     }
 
     // ------------------------------------------------------------------ visuais/sons por elemento
@@ -272,6 +286,84 @@ public final class Hazards {
             sound(level, center, SoundEvents.GENERIC_EXPLODE.value(), 1.0F, 1.3F);
             sound(level, center, impactSound(element), 1.0F, 0.8F);
             return false;
+        }
+    }
+
+    /**
+     * Terremoto de blocos: acompanha o anel de uma {@link Shockwave} (mesmo centro, raio e velocidade) e
+     * arremessa para o alto os blocos do chão por onde ele passa. São blocos CAINDO de verdade
+     * ({@code FallingBlockEntity}): o bloco some do lugar, sobe, gira e volta a ser colocado ali mesmo ao
+     * pousar, sem largar item. Só terra, pedra, areia e cascalho expostos; respeita mobGriefing e limita
+     * a quantidade por tick e por terremoto.
+     */
+    public static final class QuakeBlocks implements Hazard {
+        private static final int PER_TICK = 14;
+        private final ServerLevel level;
+        private final LivingEntity owner;
+        private final Vec3 center;
+        private final double maxRadius, speed;
+        private final boolean grief;
+        private final int maxBlocks;
+        private double radius = 1.0;
+        private int launched;
+
+        public QuakeBlocks(ServerLevel level, LivingEntity owner, Vec3 center, double maxRadius, double speed) {
+            this(level, owner, center, maxRadius, speed, 180);
+        }
+
+        /** {@code maxBlocks}: quantos blocos no máximo saltam neste terremoto (o pulão usa mais). */
+        public QuakeBlocks(ServerLevel level, LivingEntity owner, Vec3 center, double maxRadius, double speed, int maxBlocks) {
+            this.maxBlocks = maxBlocks;
+            this.level = level;
+            this.owner = owner;
+            this.center = center;
+            this.maxRadius = maxRadius;
+            this.speed = speed;
+            this.grief = net.neoforged.neoforge.event.EventHooks.canEntityGrief(level, owner);
+        }
+
+        @Override
+        public boolean tick() {
+            radius += speed;
+            if (radius > maxRadius) return false;
+            int samples = (int) Math.max(10, radius * 3);
+            int thisTick = 0;
+            for (int i = 0; i < samples; i++) {
+                double a = Math.PI * 2 * i / samples + level.random.nextDouble() * 0.2;
+                double x = center.x + Math.cos(a) * radius, z = center.z + Math.sin(a) * radius;
+                if (i % 3 == 0) level.sendParticles(ParticleTypes.POOF, x, center.y + 0.3, z, 1, 0.2, 0.1, 0.2, 0.02);
+                if (!grief || launched >= maxBlocks || thisTick >= PER_TICK || level.random.nextFloat() > 0.45F) continue;
+                BlockPos surface = looseSurface(BlockPos.containing(x, center.y, z));
+                if (surface == null) continue;
+                FallingBlockEntity block = FallingBlockEntity.fall(level, surface, level.getBlockState(surface));
+                block.dropItem = false;
+                Vec3 out = new Vec3(x - center.x, 0, z - center.z).normalize();
+                block.setDeltaMovement(out.x * 0.08, 0.32 + level.random.nextDouble() * 0.3, out.z * 0.08);
+                block.hurtMarked = true;
+                launched++;
+                thisTick++;
+            }
+            if (thisTick > 0 && (int) (radius / speed) % 2 == 0) {
+                sound(level, new Vec3(center.x, center.y, center.z).add(Math.cos(radius) * radius, 0, Math.sin(radius) * radius),
+                        SoundEvents.GRAVEL_BREAK, 1.5F, 0.6F);
+            }
+            return true;
+        }
+
+        /** Primeiro bloco solto e exposto (com ar em cima) da coluna, de 2 acima a 3 abaixo do centro. */
+        private BlockPos looseSurface(BlockPos column) {
+            for (int dy = 2; dy >= -3; dy--) {
+                BlockPos pos = column.offset(0, dy, 0);
+                if (!level.hasChunkAt(pos)) return null;
+                BlockState state = level.getBlockState(pos);
+                boolean loose = state.is(BlockTags.DIRT) || state.is(BlockTags.BASE_STONE_OVERWORLD)
+                        || state.is(BlockTags.BASE_STONE_NETHER) || state.is(BlockTags.SAND) || state.is(Blocks.GRAVEL);
+                if (loose && !state.hasBlockEntity() && state.isSolidRender(level, pos)
+                        && state.getDestroySpeed(level, pos) >= 0 && level.getBlockState(pos.above()).isAir()) {
+                    return pos;
+                }
+            }
+            return null;
         }
     }
 

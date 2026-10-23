@@ -1,36 +1,50 @@
 <#
-Gera as texturas originais do modelo 3D da Bola de Fogo Real (64x32 RGBA).
-O núcleo é magma amarelo/laranja; a crosta tem ilhas vulcânicas e fissuras transparentes.
-A malha e os anéis são procedurais em RoyalFireballRenderer. Nenhum asset do Ghast é usado.
+Gera as texturas originais da Bola de Fogo Real em 16x16 RGBA com pixels grandes, no estilo do Minecraft
+(igual às esferas de água e aos tornados do Soberano). A malha é de CUBOS, em RoyalFireballRenderer:
+  * royal_fireball.png       -> crosta de basalto com fissuras de lava (alguns pixels vazados)
+  * royal_fireball_core.png  -> núcleo de magma (branco, amarelo e laranja)
+O "ruído" é um hash de (x, y): a mesma saída sempre, sem aleatoriedade de execução.
 Execute da raiz: powershell -File tools/gen_royal_fireball.ps1
 #>
 Add-Type -AssemblyName System.Drawing
 $targetDir = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../src/main/resources/assets/solomod/textures/entity'))
-$core = [System.Drawing.Bitmap]::new(64, 32)
-$crust = [System.Drawing.Bitmap]::new(64, 32)
+
+function Get-Noise([int]$x, [int]$y, [int]$k) {
+    return ((($x * 73856093) -bxor ($y * 19349663) -bxor ($k * 83492791)) % 1000) / 1000.0
+}
+
+$crust = [System.Drawing.Bitmap]::new(16, 16)
+$core = [System.Drawing.Bitmap]::new(16, 16)
 try {
-    for ($y = 0; $y -lt 32; $y++) {
-        for ($x = 0; $x -lt 64; $x++) {
-            # Termos periódicos deixam a emenda da esfera contínua; não há aleatoriedade de execução.
-            $a = $x * [Math]::PI * 2 / 64
-            $wave = [Math]::Sin($a * 5 + $y * 0.55) + [Math]::Cos($a * 3 - $y * 0.7) + [Math]::Sin($a * 7 + $y * 0.22) * 0.5
-            $heat = [Math]::Min(1, [Math]::Abs($wave) * 0.55)
-            $core.SetPixel($x, $y, [Drawing.Color]::FromArgb(255, 255, [int](160 + $heat * 85), [int](25 + $heat * 125)))
-            $n = ($x * 37 + $y * 17) % 19
-            if ([Math]::Abs($wave) -lt 0.33) {
-                $color = [Drawing.Color]::FromArgb(0, 255, 170, 30)
-            } elseif ([Math]::Abs($wave) -lt 0.65) {
-                $color = [Drawing.Color]::FromArgb(255, 255, 80 + $n * 3, 12)
+    for ($y = 0; $y -lt 16; $y++) {
+        for ($x = 0; $x -lt 16; $x++) {
+            $r = Get-Noise $x $y 2
+            if ($r -lt 0.12) {
+                $color = [Drawing.Color]::FromArgb(0, 0, 0, 0)
+            } elseif ($r -lt 0.5) {
+                $color = [Drawing.Color]::FromArgb(255, 54, 24, 26)
+            } elseif ($r -lt 0.8) {
+                $color = [Drawing.Color]::FromArgb(255, 255, 112, 24)
             } else {
-                $color = [Drawing.Color]::FromArgb(255, 45 + $n, 16 + [int]($n / 2), 20 + [int]($n / 3))
+                $color = [Drawing.Color]::FromArgb(255, 255, 176, 48)
             }
             $crust.SetPixel($x, $y, $color)
+
+            $r = Get-Noise $x $y 3
+            if ($r -lt 0.35) {
+                $color = [Drawing.Color]::FromArgb(255, 255, 255, 255)
+            } elseif ($r -lt 0.75) {
+                $color = [Drawing.Color]::FromArgb(255, 255, 236, 140)
+            } else {
+                $color = [Drawing.Color]::FromArgb(255, 255, 190, 60)
+            }
+            $core.SetPixel($x, $y, $color)
         }
     }
-    $core.Save((Join-Path $targetDir 'royal_fireball_core.png'), [Drawing.Imaging.ImageFormat]::Png)
     $crust.Save((Join-Path $targetDir 'royal_fireball.png'), [Drawing.Imaging.ImageFormat]::Png)
-    Write-Output 'Geradas: royal_fireball_core.png e royal_fireball.png (64x32 RGBA)'
+    $core.Save((Join-Path $targetDir 'royal_fireball_core.png'), [Drawing.Imaging.ImageFormat]::Png)
+    Write-Output 'Geradas: royal_fireball.png e royal_fireball_core.png (16x16 RGBA)'
 } finally {
-    $core.Dispose()
     $crust.Dispose()
+    $core.Dispose()
 }

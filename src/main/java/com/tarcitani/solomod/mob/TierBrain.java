@@ -169,15 +169,30 @@ public abstract class TierBrain extends Goal {
 
     /** Stun compartilhado (inclusive colisão de investida): Fúria e transições nunca são interrompidas. */
     protected final boolean stun(int ticks) {
-        if (isRaging() || invulnerable || !mob.isAlive() || remainingLaughTicks() > 0) return false;
+        if ((isRaging() && !allowsStunInRage()) || invulnerable || !mob.isAlive() || remainingLaughTicks() > 0) return false;
+        kneel(ticks);
+        return true;
+    }
+
+    /**
+     * Ajoelha o chefe por {@code ticks}, parado e sem agir. Ao contrário de {@link #stun}, vale também na
+     * Fúria: é o cansaço planejado do Soberano depois do raio (quem chama decide quando).
+     */
+    protected final void kneel(int ticks) {
+        if (!mob.isAlive() || remainingLaughTicks() > 0) return;
         interrupt();
         stunnedUntil = now() + ticks;
         mob.getNavigation().stop();
         mob.setDeltaMovement(0, Math.min(0, mob.getDeltaMovement().y), 0);
         anim(MobAnim.KNOCKED_DOWN, ticks);
         sound(SoundEvents.RAVAGER_STUNNED, 2F, 0.6F);
-        return true;
     }
+
+    /** Se a Fúria deste chefe pode ser atordoada (só o Soberano: a bola devolvida o ajoelha mesmo na Fúria). */
+    protected boolean allowsStunInRage() { return false; }
+
+    /** Começo da risada de vitória (depois de o chefe matar um jogador): o Soberano acrescenta uma cinemática. */
+    protected void onVictoryLaugh() {}
 
     /** Só agenda: a morte pode acontecer dentro de Move.tick, que não pode ser interrompido por reentrância. */
     public final void onPlayerDefeated(Player player) {
@@ -211,6 +226,12 @@ public abstract class TierBrain extends Goal {
         protected boolean usable(double dist) { return true; }
 
         protected int weight(double dist) { return weight; }
+
+        /**
+         * Urgência: entre os ataques prontos, só os de MAIOR urgência entram no sorteio (0 = comum). Serve para
+         * respostas que não podem esperar a sorte: afastar quem colou nos pés, usar o golpe característico.
+         */
+        protected int urgency(double dist) { return 0; }
 
         protected void begin() {}
 
@@ -293,6 +314,7 @@ public abstract class TierBrain extends Goal {
             laughingUntil = now() + TierIdentity.BOSS_LAUGH_TICKS;
             anim(MobAnim.LAUGH, TierIdentity.BOSS_LAUGH_TICKS);
             laughSound();
+            onVictoryLaugh();
         }
         if (remainingLaughTicks() > 0 && remainingLaughTicks() < TierIdentity.BOSS_LAUGH_TICKS && mob.tickCount % 18 == 0) {
             laughSound();
@@ -447,6 +469,12 @@ public abstract class TierBrain extends Goal {
         List<Move> ready = new ArrayList<>();
         for (Move m : isRaging() ? rageMoves : moves) {
             if (now >= m.readyAt && m.weight(dist) > 0 && m.usable(dist)) ready.add(m);
+        }
+        int top = 0;
+        for (Move m : ready) top = Math.max(top, m.urgency(dist));
+        if (top > 0) {
+            final int level = top;
+            ready.removeIf(m -> m.urgency(dist) < level);
         }
         if (ready.size() > 1) ready.remove(last);
         int total = 0;
@@ -607,6 +635,17 @@ public abstract class TierBrain extends Goal {
         onRageStart();
         rageCry();
         for (Move m : rageMoves) m.readyAt = now() + random.nextInt(20);
+    }
+
+    /**
+     * Retoma a Fúria depois de recarregar o chefe (o cérebro não é salvo, só a vida): sem grito nem rugido,
+     * para não repetir a entrada. Chamar só depois de registrar os ataques de Fúria.
+     */
+    protected void resumeRage() {
+        rageUsed = true;
+        rageTicks = RAGE_TICKS;
+        onRageStart();
+        for (Move m : rageMoves) m.readyAt = now() + 40 + random.nextInt(40);
     }
 
     private void endRage() {

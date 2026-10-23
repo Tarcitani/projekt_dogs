@@ -10,6 +10,8 @@ import com.tarcitani.solomod.client.model.MonarchModel;
 import com.tarcitani.solomod.client.model.SovereignModel;
 import com.tarcitani.solomod.client.render.ThrownDaggerRenderer;
 import com.tarcitani.solomod.client.render.RoyalFireballRenderer;
+import com.tarcitani.solomod.client.render.SovereignTornadoRenderer;
+import com.tarcitani.solomod.client.render.WaterOrbRenderer;
 import com.tarcitani.solomod.client.render.TierMobRenderer;
 import com.tarcitani.solomod.component.ModDataComponents;
 import com.tarcitani.solomod.core.WeaponClass;
@@ -100,6 +102,8 @@ public final class ClientSetup {
                 ctx -> TierMobRenderer.single(ctx, "sovereign", SovereignModel::new, 2.4F, Sovereign.RENDER_SCALE));
         event.registerEntityRenderer(ModEntities.THROWN_DAGGER.get(), ThrownDaggerRenderer::new);
         event.registerEntityRenderer(ModEntities.ROYAL_FIREBALL.get(), RoyalFireballRenderer::new);
+        event.registerEntityRenderer(ModEntities.SOVEREIGN_TORNADO.get(), SovereignTornadoRenderer::new);
+        event.registerEntityRenderer(ModEntities.WATER_ORB.get(), WaterOrbRenderer::new);
     }
 
     /**

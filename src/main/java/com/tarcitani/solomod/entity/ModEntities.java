@@ -11,7 +11,7 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** Entidades do mod: criaturas, Soberano, adaga arremessada e bola de fogo real rebatível. */
+/** Entidades do mod: criaturas, Soberano, adaga, bola de fogo real, tornado e esfera de água do Soberano. */
 public final class ModEntities {
     private ModEntities() {}
 
@@ -29,7 +29,8 @@ public final class ModEntities {
     /** O chefe final: gigante, imune a fogo (tem o poder do Rei Vulcânico). */
     public static final DeferredHolder<EntityType<?>, EntityType<Sovereign>> SOVEREIGN =
             ENTITY_TYPES.register("sovereign", () -> EntityType.Builder.<Sovereign>of(Sovereign::new, MobCategory.MONSTER)
-                    .sized(3.4F, 6.6F).fireImmune().clientTrackingRange(16).build("sovereign"));
+                    .sized(Sovereign.HITBOX_WIDTH, Sovereign.HITBOX_HEIGHT).eyeHeight(Sovereign.EYE_HEIGHT)
+                    .fireImmune().clientTrackingRange(16).build("sovereign"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<ThrownDagger>> THROWN_DAGGER =
             ENTITY_TYPES.register("thrown_dagger", () -> EntityType.Builder.<ThrownDagger>of(ThrownDagger::new, MobCategory.MISC)
@@ -45,6 +46,18 @@ public final class ModEntities {
             ENTITY_TYPES.register("royal_fireball", () -> EntityType.Builder.<RoyalFireball>of(RoyalFireball::new, MobCategory.MISC)
                     .sized(TierIdentity.ROYAL_FIREBALL_SIZE, TierIdentity.ROYAL_FIREBALL_SIZE)
                     .fireImmune().clientTrackingRange(12).updateInterval(1).build("royal_fireball"));
+
+    /** Tornado do Soberano (modo ar): funil 3D que persegue um jogador. Não é salvo no mundo. */
+    public static final DeferredHolder<EntityType<?>, EntityType<SovereignTornado>> SOVEREIGN_TORNADO =
+            ENTITY_TYPES.register("sovereign_tornado", () -> EntityType.Builder.<SovereignTornado>of(SovereignTornado::new, MobCategory.MISC)
+                    .sized(SovereignTornado.WIDTH, SovereignTornado.HEIGHT).noSave().fireImmune()
+                    .clientTrackingRange(12).updateInterval(1).build("sovereign_tornado"));
+
+    /** Esfera de água do Soberano (modo água): gira em volta dele e depois persegue um jogador. Não é salva. */
+    public static final DeferredHolder<EntityType<?>, EntityType<WaterOrb>> WATER_ORB =
+            ENTITY_TYPES.register("water_orb", () -> EntityType.Builder.<WaterOrb>of(WaterOrb::new, MobCategory.MISC)
+                    .sized(WaterOrb.SIZE, WaterOrb.SIZE).noSave().fireImmune()
+                    .clientTrackingRange(12).updateInterval(1).build("water_orb"));
 
     public static EntityType<TierMob> forTier(MobTier tier) {
         return switch (tier) {
