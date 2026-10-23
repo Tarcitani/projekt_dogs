@@ -8,6 +8,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.ByIdMap;
 import net.minecraft.util.StringRepresentable;
 
+import java.util.List;
 import java.util.function.IntFunction;
 
 /**
@@ -16,16 +17,22 @@ import java.util.function.IntFunction;
  *
  * <p>Os valores de dano/velocidade seguem a convenção vanilla: são somados ao dano base do jogador (1.0)
  * e à velocidade base de ataque (4.0). Ex.: espada de ferro = +5 dano, -2.4 velocidade.
+ * Sem bônus de AGI/penalidades: adaga 2,5 ataques/s, rapieira 2,2, espada longa 1,6 e martelo 0,8.
+ * A seleção atual usa quatro classes; as antigas preservam seus ordinais e itens nos mundos salvos.
  */
 public enum WeaponClass implements StringRepresentable {
     //           nome          peso                  stat padrão    dano  veloc.  habilidade padrão
     GREATSWORD ("greatsword",  Weight.HEAVY,   StatType.FOR, 9.0F, -3.0F, "ground_slam"),
     AXE        ("axe",         Weight.HEAVY,   StatType.FOR, 8.0F, -3.1F, "ground_slam"),
-    LONGSWORD  ("longsword",   Weight.MEDIUM,  StatType.FOR, 6.0F, -2.6F, "dash_strike"),
+    LONGSWORD  ("longsword",   Weight.MEDIUM,  StatType.FOR, 6.0F, -2.4F, "dash_strike"),
     DAGGER     ("dagger",      Weight.LIGHT,   StatType.AGI, 3.0F, -1.5F, "dash_strike"),
     RAPIER     ("rapier",      Weight.LIGHT,   StatType.AGI, 4.0F, -1.8F, "dash_strike"),
     KUNAI      ("kunai",       Weight.THROWN,  StatType.AGI, 2.5F, -1.2F, "dash_strike"),
-    WAND       ("wand",        Weight.CHANNEL, StatType.INT, 1.5F, -2.0F, "mana_bolt");
+    WAND       ("wand",        Weight.CHANNEL, StatType.INT, 1.5F, -2.0F, "mana_bolt"),
+    HAMMER     ("hammer",      Weight.HEAVY,   StatType.FOR, 9.0F, -3.2F, "ground_slam");
+
+    /** Catálogo da aba Armas e da tela de teste; não confundir índice desta lista com ordinal de rede. */
+    public static final List<WeaponClass> AVAILABLE = List.of(RAPIER, LONGSWORD, DAGGER, HAMMER);
 
     public enum Weight {
         HEAVY, MEDIUM, LIGHT, THROWN, CHANNEL;

@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Os chefes BOSS (Monarcas e Soberano) não morrem como um mob comum: por {@link #DISSOLVE_TICKS} ticks se desintegram
  * (o modelo se desfaz em pedaços e vira cinza) enquanto os jogadores veem a cinemática.
+ * O Titã Ancestral é imune a quedas, pois seu Pulão termina em impacto no chão.
  */
 public class TierMob extends Monster {
     public static final int DISSOLVE_TICKS = 100;
@@ -67,6 +69,12 @@ public class TierMob extends Monster {
 
     public MobTier tier() {
         return tier;
+    }
+
+    @Override
+    public boolean isInvulnerableTo(DamageSource source) {
+        return (tier == MobTier.BOSS && element() == ElementType.EARTH && source.is(DamageTypeTags.IS_FALL))
+                || super.isInvulnerableTo(source);
     }
 
     @Override

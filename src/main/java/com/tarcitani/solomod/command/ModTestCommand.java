@@ -64,6 +64,8 @@ import java.util.function.Function;
  * /modtest sovereign [estágio]                     invoca o Soberano (chefe final), opcionalmente já no
  *                                                  estágio 1-6 (pula as cinemáticas do caminho)
  * </pre>
+ * O autocomplete de armas mostra rapier, longsword, dagger e hammer. Nomes legados continuam aceitos
+ * para permitir testes com itens de mundos antigos.
  */
 public final class ModTestCommand {
     private ModTestCommand() {}
@@ -140,7 +142,7 @@ public final class ModTestCommand {
                 }))
 
                 .then(Commands.literal("weapon")
-                        .then(enumArg("class", WeaponClass.values())
+                        .then(enumArg("class", WeaponClass.AVAILABLE.toArray(WeaponClass[]::new))
                                 .then(enumArg("tier", MobTier.values())
                                         .executes(ctx -> giveWeapon(ctx, false, false, false))
                                         .then(enumArg("element", ElementType.values())

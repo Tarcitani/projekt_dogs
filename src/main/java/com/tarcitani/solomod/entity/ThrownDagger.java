@@ -33,6 +33,8 @@ import java.util.Set;
  * Adaga arremessada. Voa girando; ao acertar um mob causa o dano da arma e cai no chão; ao acertar um bloco
  * fica cravada. Não pode ser pega por outros: só volta quando o dono a chama (clique direito com a mão
  * "fantasma") ou passa por cima dela.
+ * O dono também pode usar Shift + botão direito para se teleportar até ela e recolhê-la; destino,
+ * distância, recarga e posse são validados no servidor por ClassAbility, inclusive durante o voo.
  *
  * <p>Na volta ela atravessa o caminho até o dono como um bumerangue, ferindo quem estiver no meio.
  */

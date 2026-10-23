@@ -15,6 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -32,6 +33,9 @@ import java.util.List;
  * Item base de todas as armas modulares. Existe um item registrado por {@link WeaponClass}
  * (o formato define dano/velocidade vanilla); tudo que varia por exemplar (tier, elemento, requisito,
  * habilidade) vem do Data Component {@link WeaponData} no ItemStack.
+ * A técnica de dash da rapieira usa o ciclo vanilla de segurar/soltar; as outras usam clique simples.
+ * A escolha por classe é confirmada pelo servidor e alternada por R, sem alterar componentes da arma.
+ * Shift + clique com a adaga arremessada tem prioridade sobre a habilidade de tier e teleporta até ela.
  */
 public class ModularWeaponItem extends Item {
     private final WeaponClass weaponClass;
@@ -131,6 +135,8 @@ public class ModularWeaponItem extends Item {
                     .withStyle(ChatFormatting.GOLD));
             tooltip.add(Component.translatable("tooltip.solomod.class_ability." + weaponClass.getSerializedName())
                     .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+            if (FMLEnvironment.dist == Dist.CLIENT && com.tarcitani.solomod.skill.WeaponTechnique.supports(weaponClass))
+                tooltip.add(com.tarcitani.solomod.client.ClientAccess.techniqueHint(weaponClass).copy().withStyle(ChatFormatting.AQUA));
         }
 
         if (data.hasSkill()) {
@@ -139,8 +145,10 @@ public class ModularWeaponItem extends Item {
                     skill.manaCost(), skill.minInt());
             if (unlocked) {
                 tooltip.add(line.withStyle(ChatFormatting.LIGHT_PURPLE));
-                tooltip.add(Component.translatable(ClassAbility.hasRightClick(weaponClass)
-                        ? "tooltip.solomod.skill_hint_sneak" : "tooltip.solomod.skill_hint")
+                String hint = weaponClass == WeaponClass.DAGGER && ClassAbility.isThrown(stack)
+                        ? "tooltip.solomod.skill_hint_after_recall"
+                        : ClassAbility.hasRightClick(weaponClass) ? "tooltip.solomod.skill_hint_sneak" : "tooltip.solomod.skill_hint";
+                tooltip.add(Component.translatable(hint)
                         .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
             } else {
                 tooltip.add(Component.translatable("tooltip.solomod.dormant", line).withStyle(ChatFormatting.DARK_GRAY));
@@ -160,11 +168,23 @@ public class ModularWeaponItem extends Item {
         WeaponData data = getData(stack);
 
         if (hand != InteractionHand.MAIN_HAND) return InteractionResultHolder.pass(stack);
+        if (player instanceof ServerPlayer server && !ClassAbility.canStart(server)) return InteractionResultHolder.fail(stack);
 
-        // Habilidade do formato (rapieira, adaga, machado): clique direito. A de tier fica em agachar + clique.
+        // Habilidade de classe no botão direito; a de tier fica em agachar + clique.
         boolean classAbility = ClassAbility.hasRightClick(weaponClass)
                 && (!player.isShiftKeyDown() || !data.hasSkill() || ClassAbility.isThrown(stack));
         if (classAbility) {
+            boolean rapierDash = weaponClass == WeaponClass.RAPIER && (player instanceof ServerPlayer server
+                    ? ClassAbility.technique(server, weaponClass) == com.tarcitani.solomod.skill.WeaponTechnique.RAPIER_DASH
+                    : FMLEnvironment.dist == Dist.CLIENT && com.tarcitani.solomod.client.ClientAccess.rapierDashSelected());
+            if (rapierDash) {
+                if (player.getCooldowns().isOnCooldown(this) || !player.isAlive() || player.isSpectator()
+                        || player.isPassenger() || (player instanceof ServerPlayer server && !ClassAbility.canStart(server))) {
+                    return InteractionResultHolder.fail(stack);
+                }
+                player.startUsingItem(hand);
+                return InteractionResultHolder.consume(stack);
+            }
             if (level.isClientSide()) return InteractionResultHolder.success(stack);
             return ClassAbility.use((ServerPlayer) player, stack, this)
                     ? InteractionResultHolder.consume(stack) : InteractionResultHolder.fail(stack);
@@ -208,6 +228,27 @@ public class ModularWeaponItem extends Item {
                 skill.displayName(), hits, stats.getManaAtual(), stats.getMaxMana()).withStyle(ChatFormatting.AQUA), true);
         StatsLogic.onStatsChanged(serverPlayer); // mana mudou -> sincroniza
         return InteractionResultHolder.consume(stack);
+    }
+
+    /** Uso contínuo só na rapieira; a carga atinge o máximo antes do fim desta duração. */
+    @Override
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
+        return weaponClass == WeaponClass.RAPIER ? StatsLogic.WeaponAbilities.RAPIER_USE_DURATION : 0;
+    }
+
+    @Override
+    public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remaining) {
+        if (weaponClass == WeaponClass.RAPIER && entity instanceof ServerPlayer player) {
+            ClassAbility.tickRapierCharge(player, stack, getUseDuration(stack, entity) - remaining);
+        }
+    }
+
+    /** O cliente só informa que soltou; tempo de uso, item, mão e recarga são revalidados no servidor. */
+    @Override
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int remaining) {
+        if (weaponClass == WeaponClass.RAPIER && entity instanceof ServerPlayer player) {
+            ClassAbility.releaseRapier(player, stack, getUseDuration(stack, entity) - remaining);
+        }
     }
 
     private static InteractionResultHolder<ItemStack> fail(Player player, ItemStack stack, MutableComponent message) {

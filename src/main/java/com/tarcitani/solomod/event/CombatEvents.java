@@ -18,6 +18,8 @@ import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.network.HitFeedbackPayload;
 import com.tarcitani.solomod.network.ModNetwork;
 import com.tarcitani.solomod.skill.ClassAbility;
+import com.tarcitani.solomod.skill.DodgeRoll;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 
@@ -46,6 +48,10 @@ public final class CombatEvents {
         // Só golpes corpo a corpo diretos (habilidades usam dano mágico e calculam o próprio elemento).
         if (!source.is(DamageTypes.PLAYER_ATTACK)) return;
         if (!(source.getEntity() instanceof Player player) || source.getDirectEntity() != player) return;
+        if (player instanceof ServerPlayer server && DodgeRoll.isRolling(server)) {
+            event.setCanceled(true);
+            return;
+        }
 
         ItemStack weapon = player.getMainHandItem();
         if (!(weapon.getItem() instanceof ModularWeaponItem)) return;

@@ -6,6 +6,9 @@ import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.entity.ModEntities;
 import com.tarcitani.solomod.entity.TierMob;
 import com.tarcitani.solomod.entity.RoyalFireball;
+import com.tarcitani.solomod.entity.SovereignTornado;
+import com.tarcitani.solomod.entity.WaterOrb;
+import com.tarcitani.solomod.mob.TierIdentity.MonarchPowers;
 import com.tarcitani.solomod.network.CinematicPayload;
 import com.tarcitani.solomod.network.ModNetwork;
 import com.tarcitani.solomod.skill.SkillVfx;
@@ -14,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -45,6 +49,10 @@ import java.util.UUID;
  * Fora da Fúria, devolver ao chefe o deixa agachado se recuperando por 5 s. A aura de dano e as
  * trocas de fase ficam suspensas na recuperação e na risada após matar um jogador.
  * Investidas de Fogo convertem partes do piso natural em magma (respeitando mobGriefing).
+ * Cada rei também domina os poderes do seu elemento usados pelo Soberano, em todas as fases e na Fúria:
+ * neutro = Punho do Colosso (Golpe Sísmico com empurrão); fogo = Genki-dama;
+ * água = Maremoto e Esferas de Água; terra = Raízes, Pisão e Pulão; ar = quatro Tornados 3D.
+ * Os alcances/danos dessas versões são centralizados em {@link MonarchPowers}.
  * <ul>
  *   <li>Golpe Sísmico: ergue os braços e esmaga; onda de choque no chão — pule para esquivar.</li>
  *   <li>Chuva Elemental: marca círculos no chão (mais por fase) que explodem após um tempo.</li>
@@ -86,6 +94,18 @@ final class MonarchBrain extends TierBrain {
             addMove(fireballs);
             addRageMove(fireballs);
         }
+        List<Move> powers = switch (element) {
+            case NONE -> List.of(); // O Golpe Sísmico já é o Punho do Colosso.
+            case FIRE -> List.of(new FireGenki());
+            case WATER -> List.of(new TidalWave(), new WaterBarrage());
+            case EARTH -> List.of(new AncientRoots(), new Stomp(), new GreatLeap());
+            case AIR -> List.of(new Tornadoes());
+        };
+        for (Move power : powers) {
+            addMove(power);
+            addRageMove(power);
+        }
+        if (element == ElementType.NONE) addRageMove(new Seismic());
     }
 
     @Override public int phase() { return phase; }
@@ -221,6 +241,279 @@ final class MonarchBrain extends TierBrain {
         }
     }
 
+    // ------------------------------------------------------------------ poderes dos cinco reis
+
+    /** Genki-dama do Rei Vulcânico: carga visível sobre as mãos e projétil rebatível com explosão. */
+    private final class FireGenki extends Move {
+        FireGenki() { super(MonarchPowers.FIRE_COOLDOWN, 7); }
+
+        @Override protected boolean usable(double dist) {
+            return dist > TierIdentity.ROYAL_FIREBALL_MIN_RANGE && dist < MonarchPowers.FIRE_RANGE
+                    && mob.getSensing().hasLineOfSight(target);
+        }
+
+        @Override protected void begin() {
+            anim(MobAnim.GENKI, MonarchPowers.FIRE_TOTAL);
+            sound(SoundEvents.GHAST_WARN, 2F, 0.5F);
+        }
+
+        @Override protected boolean tick(int t) {
+            Vec3 hands = mob.position().add(0, mob.getBbHeight() + 1.8, 0);
+            if (t < MonarchPowers.FIRE_CHARGE) {
+                face(flatDirTo(target.position()));
+                double r = 0.4 + 1.4 * t / MonarchPowers.FIRE_CHARGE;
+                Hazards.farParticles(level(), ParticleTypes.FLAME, hands.x, hands.y, hands.z, 10,
+                        r * 0.5, r * 0.5, r * 0.5, 0.03);
+                if (t % 2 == 0) {
+                    SkillVfx.ring(level(), hands, r, Hazards.dust(element, 1.8F), 24);
+                    particles(ParticleTypes.LAVA, hands, 2, r * 0.5, 0);
+                }
+                if (t % 12 == 0) sound(SoundEvents.FIRE_AMBIENT, 2F, 0.5F);
+            } else if (t == MonarchPowers.FIRE_CHARGE) {
+                Vec3 aim = target.position().add(target.getDeltaMovement().multiply(1, 0, 1).scale(12)).add(0, 0.6, 0);
+                RoyalFireball.launchGenki(level(), mob, hands, aim, baseDamage() * MonarchPowers.FIRE_DAMAGE,
+                        MonarchPowers.FIRE_SPEED, MonarchPowers.FIRE_BLAST);
+            }
+            return t < MonarchPowers.FIRE_TOTAL;
+        }
+    }
+
+    /** Maremoto do Leviatã: faixa travada por 1 s, crista 3D e um único acerto por vítima. */
+    private final class TidalWave extends Move {
+        private final Set<Integer> hit = new HashSet<>();
+        private Vec3 dir, start;
+
+        TidalWave() { super(MonarchPowers.WATER_COOLDOWN, 6); }
+
+        @Override protected boolean usable(double dist) { return dist < MonarchPowers.WATER_LENGTH; }
+
+        @Override protected void begin() {
+            hit.clear();
+            dir = flatDirTo(target.position().add(target.getDeltaMovement().multiply(1, 0, 1).scale(10)));
+            start = mob.position().add(dir.scale(mob.getBbWidth() / 2));
+            face(dir);
+            anim(MobAnim.WINDUP, MonarchPowers.WATER_AIM);
+            sound(SoundEvents.ELDER_GUARDIAN_CURSE, 1.5F, 0.6F);
+        }
+
+        @Override protected boolean tick(int t) {
+            Vec3 side = new Vec3(-dir.z, 0, dir.x);
+            if (t < MonarchPowers.WATER_AIM) {
+                face(dir);
+                if (t % 2 == 0) {
+                    for (double d = 2; d < MonarchPowers.WATER_LENGTH; d += 1.5) {
+                        Vec3 p = start.add(dir.scale(d)).add(0, 0.15, 0);
+                        for (double s : new double[]{-MonarchPowers.WATER_HALF_WIDTH, MonarchPowers.WATER_HALF_WIDTH}) {
+                            particles(Hazards.dust(element, 1.2F), p.add(side.scale(s)), 1, 0, 0);
+                        }
+                    }
+                }
+                return true;
+            }
+            if (t == MonarchPowers.WATER_AIM) {
+                for (int k = -2; k <= 2; k++) {
+                    WaterOrb.wave(level(), mob, start.add(side.scale(k * 1.7)).add(0, 1.4, 0),
+                            dir.scale(MonarchPowers.WATER_SPEED), MonarchPowers.WATER_LIFE);
+                }
+                anim(MobAnim.SLAM, 10);
+                sound(SoundEvents.GENERIC_SPLASH, 2.5F, 0.5F);
+            }
+            double front = (t - MonarchPowers.WATER_AIM) * MonarchPowers.WATER_SPEED;
+            Vec3 crest = start.add(dir.scale(front));
+            particles(ParticleTypes.SPLASH, crest.add(0, 0.5, 0), 12, 1.5, 0.1);
+            for (LivingEntity e : enemiesWithin(MonarchPowers.WATER_LENGTH + mob.getBbWidth())) {
+                Vec3 rel = e.position().subtract(start);
+                double along = rel.dot(dir), across = Math.abs(rel.dot(side));
+                // Não acerta jogadores muito acima/abaixo da crista.
+                if (along > front - 1.5 && along < front + 0.8 && across <= MonarchPowers.WATER_HALF_WIDTH
+                        && Math.abs(rel.y) < 3 && hit.add(e.getId())) {
+                    magicStrike(e, baseDamage() * MonarchPowers.WATER_DAMAGE);
+                    Hazards.push(e, dir.scale(MonarchPowers.WATER_PUSH).add(0, MonarchPowers.WATER_LIFT, 0));
+                }
+            }
+            return front < MonarchPowers.WATER_LENGTH;
+        }
+    }
+
+    /** Cinco esferas orbitam o Leviatã e depois perseguem jogadores; um golpe direto as estoura. */
+    private final class WaterBarrage extends Move {
+        WaterBarrage() { super(MonarchPowers.ORB_COOLDOWN, 6); }
+
+        @Override protected boolean usable(double dist) {
+            return dist > MonarchPowers.ORB_MIN_RANGE && dist < MonarchPowers.ORB_RANGE;
+        }
+
+        @Override protected void begin() {
+            anim(MobAnim.CAST, MonarchPowers.ORB_TOTAL);
+            sound(SoundEvents.GENERIC_SPLASH, 2.5F, 0.5F);
+        }
+
+        @Override protected boolean tick(int t) {
+            face(flatDirTo(target.position()));
+            if (t == 10) {
+                List<LivingEntity> chosen = powerVictims(MonarchPowers.ORB_RANGE);
+                if (chosen.isEmpty()) return false;
+                for (int i = 0; i < MonarchPowers.ORB_COUNT; i++) {
+                    WaterOrb.orbit(level(), mob, chosen.get(i % chosen.size()), Math.PI * 2 * i / MonarchPowers.ORB_COUNT,
+                            MonarchPowers.ORB_ORBIT, baseDamage() * MonarchPowers.ORB_DAMAGE);
+                }
+                sound(SoundEvents.ELDER_GUARDIAN_CURSE, 2F, 0.6F);
+            }
+            return t < MonarchPowers.ORB_TOTAL;
+        }
+    }
+
+    /** Raízes do Titã: duas levas, cada uma mirando a posição atual dos jogadores. */
+    private final class AncientRoots extends Move {
+        AncientRoots() { super(MonarchPowers.ROOT_COOLDOWN, 6); }
+
+        @Override protected boolean usable(double dist) { return dist < MonarchPowers.ROOT_RANGE; }
+
+        @Override protected void begin() {
+            anim(MobAnim.WINDUP, MonarchPowers.ROOT_FIRST);
+            sound(SoundEvents.ROOTED_DIRT_BREAK, 2F, 0.5F);
+        }
+
+        @Override protected boolean tick(int t) {
+            if (t == MonarchPowers.ROOT_FIRST || t == MonarchPowers.ROOT_SECOND) {
+                if (t == MonarchPowers.ROOT_FIRST) anim(MobAnim.SLAM, 10);
+                for (LivingEntity v : powerVictims(MonarchPowers.ROOT_RANGE)) {
+                    Hazards.add(new Hazards.Blast(level(), mob, element, v.position(), MonarchPowers.ROOT_RADIUS,
+                            t == MonarchPowers.ROOT_FIRST ? MonarchPowers.ROOT_DELAY : MonarchPowers.ROOT_SECOND_DELAY,
+                            baseDamage() * MonarchPowers.ROOT_DAMAGE, potency()));
+                }
+                sound(SoundEvents.EVOKER_FANGS_ATTACK, 2F, 0.6F);
+                particles(ParticleTypes.COMPOSTER, mob.position(), 30, 2, 0.1);
+            }
+            return t < MonarchPowers.ROOT_TOTAL;
+        }
+    }
+
+    /** Pisão do Titã: ergue a perna, arremessa quem está perto e levanta blocos do chão. */
+    private final class Stomp extends Move {
+        Stomp() { super(MonarchPowers.STOMP_COOLDOWN, 6); }
+
+        @Override protected boolean usable(double dist) { return dist < MonarchPowers.STOMP_RANGE && mob.onGround(); }
+        @Override protected int urgency(double dist) { return dist < MonarchPowers.STOMP_HIT_RANGE ? 2 : 0; }
+
+        @Override protected void begin() {
+            anim(MobAnim.STOMP, MonarchPowers.STOMP_TOTAL);
+            sound(SoundEvents.RAVAGER_ROAR, 2F, 0.5F);
+        }
+
+        @Override protected boolean tick(int t) {
+            if (t < MonarchPowers.STOMP_WINDUP) {
+                face(flatDirTo(target.position()));
+                if (t % 3 == 0) particles(ParticleTypes.POOF, mob.position(), 6, 1.5, 0.02);
+            } else if (t == MonarchPowers.STOMP_WINDUP) {
+                earthImpact(MonarchPowers.STOMP_RADIUS, MonarchPowers.STOMP_DAMAGE, MonarchPowers.STOMP_WAVE_DAMAGE, 0.7F);
+            }
+            return t < MonarchPowers.STOMP_TOTAL;
+        }
+    }
+
+    /** Pulão do Titã: salta até o alvo e só causa o terremoto ao aterrissar. */
+    private final class GreatLeap extends Move {
+        private Vec3 dir;
+        private double speed;
+        private boolean airborne;
+
+        GreatLeap() { super(MonarchPowers.LEAP_COOLDOWN, 5); }
+
+        @Override protected boolean usable(double dist) {
+            return mob.onGround() && dist > MonarchPowers.LEAP_MIN_RANGE && dist < MonarchPowers.LEAP_RANGE;
+        }
+
+        @Override protected void begin() {
+            airborne = false;
+            anim(MobAnim.JUMP, 50);
+            sound(SoundEvents.RAVAGER_ROAR, 2F, 0.5F);
+        }
+
+        @Override protected boolean tick(int t) {
+            if (t < MonarchPowers.LEAP_WINDUP) {
+                face(flatDirTo(target.position()));
+                if (t % 3 == 0) particles(ParticleTypes.POOF, mob.position(), 6, 1.5, 0.02);
+                return true;
+            }
+            if (t == MonarchPowers.LEAP_WINDUP) {
+                dir = flatDirTo(target.position());
+                speed = Mth.clamp((mob.distanceTo(target) - 3) / 18, 0.2, MonarchPowers.LEAP_SPEED);
+                mob.setDeltaMovement(dir.x * speed, MonarchPowers.LEAP_VERTICAL, dir.z * speed);
+                mob.hasImpulse = true;
+                sound(SoundEvents.WIND_CHARGE_BURST.value(), 2F, 0.5F);
+                return true;
+            }
+            if (!mob.onGround()) {
+                airborne = true;
+                mob.setDeltaMovement(dir.x * speed, mob.getDeltaMovement().y, dir.z * speed);
+                return t < MonarchPowers.LEAP_TIMEOUT;
+            }
+            if (airborne) earthImpact(MonarchPowers.LEAP_RADIUS, MonarchPowers.LEAP_DAMAGE, MonarchPowers.LEAP_WAVE_DAMAGE, 1F);
+            return false;
+        }
+
+        @Override protected void end() {
+            mob.setDeltaMovement(0, mob.getDeltaMovement().y, 0);
+        }
+    }
+
+    /** Quatro tornados do Imperador, telegrafados por círculos de vento durante 2 s. */
+    private final class Tornadoes extends Move {
+        Tornadoes() { super(MonarchPowers.TORNADO_COOLDOWN, 7); }
+
+        @Override protected boolean usable(double dist) { return dist < MonarchPowers.TORNADO_RANGE; }
+
+        @Override protected void begin() {
+            anim(MobAnim.FLOAT, MonarchPowers.TORNADO_TOTAL);
+            sound(SoundEvents.WIND_CHARGE_BURST.value(), 2.5F, 0.5F);
+        }
+
+        @Override protected boolean tick(int t) {
+            face(flatDirTo(target.position()));
+            if (t < MonarchPowers.TORNADO_RISE) {
+                if (t % 2 == 0) SkillVfx.ring(level(), mob.position().add(0, 0.2, 0),
+                        2 + t * 0.12, Hazards.dust(element, 1.8F), 28);
+                particles(ParticleTypes.CLOUD, mob.position(), 8, 2, 0.05);
+                if (t % 10 == 0) sound(SoundEvents.PHANTOM_FLAP, 2.5F, 0.5F);
+            } else if (t == MonarchPowers.TORNADO_RISE) {
+                List<LivingEntity> chosen = powerVictims(MonarchPowers.TORNADO_RANGE);
+                if (chosen.isEmpty()) return false;
+                for (int i = 0; i < MonarchPowers.TORNADO_COUNT; i++) {
+                    double a = Math.PI * 2 * i / MonarchPowers.TORNADO_COUNT;
+                    Vec3 start = mob.position().add(Math.cos(a) * MonarchPowers.TORNADO_SPAWN_RADIUS,
+                            0, Math.sin(a) * MonarchPowers.TORNADO_SPAWN_RADIUS);
+                    SovereignTornado.spawn(level(), mob, chosen.get(i % chosen.size()), start,
+                            baseDamage() * MonarchPowers.TORNADO_DAMAGE);
+                }
+            }
+            return t < MonarchPowers.TORNADO_TOTAL;
+        }
+    }
+
+    /** Distribui poderes entre os inimigos presentes; mantém o alvo se ele está na borda da busca. */
+    private List<LivingEntity> powerVictims(double range) {
+        List<LivingEntity> nearby = enemiesWithin(range).stream().filter(e -> e instanceof Player).toList();
+        return nearby.isEmpty() && isValidTarget(target) ? List.of(target) : nearby;
+    }
+
+    /** Impacto terrestre compartilhado pelo pisão e pelo salto; blocos respeitam mobGriefing. */
+    private void earthImpact(double radius, float directDamage, float waveDamage, float shake) {
+        sound(SoundEvents.MACE_SMASH_GROUND_HEAVY, 2.5F, 0.4F);
+        sound(SoundEvents.GENERIC_EXPLODE.value(), 2F, 0.5F);
+        particles(ParticleTypes.EXPLOSION, mob.position(), 5, 2, 0);
+        for (LivingEntity e : enemiesWithin(MonarchPowers.STOMP_HIT_RANGE)) strike(e, baseDamage() * directDamage, true);
+        for (LivingEntity e : enemiesWithin(radius)) {
+            double distance = mob.distanceTo(e);
+            double push = MonarchPowers.EARTH_PUSH_MIN + MonarchPowers.EARTH_PUSH_BONUS * (1 - Math.min(1, distance / radius));
+            Hazards.push(e, flatDirTo(e.position()).scale(push).add(0, MonarchPowers.EARTH_LIFT, 0));
+        }
+        Hazards.add(new Hazards.Shockwave(level(), mob, element, mob.position(), radius, 0.5,
+                baseDamage() * waveDamage, potency()));
+        Hazards.add(new Hazards.QuakeBlocks(level(), mob, mob.position(), radius, 0.5));
+        ModNetwork.sendShake(level(), mob.position(), 48, shake, 30);
+    }
+
     /** Troca de fase: rugido invulnerável, onda que arremessa, reforços ou fúria. */
     private final class PhaseShift extends Move {
         int next;
@@ -296,6 +589,12 @@ final class MonarchBrain extends TierBrain {
                     anim(MobAnim.SLAM, 12);
                     for (LivingEntity e : enemiesWithin(2.5 + mob.getBbWidth() / 2)) {
                         strike(e, baseDamage() * 1.6F, true);
+                    }
+                    if (element == ElementType.NONE) {
+                        for (LivingEntity e : enemiesWithin(MonarchPowers.FIST_PUSH_RANGE)) {
+                            Hazards.push(e, flatDirTo(e.position()).scale(MonarchPowers.FIST_PUSH).add(0, MonarchPowers.FIST_LIFT, 0));
+                        }
+                        ModNetwork.sendShake(level(), mob.position(), 40, 0.5F, 14);
                     }
                 }
                 sound(SoundEvents.MACE_SMASH_GROUND_HEAVY, 2.0F, 0.6F);
