@@ -10,8 +10,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
- * Cliente -> servidor: clique de ataque com a espada longa. O ataque vanilla é cancelado no cliente e
- * trocado por um giro de 360° que atinge todos em volta (validado no servidor).
+ * Pacote legado da espada longa, mantido com o mesmo identificador. O cliente atual usa o botão direito
+ * vanilla; receber este pacote pede Corte em Meia-Lua, sujeito às mesmas validações e recarga.
  */
 public record SpinAttackPayload() implements CustomPacketPayload {
     public static final SpinAttackPayload INSTANCE = new SpinAttackPayload();

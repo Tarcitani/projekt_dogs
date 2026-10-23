@@ -35,6 +35,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
  * <p>Os modificadores são permanentes (salvos com o mob); a IA ({@link TierBrain}) não é salva e é
  * reinstalada sempre que o mob entra no mundo (ver {@link MobEvents}).
  * Também centraliza o balanceamento das Bolas de Fogo Reais compartilhadas pelo Rei Vulcânico e Soberano.
+ * {@link MonarchPowers} reúne alcance, tempos e dano das versões dos poderes usadas pelos Monarcas.
  */
 public final class TierIdentity {
     private TierIdentity() {}
@@ -55,6 +56,38 @@ public final class TierIdentity {
     public static final int RAGE_CRY_INTERVAL = 100;
     public static final int MAGMA_TRAIL_RADIUS = 2;
     public static final float MAGMA_TRAIL_CHANCE = 0.28F;
+
+    /** Poderes característicos dos Monarcas: mesma mecânica do Soberano, em escala de arena menor. */
+    public static final class MonarchPowers {
+        private MonarchPowers() {}
+
+        public static final double FIST_PUSH_RANGE = 6, FIST_PUSH = 1.1, FIST_LIFT = 0.4;
+        public static final int FIRE_COOLDOWN = 220, FIRE_CHARGE = 70, FIRE_TOTAL = 100;
+        public static final double FIRE_RANGE = 32, FIRE_BLAST = 4, FIRE_SPEED = 0.7;
+        public static final float FIRE_DAMAGE = 1.6F;
+        public static final int WATER_COOLDOWN = 180, WATER_AIM = 20, WATER_LIFE = 24;
+        public static final double WATER_LENGTH = 24, WATER_HALF_WIDTH = 3.5, WATER_SPEED = 1.1;
+        public static final double WATER_PUSH = 1.6, WATER_LIFT = 0.4;
+        public static final float WATER_DAMAGE = 1.2F;
+        public static final int ORB_COOLDOWN = 220, ORB_ORBIT = 50, ORB_TOTAL = 90, ORB_COUNT = 5;
+        public static final double ORB_RADIUS = 4, ORB_MIN_RANGE = 5, ORB_RANGE = 32;
+        public static final float ORB_HEIGHT_RATIO = 0.8F, ORB_DAMAGE = 1.1F;
+        public static final int ROOT_COOLDOWN = 180, ROOT_FIRST = 14, ROOT_SECOND = 34, ROOT_TOTAL = 40;
+        public static final int ROOT_DELAY = 22, ROOT_SECOND_DELAY = 18;
+        public static final double ROOT_RANGE = 24, ROOT_RADIUS = 2;
+        public static final float ROOT_DAMAGE = 1.3F;
+        public static final int STOMP_COOLDOWN = 140, STOMP_WINDUP = 24, STOMP_TOTAL = 40;
+        public static final double STOMP_RANGE = 10, STOMP_RADIUS = 10, STOMP_HIT_RANGE = 4.5;
+        public static final float STOMP_DAMAGE = 1.1F, STOMP_WAVE_DAMAGE = 0.9F;
+        public static final int LEAP_COOLDOWN = 220, LEAP_WINDUP = 15, LEAP_TIMEOUT = 80;
+        public static final double LEAP_MIN_RANGE = 8, LEAP_RANGE = 24, LEAP_RADIUS = 14;
+        public static final double LEAP_VERTICAL = 0.7, LEAP_SPEED = 0.8;
+        public static final float LEAP_DAMAGE = 1.4F, LEAP_WAVE_DAMAGE = 1.1F;
+        public static final double EARTH_PUSH_MIN = 0.5, EARTH_PUSH_BONUS = 0.8, EARTH_LIFT = 0.55;
+        public static final int TORNADO_COOLDOWN = 260, TORNADO_RISE = 40, TORNADO_TOTAL = 100, TORNADO_COUNT = 4;
+        public static final double TORNADO_RANGE = 32, TORNADO_SPAWN_RADIUS = 7;
+        public static final float TORNADO_DAMAGE = 0.3F;
+    }
 
     /** Valores por tier. {@code scale}, {@code health}, {@code damage} e {@code speed} são multiplicadores. */
     public record Stats(String symbol, double scale, double health, double damage, double armor,

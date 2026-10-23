@@ -7,8 +7,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * "Animações" das habilidades no protótipo: padrões de partículas enviados pelo servidor
- * (todos os jogadores próximos veem). Sem modelos animados ainda.
+ * Padrões de partículas enviados pelo servidor (todos os jogadores próximos veem), complementando
+ * as poses de PlayerAnimations. Inclui anéis, linhas e o arco horizontal do Corte em Meia-Lua.
  */
 public final class SkillVfx {
     private SkillVfx() {}
@@ -29,6 +29,17 @@ public final class SkillVfx {
             double angle = 2 * Math.PI * i / count;
             level.sendParticles(particle, center.x + Math.cos(angle) * radius, center.y, center.z + Math.sin(angle) * radius,
                     1, 0, 0, 0, 0);
+        }
+    }
+
+    /** Arco horizontal relativo à direção frontal (ângulos em radianos; zero aponta à frente). */
+    public static void arc(ServerLevel level, Vec3 center, Vec3 forward, double radius, double from, double to,
+                           ParticleOptions particle, int count) {
+        Vec3 side = new Vec3(-forward.z, 0, forward.x);
+        for (int i = 0; i <= count; i++) {
+            double angle = from + (to - from) * i / count;
+            Vec3 p = center.add(forward.scale(Math.cos(angle) * radius)).add(side.scale(Math.sin(angle) * radius));
+            level.sendParticles(particle, p.x, p.y, p.z, 1, 0.015, 0.015, 0.015, 0);
         }
     }
 

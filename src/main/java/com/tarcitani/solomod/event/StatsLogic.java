@@ -20,6 +20,7 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Regras numéricas centrais (fórmulas de stats) e aplicação dos atributos vanilla.
  * Tudo que é "balanceamento" fica aqui para ser ajustado em um só lugar.
+ * {@link WeaponAbilities} centraliza tempos, alcance e força das habilidades de classe.
  */
 public final class StatsLogic {
     private StatsLogic() {}
@@ -40,6 +41,52 @@ public final class StatsLogic {
     public static final float WEAPON_STAT_SCALING = 0.02F;
     /** Penalidade de velocidade de ataque para armas Pesadas/Médias sem Maestria (-40%). */
     public static final double LOCKED_HEAVY_SPEED_PENALTY = -0.40;
+
+    /** Técnicas de classe sem mana: dash/rajada/recuo, cortes da espada e salto/giro/onda do martelo; ticks, blocos e multiplicadores. */
+    public static final class WeaponAbilities {
+        private WeaponAbilities() {}
+
+        public static final int RAPIER_USE_DURATION = 72000, RAPIER_CHARGE_TICKS = 30, RAPIER_COOLDOWN = 30;
+        public static final double RAPIER_MIN_DISTANCE = 3, RAPIER_MAX_DISTANCE = 14, RAPIER_SPEED = 1.6;
+        public static final float RAPIER_DAMAGE = 1.3F;
+        public static final int FLURRY_TICKS = 32, FLURRY_COOLDOWN = 48, FLURRY_FIRST_HIT = 4, FLURRY_HIT_GAP = 10, FLURRY_HITS = 3;
+        public static final float FLURRY_DAMAGE = 0.55F;
+        public static final double FLURRY_RANGE = 4, FLURRY_CONE_DOT = 0.88;
+        public static final int RETREAT_TICKS = 18, RETREAT_COOLDOWN = 38, RETREAT_HIT = 4, RETREAT_MOVE_TICKS = 4;
+        public static final float RETREAT_DAMAGE = 1F;
+        public static final double RETREAT_RANGE = 4, RETREAT_SPEED = 0.8;
+        public static final int CRESCENT_COOLDOWN = 24, CRESCENT_WINDUP = 6, CRESCENT_TICKS = 18;
+        public static final double CRESCENT_RANGE = 4.5, CRESCENT_PUSH = 0.65;
+        public static final float CRESCENT_DAMAGE = 1.2F;
+        public static final int RISING_COOLDOWN = 34, RISING_TICKS = 22;
+        public static final float RISING_DAMAGE = 1.5F;
+        public static final double RISING_RANGE = 5.0, RISING_LIFT = 0.7;
+        public static final int CROSS_COOLDOWN = 42, CROSS_TICKS = 30, CROSS_SECOND_HIT = 16;
+        public static final float CROSS_DAMAGE = 0.8F;
+        public static final int DAGGER_THROW_COOLDOWN = 8, DAGGER_TELEPORT_COOLDOWN = 30;
+        public static final double DAGGER_TELEPORT_RANGE = 64;
+        public static final int HAMMER_COOLDOWN = 70, HAMMER_DIVE_TICK = 9, HAMMER_TIMEOUT = 240;
+        public static final double HAMMER_RADIUS = 4.5, HAMMER_JUMP = 1.05, HAMMER_DIVE = -2.2;
+        public static final float HAMMER_DAMAGE = 2F;
+        public static final int HAMMER_DEBRIS_BLOCKS = 36;
+        public static final double HAMMER_HEIGHT_CAP = 24, HAMMER_DAMAGE_PER_BLOCK = 0.12, HAMMER_RADIUS_PER_BLOCK = 0.08;
+        public static final int HAMMER_SWEEP_TICKS = 28, HAMMER_SWEEP_COOLDOWN = 54, HAMMER_SWEEP_HIT = 10;
+        public static final float HAMMER_SWEEP_DAMAGE = 1.6F;
+        public static final double HAMMER_SWEEP_RANGE = 4.4, HAMMER_SWEEP_PUSH = 1.2;
+        public static final int HAMMER_QUAKE_TICKS = 30, HAMMER_QUAKE_COOLDOWN = 64, HAMMER_QUAKE_HIT = 10;
+        public static final float HAMMER_QUAKE_DAMAGE = 1.8F;
+        public static final double HAMMER_QUAKE_RANGE = 8, HAMMER_QUAKE_STEP = 0.7, HAMMER_QUAKE_WIDTH = 1.25;
+    }
+
+    /** Rolamento: impulso no chão, recuperação e breve janela de esquiva de dano de combate. */
+    public static final class Dodge {
+        private Dodge() {}
+
+        public static final int DOUBLE_TAP_MS = 280, MOVE_TICKS = 8, TOTAL_TICKS = 12, COOLDOWN_TICKS = 26;
+        public static final int INVULNERABLE_FROM = 2, INVULNERABLE_UNTIL = 8;
+        public static final double SPEED = 0.95;
+        public static final float EXHAUSTION = 0.4F;
+    }
 
     // ------------------------------------------------------------------ ids dos modificadores
 

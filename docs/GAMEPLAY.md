@@ -63,17 +63,16 @@ destravada: dano_vanilla × tier × (1 + 2% × stat_efetivo) × multiplicador_el
 
 ## ⚔️ Armas
 
-7 classes de arma. Cada uma tem um item próprio (`solomod:<classe>`), e o tier, elemento, requisito e habilidade de cada exemplar ficam gravados no item.
+O catálogo atual tem **4 classes de arma**. Cada uma tem um item próprio (`solomod:<classe>`), e o tier, elemento, requisito e habilidade de cada exemplar ficam gravados no item. A aba criativa **Solo Mod: Armas** contém exatamente uma rapieira, uma espada longa, uma adaga e um martelo, neutros e de tier Normal. A aba Teste e o autocomplete de `/modtest weapon` também oferecem só essas quatro classes; tiers e elementos continuam configuráveis ali.
 
 | Classe | Peso | Stat | Habilidade de tier padrão | Habilidade de classe |
 |---|---|---|---|---|
-| Espadão (`greatsword`) | Pesada | FOR | Impacto Sísmico | — |
-| Machado (`axe`) | Pesada | FOR | Impacto Sísmico | **Salto Esmagador** (clique direito) |
-| Espada longa (`longsword`) | Média | FOR | Investida | **Giro da Claymore** (todo ataque) |
+| Espada longa (`longsword`) | Média | FOR | Investida | **Meia-Lua / Ascendente / Cruzado** (R alterna, clique direito usa) |
 | Adaga (`dagger`) | Leve | AGI | Investida | **Arremesso** (clique direito) |
 | Rapieira (`rapier`) | Leve | AGI | Investida | **Estocada Relâmpago** (clique direito) |
-| Kunai (`kunai`) | Lançável | AGI | Investida | — |
-| Varinha (`wand`) | Canalizador | INT | Disparo de Mana | — |
+| Martelo (`hammer`) | Pesada | FOR | Impacto Sísmico | **Salto Esmagador** (clique direito) |
+
+Velocidades base, antes de AGI e penalidades de requisito: **adaga 2,5 ataques/s**, **rapieira 2,2**, **espada longa 1,6** (igual às espadas vanilla) e **martelo 0,8**. O martelo tem +9 de dano base. Espadão, machado, kunai e varinha permanecem registrados para compatibilidade com mundos salvos e podem ser obtidos por comando, mas saíram do catálogo visível.
 
 ### Habilidades de tier (gastam mana)
 
@@ -84,23 +83,59 @@ destravada: dano_vanilla × tier × (1 + 2% × stat_efetivo) × multiplicador_el
 | Disparo de Mana (`mana_bolt`) | 10 | 1,5 s | 5 |
 | Explosão Elemental (`elemental_burst`) | 40 | 10 s | 20 |
 
-Exigem Maestria + INT mínima + mana. A potência escala com o tier (habilidade menor = 1x, suprema = 2x). Nas armas com habilidade de classe, a de tier passa para **agachar + clique direito**.
+Exigem Maestria + INT mínima + mana. A potência escala com o tier (habilidade menor = 1x, suprema = 2x). Nas armas com habilidade de classe, a de tier passa para **agachar + clique direito**. Com a adaga arremessada, essa combinação escolhe o teleporte: recolha a adaga para voltar a usar a habilidade de tier.
 
 ### Habilidades de classe (sem mana, qualquer tier)
 
 | Arma | Habilidade |
 |---|---|
-| Rapieira | **Estocada Relâmpago**: dispara para a frente perfurando quem estiver no caminho |
-| Adaga | **Arremesso**: crava no chão ou no alvo; na mão fica um contorno fantasma. Clique de novo e ela volta girando, ferindo quem estiver no caminho (passar por cima também recolhe) |
-| Espada longa | **Giro da Claymore**: todo golpe vira um giro de 360° que acerta todos em volta |
-| Machado | **Salto Esmagador**: salta, mergulha e explode o chão num CRÍTICO em área, com a câmera tremendo |
+| Rapieira | **Estocada Relâmpago carregada**: segure botão direito para escolher a distância e solte para avançar perfurando; a carga varia de aproximadamente **3 a 14 blocos**, atingindo o máximo em **1,5 s**. HUD mostra distância e barra; paredes interrompem o dash. Linhas 3D brancas/ciano seguem o trajeto real, com faixas de velocidade, braço em estocada e recuperação rápida da arma. Recarga de 1,5 s após soltar. |
+| Adaga | **Arremesso**: na mão fica um fantasma. **Botão direito** chama de volta, girando e ferindo no caminho; **Shift + botão direito** teleporta até a lâmina e a recolhe. Arremesso/retorno têm rastro elétrico dourado e poses do braço; o teleporte tem raios segmentados, clarão e selo angular nas duas pontas, sem gerar um raio real nem fogo. Funciona durante o voo ou cravada. O servidor verifica dono, mesma dimensão, chunk carregado, destino livre e alcance de **64 blocos**; junto de paredes procura espaço próximo, considerando a altura do jogador em pé. Em local bloqueado mantém a adaga para poder chamá-la. O teleporte tem recarga de 1,5 s; passar por cima também recolhe. |
+| Espada longa | **Corte em Meia-Lua**: botão direito prepara por **6 ticks**, com a arma nos ombros e mão de apoio, e corta um semicírculo horizontal de **180° à frente**, alcançando **4,5 blocos**, com dano de 1,2× e empurrão. Uma **lâmina de luz volumétrica** revela o arco do golpe, com halo elemental, fio branco e dissipação na recuperação; acertos produzem clarão, faíscas, som pesado e tremor leve. Braços/mangas acompanham o corte em terceira pessoa; a arma tem preparação, varredura ampla e recuperação em primeira pessoa. A sequência dura **18 ticks**. Cada inimigo recebe um acerto; alvos atrás ou através de paredes não entram. Recarga de **1,2 s**. Clique esquerdo é ataque vanilla, inclusive para rebater bolas de fogo. |
+| Martelo | **Salto Esmagador**: botão direito no chão salta e mergulha; **no ar mergulha imediatamente**. O servidor registra a maior altura e considera a distância já caída ao ativar: multiplicador **2 + 0,12 × altura**, com teto de **24 blocos** (máximo **4,88×**). O raio começa em **4,5** e aumenta **0,08 por bloco** (máximo **6,42**). Poses de arma erguida até pousar, rastro de queda, poeira, anéis 3D, ondas elementais e tremor. Até **36 + 2 × altura** blocos naturais expostos saltam e voltam ao pousar, respeitando `mobGriefing`; com a regra desligada ficam os efeitos visuais. Recarga de **3,5 s** e proteção de queda durante a habilidade. Água/lava, voo criativo e elytra bloqueiam o início; limite de duração de 12 s. |
+
+Com **espada longa, rapieira ou martelo** equipado, **R** alterna a técnica selecionada (tecla configurável em Controles). A seleção aparece na faixa compacta da HUD, no tooltip e no painel K; **botão direito** executa. A seleção é independente para cada classe. Todas as técnicas de uma arma compartilham a recarga do item, sem reiniciá-la ao trocar. A seleção vale para a sessão; ao reconectar, volta à Meia-Lua, Estocada Relâmpago e Salto Esmagador. R durante uma habilidade, carga, rolamento ou menu não troca a seleção.
+
+| Técnica da rapieira | Mecânica | Sequência / recarga |
+|---|---|---|
+| **Estocada Relâmpago** | Dash original: segure/solte botão direito para carregar 3–14 blocos | Dash variável / 30 ticks |
+| **Chuva de Agulhas** | Três estocadas em cone estreito frontal, alcance 4 blocos, 0,55× por acerto nos ticks 4/14/24; desacelera o deslocamento durante a técnica | 32 / 48 ticks |
+| **Passo do Vento** | Estocada de 1× no tick 4, alcance 4 blocos, seguida de recuo de até 3,2 blocos em 4 ticks. Colisões bloqueiam o recuo; não concede invulnerabilidade | 18 / 38 ticks |
+
+As duas técnicas novas usam clique simples. Braços em pose de esgrima, agulhas de luz branca/ciano em 3D e rastros de velocidade acompanham os acertos/recuo. Os intervalos de 10 ticks da Chuva de Agulhas respeitam a invulnerabilidade vanilla, sem removê-la dos inimigos.
+
+| Técnica do martelo | Mecânica | Sequência / recarga |
+|---|---|---|
+| **Salto Esmagador** | Salto/mergulho original, inclusive ativação no ar e bônus de altura limitado a 24 blocos | Até pousar / 70 ticks |
+| **Giro Demolidor** | Preparação de 10 ticks e golpe circular de 1,6×, raio 4,4 blocos, empurrão forte e rastro dourado volumétrico | 28 / 54 ticks |
+| **Ruptura Sísmica** | Preparação de 10 ticks e onda frontal de até 8 blocos, avançando 0,7 bloco/tick; 1,8× uma vez por alvo, com impulso vertical | 30 / 64 ticks |
+
+Giro e Ruptura iniciam no chão e desaceleram o movimento. A Ruptura mede o terreno no servidor, para em paredes, líquidos, bordas e chunks não carregados, e exige piso aproximadamente plano (desnível máximo de 0,6 bloco). Os fragmentos 3D da onda são visuais e não removem o piso; os blocos físicos do Salto Esmagador continuam obedecendo `mobGriefing`. As duas técnicas têm poses de duas mãos, preparação/recuperação e efeitos próprios; alvos através de paredes não são atingidos.
+
+| Técnica da espada longa | Acerto | Sequência / recarga |
+|---|---|---|
+| **Meia-Lua** | Semicírculo frontal, 4,5 blocos, 1,2× de dano e empurrão | 18 ticks / 24 ticks |
+| **Ascendente** | Corte vertical de luz, alcance frontal de 5 blocos, 1,5× de dano e impulso para cima nos alvos | 22 ticks / 34 ticks |
+| **Cruzado** | Dois cortes diagonais formando um X, alcance frontal de 4,5 blocos, 0,8× por corte; acertos nos ticks 6 e 16 | 30 ticks / 42 ticks |
+
+As três técnicas preparam por 6 ticks, têm lâminas de luz volumétricas segmentadas e poses de duas mãos, com fio branco, halo elemental, faíscas, clarão e recuperação. A seleção e os acertos são validados no servidor; alvos atrás ou através de paredes não entram. O clique esquerdo mantém o ataque vanilla.
+
+As poses de arma são visíveis em primeira pessoa e os movimentos do corpo em terceira pessoa. Os valores ficam em `StatsLogic.WeaponAbilities`; carga, dano, posse da adaga e destino são decididos pelo servidor. Dash, salto e meia-lua são cancelados ao trocar de arma/dimensão, morrer ou desconectar.
+
+### Rolamento de esquiva
+
+Pressione **o mesmo Ctrl duas vezes em até 280 ms** (esquerdo ou direito). Segurar a tecla não repete o gesto. **WASD escolhe a direção** relativa à visão, incluindo diagonais; sem direção, rola para a frente. Um Ctrl isolado continua com seu comportamento normal de corrida.
+
+O rolamento começa somente no chão, fora de água/lava, sem voo, veículo, item em uso ou outra habilidade em andamento. Tem **8 ticks de impulso e 4 de recuperação**, com cambalhota na direção real do movimento em terceira pessoa e mãos recolhidas/balanço curto da câmera em primeira pessoa. A hitbox não encolhe e paredes bloqueiam o avanço. O impulso perde força no final e deixa poeira do piso.
+
+Nos **ticks 2–7**, esquiva de golpes de combate, projéteis e explosões. **Queda, void, ambiente e dano que ignora invulnerabilidade não são anulados**. Não permite atacar ou ativar armas durante a rolagem. A recarga total é de **26 ticks (1,3 s)** desde o início; não gasta mana, mas custa 0,4 de exaustão de comida. Movimento, condições e janela de esquiva são controlados pelo servidor; constantes em `StatsLogic.Dodge`.
 
 ### Visual das armas
 
 - Texturas em pixel art. Cada arma tem **textura própria por elemento**: Fogo (lâmina em brasa), Água (ondas e gotas), Terra (pedra, musgo e cristais) e Ar (prata, penas e vento).
-- Rapieira e claymore têm **modelo 3D**, com paleta e peças extras por elemento.
+- As quatro armas do catálogo têm **modelo 3D de cubos** com textura pixel art 16×16: rapieira com guarda dourada e arco de mão, espada longa com cabo de duas mãos, adaga com lâmina escalonada e martelo volumétrico com runa, aros dourados e molduras de aço salientes. O martelo usa iluminação lateral no inventário e poses próprias de mão para mostrar a face e a profundidade da cabeça. As variantes elementais têm paleta própria; rapieira e espada longa também ganham peças extras. O fantasma da adaga arremessada acompanha seu modelo 3D.
 - Armas de S. Chefe e Chefe brilham.
-- Todas as combinações (classe × tier × elemento) ficam na aba **Solo Mod** do criativo.
+- A aba **Solo Mod** contém os ovos; a aba **Solo Mod: Armas** mostra só os quatro exemplares, sem duplicatas. Para variantes, use **K → Teste** ou `/modtest weapon`.
 
 ## 👹 Mobs por tier
 
@@ -132,7 +167,21 @@ Quando um chefe mata um jogador, para por **4 s para rir**, jogando a cabeça pa
 
 O Monarca se **desintegra** por 5 s. Os jogadores por perto entram numa **cinemática**: faixas pretas, HUD escondido, câmera virando para o chefe e o letreiro "MONARCA DERROTADO". Quem causou dano a ele ganha a conquista da forma derrotada (ver [Conquistas](#-conquistas)).
 
-### 🔥 Poder característico do Rei Vulcânico
+### Poderes dos cinco Monarcas
+
+Os poderes que o Soberano representa nos estágios 1–5 também pertencem aos respectivos reis. Estão disponíveis desde a fase 1 e continuam na Fúria, junto dos ataques que eles já tinham; apenas um ataque do cérebro executa por vez. Projéteis e áreas já lançados continuam ativos.
+
+| Monarca | Poderes característicos |
+|---|---|
+| Colosso Rei (neutro) | Punho do Colosso: seu Golpe Sísmico agora empurra quem está perto e sacode a câmera; também pode usá-lo na Fúria. |
+| Rei Vulcânico (fogo) | Genki-dama: carrega por 3,5 s acima das mãos e lança uma bola rebatível, com explosão de raio 4. Mantém as Bolas de Fogo Reais. |
+| Leviatã Coroado (água) | Maremoto: faixa de 7×24 blocos, telegrafada por 1 s, com crista de esferas 3D que arrasta as vítimas. Esferas de Água: cinco orbitam o rei por 2,5 s e depois perseguem os jogadores; um golpe direto as estoura. |
+| Titã Ancestral (terra) | Raízes Ancestrais: duas levas sob as posições atuais dos jogadores, com círculos de aviso. Pisão: terremoto de raio 10; Pulão: salta até perto do alvo e causa terremoto de raio 14 ao pousar. Ambos arremessam e levantam blocos respeitando `mobGriefing`. O Titã não sofre dano de queda. |
+| Imperador dos Céus (ar) | Conjura quatro tornados 3D após 2 s de preparação, distribuídos entre os jogadores; perseguem e lançam para o alto. |
+
+Alcance, recarga e multiplicadores dessas versões ficam em `TierIdentity.MonarchPowers`. O Soberano conserva suas versões gigantes e o Raio do Peito exclusivo.
+
+### 🔥 Bolas de Fogo Reais do Rei Vulcânico
 
 Desde a **fase 1**, o Monarca do Fogo lança **Bolas de Fogo Reais**: prepara por 1 s e dispara 1/2/3 bolas conforme a fase, com 0,9 s entre disparos, a alvos entre 6 e 32 blocos com linha de visão. O ataque continua disponível na Fúria. O modelo 3D próprio tem **2,4 blocos**, no estilo do Minecraft (só cubos): um núcleo de magma incandescente dentro de uma casca de basalto com lava, dois anéis quadrados de chama e seis blocos de magma em órbita; não usa a bola de fogo do Ghast nem o item fire charge. Elas voam em linha reta, sem acelerar, a **7 blocos/s** (0,35 bloco/tick), com espiral de chamas, fumaça e faíscas. Explodem ao tocar um alvo ou bloco, sem destruir o terreno; desaparecem após 10 s ou se o conjurador morrer/sair do mundo.
 
@@ -236,7 +285,7 @@ O mod adiciona uma aba própria **Solo Mod** na tela de conquistas (Advancements
 
 A recompensa é **XP do Minecraft** (a barra verde), não o XP Global da Maestria.
 
-O ícone de **Cinzas do Vulcão** é a cabeça do Rei Vulcânico em pixel art 16×16: carvão, olhos de brasa e coroa de chamas (`solomod:monarch_fire_head`), gerada por `tools/gen_boss_icons.ps1`.
+Cada conquista de derrota usa o **rosto do respectivo chefe em pixel art 16×16**: pedra e coroa do Colosso, carvão e chamas do Rei Vulcânico, kraken com coroa de coral do Leviatã, casca e copa do Titã, elmo alado do Imperador e coroa dos cinco poderes do Soberano. Os itens `monarch_<elemento>_head` e `sovereign_head` são gerados por `python tools/gen_boss_icons.py`; o ícone secreto `???` permanece oculto até sua revelação.
 
 - **Quem ganha**: todo jogador que causou dano ao chefe durante a luta e está online quando ele morre. Quem só assistiu, espectadores e mortes sem jogador (lava, `/kill`) não ganham nada.
 - **Só a criatura conta**: um mob vanilla marcado como Monarca por `/modtest mob boss ...` não dá conquista.
@@ -248,8 +297,10 @@ O ícone de **Cinzas do Vulcão** é a cabeça do Rei Vulcânico em pixel art 16
 - **Tecla K**: tela de Maestria.
   - Aba **Maestria**: distribui pontos (+1/+5) e mostra o efeito de cada stat.
   - Aba **Teste**: atalhos dos comandos `/modtest` (gerar arma, invocar ou marcar mob, ±10 stats, +100 XP, mana, reset). Exige cheats/OP.
-- **HUD** (canto superior esquerdo): nível, XP até o próximo ponto, barra de mana animada, aviso de pontos livres, estado da arma na mão (ativa/adormecida) e recarga da habilidade.
-- **Feedback de combate**: números de dano flutuantes (na cor do elemento, maiores e com "!" na vantagem), som de crítico, partículas por habilidade e animações do jogador (giro, estocada, mortal do machado).
+- **HUD** (canto superior esquerdo): brasão facetado com coroa e runas orbitais, filigranas douradas, barras biseladas de vida/mana/XP suavizadas e reflexo animado. Área de aproximadamente **164×62 pixels de GUI com arma**, antes 182×139 ou mais; carga acrescenta só 12 pixels. Faixa da arma mostra ícone, técnica, tecla R e recarga; pontos livres viram um selo junto ao brasão. O brasão pulsa com vida baixa e brilha ao subir de nível. Informações extensas ficam em K/tooltip.
+- **Vida padrão**: só a camada dos **corações do jogador** é ocultada enquanto a HUD personalizada está visível. Absorção aparece como trilho dourado e número extra; veneno/wither mudam a cor da vida, e dano gera clarão curto. Armadura, fome, oxigênio e vida da montaria continuam nas camadas vanilla. F1 e espectador escondem a HUD normalmente.
+- **Painel K**: cartões de FOR/AGI/INT/VIT em duas colunas com efeitos e botões +1/+5, XP, mana, pontos e resumo da arma. Abas e botões seguem a mesma paleta da HUD, com foco de teclado visível.
+- **Feedback de combate**: números de dano flutuantes (na cor do elemento, maiores e com "!" na vantagem), som de crítico, partículas e efeitos 3D por habilidade: cortes da espada, velocidade da rapieira, raios dourados da adaga e salto/impacto do martelo.
 
 ## 🧪 Roteiros de teste
 
@@ -258,7 +309,7 @@ O ícone de **Cinzas do Vulcão** é a cabeça do Rei Vulcânico em pixel art 16
 1. Crie um mundo Criativo **com cheats** e aperte **K** → aba **Teste**.
 2. Classe *Adaga*, Tier *S. Chefe*, Elemento *Fogo* → **Gerar arma na mão**. O HUD mostra "Adormecida (requer 30 AGI)".
 3. Troque o Elemento para *Ar* → **Invocar mob**. Bata nele: números brancos, sem elemento.
-4. **+10 AGI** três vezes (e +10 INT uma vez). O HUD fica "Fogo · Ativa"; bata de novo: números laranja com "!" e o alvo pegando fogo.
+4. **+10 AGI** três vezes (e +10 INT uma vez). O estado da arma no HUD muda de adormecida para Fogo; bata de novo: números laranja com "!" e o alvo pegando fogo.
 5. **Agachar + clique direito**: Investida com rastro de partículas; a barra de recarga esvazia e enche.
 6. **+100 XP** e volte à aba **Maestria** para gastar o ponto.
 
@@ -270,7 +321,7 @@ O ícone de **Cinzas do Vulcão** é a cabeça do Rei Vulcânico em pixel art 16
 /modtest mob @e[type=zombie,limit=1,sort=nearest] op air   # zumbi Elite de Ar
 /modtest set agi 30
 /modtest set int 10                           # INT mínima da Investida é 5
-/modtest weapon greatsword boss water         # espadão de Chefe, requer 50 FOR
+/modtest weapon hammer boss water             # martelo de Chefe, requer 50 FOR
 /modtest spawn boss fire                      # Rei Vulcânico
 /modtest stats
 /modtest sovereign                            # Soberano no estágio 1
@@ -278,5 +329,20 @@ O ícone de **Cinzas do Vulcão** é a cabeça do Rei Vulcânico em pixel art 16
 ```
 
 Para ver o Soberano lutar, saia do Criativo (`/gamemode survival`): como todo mob do mod, ele ignora jogadores no Criativo. As agonias e o close acontecem mesmo no Criativo. Para ver o fim e os créditos sem lutar: `/modtest sovereign 6` e bata até ele morrer, ou `/kill @e[type=solomod:sovereign]`.
+
+### Habilidades e animações das quatro armas
+
+1. Em terreno aberto, gere cada classe por **K → Teste**, ou `/modtest weapon <classe> normal none`. Confira em primeira pessoa e com **F5**.
+2. **Espada longa**: coloque alvos à frente, atrás e separados por uma parede. Botão direito deve acertar vários à frente uma vez na Meia-Lua. Use **R** para Ascendente (impulso vertical) e Cruzado (dois acertos em sequência). Nenhuma técnica deve acertar os de trás ou atravessar a parede. Alterne durante a recarga para confirmar que ela não é zerada. Teste ataque esquerdo comum.
+3. **Adaga**: arremesse e chame com botão direito. Arremesse de novo e use Shift + botão direito para ir até ela, inclusive no voo. Teste parede/teto baixo, destino ocupado, água/lava, fora de 64 blocos e adaga em chunk descarregado: a falha não deve consumir a adaga; o botão direito continua recuperando.
+4. **Rapieira**: compare toque curto, meia carga e 1,5 s de carga; a distância e a barra devem aumentar até o limite. Segure por mais tempo para conferir o teto, teste contra uma parede e troque de item durante a carga/dash.
+5. **Martelo**: use sobre terra/pedra expostas e observe salto, mergulho, blocos e impacto; repita com `/gamerule mobGriefing false` para verificar que ficam apenas efeitos visuais. Compare ativações já no ar com quedas de 4, 12 e 24 blocos contra alvos iguais; 24 e 32 blocos devem ter o mesmo bônus máximo. Trocar a arma no ar cancela o golpe. Em grupo, confira se os demais veem efeitos/animações e sentem o tremor perto do impacto. Confira o volume/runa do modelo no inventário, em primeira pessoa e em F5, com e sem elemento.
+6. **Espada longa em F5**: confira mão de apoio, preparação, varredura e recuperação; as mangas e a armadura devem acompanhar os braços. Em primeira pessoa, veja o arco 3D revelado pelo corte. Teste as cinco formas elementais, alvos múltiplos e oclusão por parede.
+7. **Rolamento**: compare Ctrl isolado, Ctrl segurado e duplo Ctrl; só o último rola. Teste W/A/S/D, diagonais e sem direção, em primeira pessoa/F5 e com outro jogador observando. Teste parede, água, voo, menus e spam durante a recarga. Um golpe durante os ticks centrais deve ser evitado; golpes na recuperação e dano de queda/ambiente continuam valendo. Não deve ser possível combinar ataque/arma com a rolagem.
+8. **Efeitos em movimento**: na rapieira, veja faixas brancas/ciano acompanhando o caminho e parando junto à parede. Na adaga, veja rastro dourado no arremesso e retorno, raios e selo nas duas pontas do teleporte. Um observador junto ao destino também deve enxergar o clarão. Confira com a mão esquerda principal e em F5.
+9. **Interface e velocidade**: abra K nas duas abas, confira navegação por Tab e textos em pt-BR/en-US nas escalas de GUI. Adicione XP para ver a subida de nível, gaste mana e receba dano para ver a suavização/clarão das barras. Confira que somem só os corações vanilla: fome, armadura, oxigênio e montaria permanecem. Use maçã dourada/absorção, veneno e wither; confira trilho dourado, números e cores. Teste F1/espectador e GUI 320×240. Com AGI 0 e armas Normal sem elemento, confira os atributos de 2,5 / 2,2 / 1,6 / 0,8 ataques/s (adaga / rapieira / espada / martelo).
+10. **Rapieira com R**: alterne as três técnicas, confira seleção no tooltip/K/HUD. Compare segurar/soltar do dash com clique simples nas outras. Chuva de Agulhas deve acertar nos três tempos em inimigo frontal, sem atingir atrás ou por paredes. Passo do Vento deve estocar e recuar; teste parede atrás, água, borda e troca de item. Compare em F5 e com jogador observador.
+11. **Martelo com R**: no chão, compare Giro (área circular com empurrão) e Ruptura (onda frontal). Teste inimigos atrás/através de paredes, vários alvos, desníveis, penhasco e água. Apenas o Salto deve ativar no ar e escalar com a altura. Troque de arma, morra, mude de dimensão e tente rolar durante as sequências: ações devem cancelar/bloquear corretamente.
+12. **Seleção independente**: escolha Chuva na rapieira, Cruzado na espada e Giro no martelo, alterne os itens e confira que cada seleção é lembrada. R não deve zerar recargas nem funcionar durante carga/ação/menu. Reconectar deve restaurar os três padrões.
 
 Lista completa de comandos: [README](../README.md#-comandos-de-teste).

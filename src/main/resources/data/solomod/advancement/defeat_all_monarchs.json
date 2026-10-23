@@ -2,7 +2,7 @@
   "parent": "solomod:root",
   "display": {
     "icon": {
-      "id": "solomod:greatsword"
+      "id": "solomod:rapier"
     },
     "title": {
       "translate": "advancements.solomod.defeat_all_monarchs.title"

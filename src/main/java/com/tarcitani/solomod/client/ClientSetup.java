@@ -51,6 +51,7 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void onRegisterKeys(RegisterKeyMappingsEvent event) {
         event.register(OPEN_STATS);
+        event.register(WeaponControls.CYCLE);
     }
 
     @SubscribeEvent

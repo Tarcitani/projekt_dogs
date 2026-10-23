@@ -20,7 +20,7 @@ import net.minecraft.util.Mth;
  *   <li>Pulão ({@link MobAnim#JUMP}): agacha com os braços para trás, abre os braços no ar e esmaga no pouso.</li>
  *   <li>Corrida frenética ({@link MobAnim#SPRINT}): pernas e braços batendo num exagero, cabeça baixa.</li>
  * </ul>
- * (A recuperação ajoelhada vem da base {@code TierMobModel}.)
+ * As poses elementais vêm de MonarchModel; a recuperação ajoelhada vem da base {@code TierMobModel}.
  */
 public class SovereignModel extends MonarchModel {
     private final ModelPart chest, head, jaw, crown, armR, armL, forearmR, forearmL, legR, legL, shinR, shinL;
@@ -47,57 +47,7 @@ public class SovereignModel extends MonarchModel {
         if (MobAnimations.phase(e) >= 4) crown.zRot += Mth.sin(age * 1.1F) * 0.04F;
 
         float t = act.t();
-        if (act.is(MobAnim.GENKI)) {
-            // Braços esticados e unidos no alto (inclinados para dentro) enquanto carrega; no arremesso descem.
-            float up = Mth.clamp(t / 0.25F, 0F, 1F) * (1F - Mth.clamp((t - 0.7F) / 0.1F, 0F, 1F));
-            float thr = Mth.clamp((t - 0.7F) / 0.1F, 0F, 1F) * (1F - Mth.clamp((t - 0.85F) / 0.15F, 0F, 1F));
-            armR.xRot = armL.xRot = -0.2F - 2.75F * up + 0.9F * thr;
-            armR.zRot = 0.12F - 0.42F * up;
-            armL.zRot = -armR.zRot;
-            forearmR.xRot = forearmL.xRot = -0.25F * (1F - up);
-            chest.xRot += -0.3F * up + 0.55F * thr;
-            head.xRot += -0.6F * up + 0.5F * thr;
-            jaw.xRot += 0.5F * up;
-            return;
-        }
-        if (act.is(MobAnim.STOMP)) {
-            float lift = Mth.sin(Mth.clamp(t / 0.6F, 0F, 1F) * Mth.HALF_PI) * (1F - Mth.clamp((t - 0.6F) / 0.08F, 0F, 1F));
-            float impact = t > 0.6F ? 1F - Mth.clamp((t - 0.6F) / 0.15F, 0F, 1F) : 0F;
-            legR.xRot = -1.1F * lift;
-            shinR.xRot = 1.4F * lift;
-            armR.xRot = -0.2F + 0.5F * lift;
-            armL.xRot = -0.2F - 0.9F * lift;
-            chest.xRot += -0.15F * lift + 0.3F * impact;
-            jaw.xRot += 0.4F * impact;
-            return;
-        }
         float k = Mth.clamp(t * 6F, 0F, 1F) * Mth.clamp((1F - t) * 6F, 0F, 1F);
-        if (act.is(MobAnim.FLOAT)) {
-            legR.xRot = legL.xRot = 0.1F * k;
-            shinR.xRot = shinL.xRot = 0.3F * k;
-            armR.zRot = 0.12F + 1.75F * k;
-            armL.zRot = -armR.zRot;
-            armR.xRot = armL.xRot = -0.15F * k;
-            forearmR.xRot = forearmL.xRot = -0.1F * k;
-            chest.xRot -= 0.15F * k;
-            head.xRot -= 0.5F * k;
-            jaw.xRot += 0.3F * k;
-            return;
-        }
-        if (act.is(MobAnim.JUMP)) {
-            float crouch = Mth.clamp(t / 0.3F, 0F, 1F) * (1F - Mth.clamp((t - 0.3F) / 0.06F, 0F, 1F));
-            float air = Mth.clamp((t - 0.3F) / 0.06F, 0F, 1F) * (1F - Mth.clamp((t - 0.72F) / 0.08F, 0F, 1F));
-            float land = Mth.clamp((t - 0.72F) / 0.08F, 0F, 1F) * (1F - Mth.clamp((t - 0.85F) / 0.15F, 0F, 1F));
-            legR.xRot = legL.xRot = -0.6F * crouch - 0.7F * air;
-            shinR.xRot = shinL.xRot = 1.0F * crouch + 1.1F * air;
-            armR.xRot = armL.xRot = 0.7F * crouch - 2.3F * air + 0.5F * land;
-            armR.zRot = 0.12F + 0.5F * air;
-            armL.zRot = -armR.zRot;
-            chest.xRot += 0.3F * crouch + 0.35F * land;
-            head.xRot += -0.4F * air + 0.2F * land;
-            jaw.xRot += 0.6F * air + 0.4F * land;
-            return;
-        }
         if (act.is(MobAnim.SPRINT)) {
             // Passada exagerada: o seno de age dá o compasso, braços em oposição às pernas.
             float stride = Mth.sin(age * 0.9F);
