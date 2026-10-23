@@ -1,5 +1,5 @@
 """
-Gera a arte dos 4 mobs do mod a partir de uma única especificação:
+Gera a arte das criaturas do mod (os 4 tiers e o Soberano) a partir de uma única especificação:
 
   * texturas base   -> src/main/resources/assets/solomod/textures/entity/<mob>.png
   * texturas brilho -> src/main/resources/assets/solomod/textures/entity/<mob>_glow.png
@@ -164,9 +164,9 @@ def guardian():
     return m
 
 
-def sovereign():
+def monarch():
     """Soberano: colosso-rei de pedra e obsidiana, coroa de espinhos, chifres em espiral, núcleo e cristais nas costas."""
-    m = Model("sovereign", 256)
+    m = Model("monarch", 256)
     for side, x in (("r", -7), ("l", 7)):
         m.part(f"leg_{side}", "root", (x, 6, 0), C(-4, 0, -4, 8, 10, 8, "rock"))
         m.part(f"shin_{side}", f"leg_{side}", (0, 9, 0),
@@ -738,8 +738,8 @@ public final class MobMeshes {{
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from mob_variants import VARIANTS
-    models = [minion(), elite(), guardian(), sovereign()] + [v() for v in VARIANTS]
+    from mob_variants import VARIANTS, sovereign
+    models = [minion(), elite(), guardian(), monarch()] + [v() for v in VARIANTS] + [sovereign()]
     for m in models:
         names = [p.name for p in m.parts]
         assert len(names) == len(set(names)), f"nomes repetidos em {m.name}"

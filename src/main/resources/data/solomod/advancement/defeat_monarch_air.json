@@ -2,13 +2,13 @@
   "parent": "solomod:root",
   "display": {
     "icon": {
-      "id": "solomod:sovereign_water_spawn_egg"
+      "id": "solomod:monarch_air_spawn_egg"
     },
     "title": {
-      "translate": "advancements.solomod.defeat_sovereign_water.title"
+      "translate": "advancements.solomod.defeat_monarch_air.title"
     },
     "description": {
-      "translate": "advancements.solomod.defeat_sovereign_water.description"
+      "translate": "advancements.solomod.defeat_monarch_air.description"
     },
     "frame": "challenge",
     "show_toast": true,

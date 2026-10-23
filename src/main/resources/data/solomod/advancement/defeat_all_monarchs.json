@@ -5,10 +5,10 @@
       "id": "solomod:greatsword"
     },
     "title": {
-      "translate": "advancements.solomod.defeat_all_sovereigns.title"
+      "translate": "advancements.solomod.defeat_all_monarchs.title"
     },
     "description": {
-      "translate": "advancements.solomod.defeat_all_sovereigns.description"
+      "translate": "advancements.solomod.defeat_all_monarchs.description"
     },
     "frame": "challenge",
     "show_toast": true,
@@ -16,28 +16,28 @@
     "hidden": false
   },
   "criteria": {
-    "sovereign_none": {
+    "monarch_none": {
       "trigger": "minecraft:impossible"
     },
-    "sovereign_fire": {
+    "monarch_fire": {
       "trigger": "minecraft:impossible"
     },
-    "sovereign_water": {
+    "monarch_water": {
       "trigger": "minecraft:impossible"
     },
-    "sovereign_earth": {
+    "monarch_earth": {
       "trigger": "minecraft:impossible"
     },
-    "sovereign_air": {
+    "monarch_air": {
       "trigger": "minecraft:impossible"
     }
   },
   "requirements": [
-    ["sovereign_none"],
-    ["sovereign_fire"],
-    ["sovereign_water"],
-    ["sovereign_earth"],
-    ["sovereign_air"]
+    ["monarch_none"],
+    ["monarch_fire"],
+    ["monarch_water"],
+    ["monarch_earth"],
+    ["monarch_air"]
   ],
   "rewards": {
     "experience": 1000

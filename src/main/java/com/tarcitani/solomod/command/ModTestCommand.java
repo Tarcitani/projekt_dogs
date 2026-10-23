@@ -15,9 +15,12 @@ import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.core.StatType;
 import com.tarcitani.solomod.core.WeaponClass;
+import com.tarcitani.solomod.entity.ModEntities;
+import com.tarcitani.solomod.entity.Sovereign;
 import com.tarcitani.solomod.event.StatsLogic;
 import com.tarcitani.solomod.item.ModItems;
 import com.tarcitani.solomod.item.ModularWeaponItem;
+import com.tarcitani.solomod.mob.SovereignBrain;
 import com.tarcitani.solomod.mob.TierIdentity;
 import com.tarcitani.solomod.network.TestActionPayload;
 import com.tarcitani.solomod.skill.WeaponSkill;
@@ -32,7 +35,9 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
@@ -56,6 +61,8 @@ import java.util.function.Function;
  * /modtest mob &lt;alvos&gt; &lt;tier&gt; &lt;elemento&gt;            transforma mobs em "mobs do mod"
  * /modtest unmark &lt;alvos&gt;                          remove o perfil
  * /modtest spawn &lt;tier&gt; &lt;elemento&gt;              invoca a criatura do tier (modelo próprio)
+ * /modtest sovereign [estágio]                     invoca o Soberano (chefe final), opcionalmente já no
+ *                                                  estágio 1-6 (pula as cinemáticas do caminho)
  * </pre>
  */
 public final class ModTestCommand {
@@ -160,6 +167,11 @@ public final class ModTestCommand {
                                             return feedback(ctx, "Invocado: %s / %s", tier.name(), element.name());
                                         }))))
 
+                .then(Commands.literal("sovereign")
+                        .executes(ctx -> spawnSovereign(ctx, 1))
+                        .then(Commands.argument("stage", IntegerArgumentType.integer(1, SovereignBrain.STAGES))
+                                .executes(ctx -> spawnSovereign(ctx, IntegerArgumentType.getInteger(ctx, "stage")))))
+
                 .then(Commands.literal("unmark")
                         .then(Commands.argument("targets", EntityArgument.entities())
                                 .executes(ctx -> {
@@ -238,6 +250,23 @@ public final class ModTestCommand {
             }
         }
         return feedback(ctx, "%d mob(s) marcados como %s / %s.", count, tier.name(), element.name());
+    }
+
+    /** Invoca o Soberano à frente do jogador, já no estágio pedido. */
+    private static int spawnSovereign(CommandContext<CommandSourceStack> ctx, int stage) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        Sovereign boss = ModEntities.SOVEREIGN.get().create(player.serverLevel());
+        if (boss == null) return 0;
+        Vec3 look = player.getLookAngle();
+        double distance = 4 + boss.getBbWidth();
+        Vec3 pos = player.position().add(look.x * distance, 0, look.z * distance);
+        boss.moveTo(pos.x, pos.y, pos.z, player.getYRot() + 180F, 0F);
+        boss.finalizeSpawn(player.serverLevel(), player.serverLevel().getCurrentDifficultyAt(boss.blockPosition()),
+                MobSpawnType.COMMAND, null);
+        player.serverLevel().addFreshEntity(boss);
+        // Depois de entrar no mundo: o MobEvents reinstala o cérebro ao entrar.
+        if (stage > 1) SovereignBrain.skipToStage(boss, stage);
+        return feedback(ctx, "Soberano invocado no estágio %d/%d.", stage, SovereignBrain.STAGES);
     }
 
     // ------------------------------------------------------------------ helpers

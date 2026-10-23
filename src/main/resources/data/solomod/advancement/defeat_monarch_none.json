@@ -2,13 +2,13 @@
   "parent": "solomod:root",
   "display": {
     "icon": {
-      "id": "solomod:sovereign_spawn_egg"
+      "id": "solomod:monarch_spawn_egg"
     },
     "title": {
-      "translate": "advancements.solomod.defeat_sovereign_none.title"
+      "translate": "advancements.solomod.defeat_monarch_none.title"
     },
     "description": {
-      "translate": "advancements.solomod.defeat_sovereign_none.description"
+      "translate": "advancements.solomod.defeat_monarch_none.description"
     },
     "frame": "challenge",
     "show_toast": true,

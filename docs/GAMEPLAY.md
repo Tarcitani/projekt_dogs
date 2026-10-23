@@ -8,7 +8,8 @@ Referência completa do que o Solo Mod faz dentro do jogo. Para saber **onde** c
 - [Armas](#️-armas)
 - [Mobs por tier](#-mobs-por-tier)
 - [Criaturas próprias](#-criaturas-próprias)
-- [Conquistas dos Soberanos](#-conquistas-dos-soberanos)
+- [O Soberano (chefe final)](#-o-soberano-chefe-final)
+- [Conquistas](#-conquistas)
 - [Interface](#️-interface)
 - [Roteiros de teste](#-roteiros-de-teste)
 
@@ -110,22 +111,22 @@ Qualquer mob vira "mob do mod" ao receber um **perfil** (tier + elemento). O per
 | NORMAL | • Lacaio | 0.85x / 1x / 1x | corre curvado, trote | **bando**: grita chamando aliados, fica mais rápido com 2+ aliados, foge com <30% de vida | **Bote** |
 | OP | ★ Elite | 1.2x / 2.5x / 1.5x | balança os ombros | **duelista**: circula o alvo enquanto recarrega; **apara** 30% dos golpes de frente e contra-ataca | **Investida** telegrafada · **Golpe Triplo** em leque |
 | SUB_BOSS | ✦ Guardião | 1.6x / 6x / 2x, barra roxa | flutua, 3 motes orbitando | **mago**: recua se colam, aproxima se fogem, teleporta às costas de quem foge | **Rajada** de 3 orbes com mira preditiva · **Repulsão** · **Salto Esmagador** · **Translocar** · **Invocação** a 50% |
-| BOSS | ♛ Soberano | 2.3x / 14x / 2.8x, barra dourada, brilho | respiração pesada | **3 fases** (60% / 25%) com rugido invulnerável; lê se o jogador luta de perto ou de longe e escolhe ataques contra isso | **Golpe Sísmico** (pule) · **Chuva Elemental** · **Investida** 1/2/3x (parede = atordoado) · **Vórtice** · **Sopro** em cone · convoca Elites e Lacaios |
+| BOSS | ♛ Monarca | 2.3x / 14x / 2.8x, barra dourada, brilho | respiração pesada | **3 fases** (60% / 25%) com rugido invulnerável; lê se o jogador luta de perto ou de longe e escolhe ataques contra isso | **Golpe Sísmico** (pule) · **Chuva Elemental** · **Investida** 1/2/3x (parede = atordoado) · **Vórtice** · **Sopro** em cone · convoca Elites e Lacaios |
 
 Todo ataque especial é **telegrafado** (agachar/tremer + partículas na cor do elemento) e aplica a passiva do elemento do mob.
 
-### 😡 Fúria (Guardião e Soberano)
+### 😡 Fúria (Guardião e Monarca)
 
 Com 1/4 da vida, o chefe ruge (invulnerável), arremessa quem está perto e chama Lacaios. Durante **20 s** ele fica com aura vermelha, causa +35% de dano, recebe −35% de dano e usa ataques **totalmente diferentes**:
 
 - **Guardião**: Tempestade de Orbes, Olhar Fulminante (raio girando 360°) e Translocação Frenética. Para de fugir e parte para cima.
-- **Soberano**: Marcha Sísmica, Meteoro Colossal, Investida Sem Fim (ricocheteia nas paredes) e Anel de Erupções. A Fúria é a fase 3.
+- **Monarca**: Marcha Sísmica, Meteoro Colossal, Investida Sem Fim (ricocheteia nas paredes) e Anel de Erupções. A Fúria é a fase 3.
 
 Quando a Fúria acaba, o chefe fica **exausto por 3 s** e recebe +25% de dano.
 
-### 💀 Morte do Soberano
+### 💀 Morte do Monarca
 
-O Soberano se **desintegra** por 5 s. Os jogadores por perto entram numa **cinemática**: faixas pretas, HUD escondido, câmera virando para o chefe e o letreiro "SOBERANO DERROTADO". Quem causou dano a ele ganha a conquista da forma derrotada (ver [Conquistas dos Soberanos](#-conquistas-dos-soberanos)).
+O Monarca se **desintegra** por 5 s. Os jogadores por perto entram numa **cinemática**: faixas pretas, HUD escondido, câmera virando para o chefe e o letreiro "MONARCA DERROTADO". Quem causou dano a ele ganha a conquista da forma derrotada (ver [Conquistas](#-conquistas)).
 
 ## 🐉 Criaturas próprias
 
@@ -136,7 +137,7 @@ Cada tier tem uma criatura com modelo próprio, e cada criatura tem uma forma **
 | **Lacaio** | Diabrete | Diabrete Ígneo | Diabrete Abissal | Diabrete de Pedra | Sílfide Travessa |
 | **Elite** | Duelista Espectral | Executor Infernal | Tritão Corsário | Sentinela de Granito | Valquíria do Vento |
 | **Guardião** | Oráculo | Arauto Solar | Medusa Abissal | Monólito Ancestral | Olho da Tempestade |
-| **Soberano** | Colosso Rei | Rei Vulcânico | Leviatã Coroado | Titã Ancestral | Imperador dos Céus |
+| **Monarca** | Colosso Rei | Rei Vulcânico | Leviatã Coroado | Titã Ancestral | Imperador dos Céus |
 
 <details>
 <summary>Descrição de cada forma</summary>
@@ -168,24 +169,47 @@ Cada tier tem uma criatura com modelo próprio, e cada criatura tem uma forma **
 
 Olhos, gemas, chamas e rachaduras ficam numa **camada emissiva** que pulsa na cor do elemento. As partes decorativas (chamas, nadadeiras, anéis, asas) se mexem sozinhas.
 
-## 🏆 Conquistas dos Soberanos
+## 👑 O Soberano (chefe final)
 
-O mod adiciona uma aba própria **Solo Mod** na tela de conquistas (Advancements) do Minecraft (tecla **L**), com uma conquista narrativa para a derrota de cada forma do Soberano:
+**História**: há eras, os cinco Monarcas se uniram para derrotar o Soberano. Ele voltou com o poder de todos eles e é o chefe final desta versão de testes. No futuro ele vai morar numa dimensão própria; por enquanto nasce pelo **ovo** da aba Solo Mod ou por `/modtest sovereign [estágio]`.
+
+**Corpo**: gigante (cerca de 7 blocos), com um pedaço de cada Monarca: braço de pedra e chifres do Colosso Rei, perna de magma e vulcão no ombro do Rei Vulcânico, pinça e barba de tentáculos do Leviatã Coroado, perna de raízes e copa do Titã Ancestral, asas e auréola do Imperador dos Céus. A coroa tem uma ponta de cada Monarca, cinco fragmentos orbitam o corpo e o brilho passa pelas cores dos cinco. Imune a fogo. Vida 700, dano 11 por golpe.
+
+**Estágios**: a barra de chefe tem 6 marcas. Cada vez que o jogador termina uma, o Soberano **agoniza** por 4 s: fica invulnerável e parado, ajoelha se contorcendo, e todos por perto ganham um **close cinemático** no rosto dele com a fala do estágio. No fim da agonia ele explode numa onda que empurra todos e desperta o poder de mais um Monarca, que vira um ataque novo. Nenhum golpe pula estágio: a vida para no limite da faixa, mesmo num golpe fatal (só `/kill` ignora).
+
+| Estágio | Vida | Desperta | Ataque novo |
+|---|---|---|---|
+| 1 | 100–83% | — | **Punho do Colosso**: ergue o punho e esmaga; onda de choque no chão (duas a partir do estágio 4) — pule |
+| 2 | 83–67% | Rei Vulcânico | **Erupção**: círculos de fogo sob cada jogador (o primeiro onde ele vai estar) e um anel deles em volta do Soberano |
+| 3 | 67–50% | Leviatã Coroado | **Maremoto**: marca uma faixa reta no chão e lança uma onda que arrasta quem estiver nela |
+| 4 | 50–33% | Titã Ancestral | **Raízes Ancestrais**: duas levas de raízes sob cada jogador (a segunda onde ele estiver) |
+| 5 | 33–17% | Imperador dos Céus | **Tempestade**: puxa todos para perto e chama raios sobre cada jogador por 3 s |
+| 6 | 17–0% | todos | **Convergência**: três rajadas de orbes dos cinco elementos e uma estrela de explosões · **FÚRIA até morrer** |
+
+Os ataques se acumulam (no estágio 5 ele usa os cinco). No estágio 6 a barra fica roxa, a tela escurece e ele entra em **Fúria sem fim**: +35% de dano, −35% de dano recebido, ataques mais frequentes.
+
+**Fim**: o Soberano se desintegra, quem estava perto ou lutou vê a cinemática "O SOBERANO CAIU" e, em seguida, os **créditos** (música de créditos do Minecraft; ESPAÇO acelera, ESC sai e volta ao mundo).
+
+## 🏆 Conquistas
+
+O mod adiciona uma aba própria **Solo Mod** na tela de conquistas (Advancements) do Minecraft (tecla **L**), com uma conquista narrativa para a derrota de cada forma do Monarca e duas **secretas** (só aparecem quando ganhas):
 
 | Conquista | Chefe | Elemento | Natureza e contexto narrativo | Tipo / Recompensa |
 |---|---|---|---|---|
 | **A Queda da Coroa Pétrea** | Colosso Rei | Neutro | Monarca primordial de rocha pura e força bruta indestrutível que desafia todas as forças elementais. | Desafio · 150 XP |
-| **Cinzas do Vulcão** | Rei Vulcânico | Fogo | Soberano do magma em tronco-vulcão vivo que expele erupções e transforma terras em caldeiras ardentes. | Desafio · 150 XP |
+| **Cinzas do Vulcão** | Rei Vulcânico | Fogo | Monarca do magma em tronco-vulcão vivo que expele erupções e transforma terras em caldeiras ardentes. | Desafio · 150 XP |
 | **Calmaria no Abismo** | Leviatã Coroado | Água | Rei-kraken com pinças titânicas que comanda maremotos devastadores e os abismos oceânicos. | Desafio · 150 XP |
 | **Raízes Milenares Desfeitas** | Titã Ancestral | Terra | Árvore colossal com copa impenetrável e coração de âmbar cujas raízes sustentavam o peso do mundo. | Desafio · 150 XP |
 | **O Trono Despedaçado** | Imperador dos Céus | Ar | Senhor alado das tempestades que comanda vendavais cortantes e relâmpagos em seu trono celestial. | Desafio · 150 XP |
-| **Soberania Absoluta** | Todos os 5 Soberanos | Mestre | O ápice do guerreiro: derrotar todas as cinco formas dos Soberanos e alcançar a Maestria suprema sobre os elementos. | Desafio Mestre · 1000 XP |
+| **Cinco Coroas Caídas** | Todos os 5 Monarcas | Mestre | Derrotar os cinco Monarcas e dominar todos os elementos. | Desafio Mestre · 1000 XP |
+| **O Selo Partido** *(secreta)* | — | — | Vem junto com a anterior. "Há eras, os cinco Monarcas se uniram contra algo maior que todos eles. Agora que caíram... nada mais o prende." Insinua que não é o fim. | Objetivo |
+| **Soberania Absoluta** *(secreta)* | Soberano | Todos | Derrotar o Soberano, que tomou para si o poder dos cinco Monarcas. Também revela o Selo Partido, se faltava. | Desafio · 2000 XP |
 
 A recompensa é **XP do Minecraft** (a barra verde), não o XP Global da Maestria.
 
-- **Quem ganha**: todo jogador que causou dano ao Soberano durante a luta e está online quando ele morre. Quem só assistiu, espectadores e mortes sem jogador (lava, `/kill`) não ganham nada.
-- **Só a criatura Soberano conta**: um mob vanilla marcado como Soberano por `/modtest mob boss ...` não dá conquista.
-- **Progresso do desafio mestre**: "Soberania Absoluta" mostra o progresso (0/5) conforme cada forma diferente é derrotada.
+- **Quem ganha**: todo jogador que causou dano ao chefe durante a luta e está online quando ele morre. Quem só assistiu, espectadores e mortes sem jogador (lava, `/kill`) não ganham nada.
+- **Só a criatura conta**: um mob vanilla marcado como Monarca por `/modtest mob boss ...` não dá conquista.
+- **Progresso do desafio mestre**: "Cinco Coroas Caídas" mostra o progresso (0/5) conforme cada forma diferente é derrotada.
 - A lista de quem lutou não é salva: se o chunk do chefe descarregar no meio da luta, ela recomeça.
 
 ## 🖥️ Interface
@@ -218,6 +242,10 @@ A recompensa é **XP do Minecraft** (a barra verde), não o XP Global da Maestri
 /modtest weapon greatsword boss water         # espadão de Chefe, requer 50 FOR
 /modtest spawn boss fire                      # Rei Vulcânico
 /modtest stats
+/modtest sovereign                            # Soberano no estágio 1
+/modtest sovereign 5                          # já no estágio 5: falta 1 agonia para a Fúria
 ```
+
+Para ver o Soberano lutar, saia do Criativo (`/gamemode survival`): como todo mob do mod, ele ignora jogadores no Criativo. As agonias e o close acontecem mesmo no Criativo. Para ver o fim e os créditos sem lutar: `/modtest sovereign 6` e bata até ele morrer, ou `/kill @e[type=solomod:sovereign]`.
 
 Lista completa de comandos: [README](../README.md#-comandos-de-teste).

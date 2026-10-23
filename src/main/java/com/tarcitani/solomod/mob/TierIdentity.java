@@ -5,6 +5,7 @@ import com.tarcitani.solomod.attachment.MobProfile;
 import com.tarcitani.solomod.attachment.ModAttachments;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
+import com.tarcitani.solomod.entity.Sovereign;
 import com.tarcitani.solomod.entity.TierMob;
 import com.tarcitani.solomod.network.MobAnimPayload;
 import com.tarcitani.solomod.network.ModNetwork;
@@ -28,7 +29,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
  *   <tr><td>NORMAL</td><td>Lacaio</td><td>0.85x</td><td>1x</td><td>1x</td><td>+0</td><td>0%</td><td>+12%</td></tr>
  *   <tr><td>OP</td><td>Elite</td><td>1.2x</td><td>2.5x</td><td>1.5x</td><td>+4</td><td>30%</td><td>+15%</td></tr>
  *   <tr><td>SUB_BOSS</td><td>Guardião</td><td>1.6x</td><td>6x</td><td>2x</td><td>+8</td><td>60%</td><td>+0%</td></tr>
- *   <tr><td>BOSS</td><td>Soberano</td><td>2.3x</td><td>14x</td><td>2.8x</td><td>+12</td><td>100%</td><td>-5%</td></tr>
+ *   <tr><td>BOSS</td><td>Monarca</td><td>2.3x</td><td>14x</td><td>2.8x</td><td>+12</td><td>100%</td><td>-5%</td></tr>
  * </table>
  *
  * <p>Os modificadores são permanentes (salvos com o mob); a IA ({@link TierBrain}) não é salva e é
@@ -77,7 +78,7 @@ public final class TierIdentity {
         if (living instanceof TierMob creature) creature.setElement(element);
         living.setCustomName(title(living, tier, element));
         living.setCustomNameVisible(true);
-        // Só o Soberano tem contorno brilhante: é visto através das paredes.
+        // Só o Monarca tem contorno brilhante: é visto através das paredes.
         living.setGlowingTag(tier == MobTier.BOSS);
 
         if (living instanceof PathfinderMob mob) TierBrain.install(mob);
@@ -101,8 +102,13 @@ public final class TierIdentity {
         if (living instanceof PathfinderMob mob) TierBrain.uninstall(mob);
     }
 
-    /** "♛ Soberano Husk · Fogo", com o tier na cor dele e o nome do mob na cor do elemento. */
+    /** "♛ Monarca Husk · Fogo", com o tier na cor dele e o nome do mob na cor do elemento. */
     public static Component title(LivingEntity living, MobTier tier, ElementType element) {
+        // O Soberano está acima dos tiers: só o nome, sem título nem elemento.
+        if (living instanceof Sovereign) {
+            return Component.literal("☬ ").withStyle(ChatFormatting.DARK_PURPLE)
+                    .append(living.getType().getDescription().copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+        }
         var name = Component.literal(stats(tier).symbol() + " ").withStyle(tier.color())
                 .append(Component.translatable("mob_title.solomod." + tier.getSerializedName())
                         .withStyle(tier.color(), ChatFormatting.BOLD))

@@ -40,7 +40,7 @@ public final class ModNetwork {
         else PacketDistributor.sendToPlayersTrackingEntity(player, payload);
     }
 
-    /** Cinemática de abate do Soberano para os jogadores próximos. */
+    /** Cinemática de chefe (morte do Monarca, agonia ou morte do Soberano) para um jogador. */
     public static void sendCinematic(ServerPlayer player, CinematicPayload payload) {
         PacketDistributor.sendToPlayer(player, payload);
     }

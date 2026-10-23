@@ -32,16 +32,17 @@ src/main/java/com/tarcitani/solomod/
 ├── core/                 enums: ElementType, MobTier, StatType, WeaponClass
 ├── component/            WeaponData (record no ItemStack) + registro
 ├── attachment/           PlayerStatsAttachment (jogador), MobProfile (mob) + registro
-├── advancement/          ModAdvancements (conquistas dos chefes e desafio mestre)
+├── advancement/          ModAdvancements (conquistas dos Monarcas, do Soberano e as secretas)
 ├── item/                 ModularWeaponItem, ModItems (itens, ovos, aba criativa)
 ├── event/                CombatEvents (dano), ElementalCombat, StatsLogic (balanceamento), PlayerEvents
 ├── skill/                WeaponSkill (habilidades de tier), ClassAbility (de classe), SkillVfx, PlayerAnim
-├── entity/               TierMob (criaturas), ThrownDagger, ModEntities
-├── mob/                  TierIdentity, TierBrain + 4 Brains, Hazards, MobAnim, MobEvents
+├── entity/               TierMob (criaturas), Sovereign (chefe final), ThrownDagger, ModEntities
+├── mob/                  TierIdentity, TierBrain + 4 Brains + SovereignBrain, Hazards, MobAnim, MobEvents
 ├── network/              ModNetwork + *Payload
 ├── command/              ModTestCommand (/modtest)
 └── client/               SÓ CLIENTE: tela, HUD, animações, cinemática, model/, render/
 src/main/resources/assets/solomod/   lang/, models/item/, textures/{item,entity}/
+src/main/resources/data/solomod/     advancement/ (JSON das conquistas)
 src/main/templates/META-INF/neoforge.mods.toml   metadados (variáveis de gradle.properties)
 tools/                    scripts Python que GERAM arte e código
 ```
@@ -68,9 +69,10 @@ No Windows use `gradlew.bat`. Não há testes automatizados: valide com `./gradl
 6. **Não reordene enums.** Ordinais são usados no protocolo e nos assets:
    - `ElementType`: o predicate `solomod:element` nos modelos de item usa o ordinal (1=water, 2=earth, 3=fire, 4=air).
    - `MobTier`, `WeaponClass`, `StatType`: ordinais vão nos argumentos de `TestActionPayload`, e `TierMob` usa `tier.ordinal()`.
+   - `MobAnim`, `CinematicPayload.Kind`: vão pela rede como ordinal.
    - Adicione constantes novas **no fim**.
 7. **Textos visíveis**: chave em `lang/pt_br.json` **e** `lang/en_us.json`. Prefira `Component.translatable`.
-8. **Balanceamento** fica nas constantes de `event/StatsLogic`, `attachment/PlayerStatsAttachment`, `core/MobTier`, `core/WeaponClass`, `skill/WeaponSkill` e na tabela de `mob/TierIdentity`. Não espalhe números mágicos.
+8. **Balanceamento** fica nas constantes de `event/StatsLogic`, `attachment/PlayerStatsAttachment`, `core/MobTier`, `core/WeaponClass`, `skill/WeaponSkill`, na tabela de `mob/TierIdentity` e, para o chefe final, em `entity/Sovereign` (atributos base) e `mob/SovereignBrain` (estágios). Não espalhe números mágicos.
 9. **Classe nova com `@SubscribeEvent` estático no game bus (servidor)** → registre em `SoloMod.java` (`NeoForge.EVENT_BUS.register(...)`).
 10. **Mantenha a documentação em dia.** Mudou comando, mecânica, arquivo ou estrutura? Atualize o Javadoc da classe e o doc correspondente (README / GAMEPLAY / ARCHITECTURE / este arquivo).
 
@@ -116,7 +118,9 @@ No Windows use `gradlew.bat`. Não há testes automatizados: valide com `./gradl
 - **Brains não são salvos**: só o `MobProfile` persiste. `MobEvents.onJoin` reinstala o brain quando o mob é carregado.
 - **Ter `MobProfile` = ser mob do mod**: dá XP, é alvo dos Hazards como "aliado" (não leva dano deles) e fica hostil ao jogador. Teste com `hasData(ModAttachments.MOB_PROFILE)`.
 - **Ataque da espada longa** é cancelado no cliente e vira `SpinAttackPayload`; o giro é validado no servidor (`ClassAbility.spinAttack`).
-- **O Soberano não morre na hora**: desintegra por `TierMob.DISSOLVE_TICKS` (100) e dispara `CinematicPayload`.
+- **Monarca e Soberano não morrem na hora**: desintegram por `TierMob.DISSOLVE_TICKS` (100) e disparam `CinematicPayload`.
+- **Soberano ≠ Monarca.** No código, `monarch` são os 5 chefes elementais (tier BOSS, `MonarchBrain`) e `sovereign` é o chefe final (entidade `Sovereign`, também tier BOSS, `SovereignBrain`). `TierBrain.install` escolhe pelo tipo da entidade.
+- **O Soberano não pula estágio**: `SovereignBrain.onHurt` devolve a vida ao limite do estágio, inclusive em golpe fatal. Só dano com a tag `bypasses_invulnerability` (`/kill`, void) passa direto.
 - **`.vscode/launch.json` não vai para o Git** (caminhos absolutos da máquina). `run/`, `build/`, `bin/` e `.gradle/` também são ignorados.
 - **Encoding**: os arquivos são UTF-8 com acentos. No PowerShell, leia com `-Encoding utf8`, senão o texto aparece corrompido. Nunca regrave um arquivo com outro encoding.
 - **Versão do NeoForge**: `neo_version` em `gradle.properties` (`21.1.x`). Se o build falhar ao resolver, tente uma `21.1.x` mais recente.

@@ -5,6 +5,7 @@ import com.tarcitani.solomod.attachment.ModAttachments;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.entity.ModEntities;
+import com.tarcitani.solomod.entity.Sovereign;
 import com.tarcitani.solomod.entity.TierMob;
 import com.tarcitani.solomod.network.ModNetwork;
 import com.tarcitani.solomod.skill.SkillVfx;
@@ -55,16 +56,19 @@ import java.util.function.Predicate;
  *   <li>{@link MinionBrain} (NORMAL): covarde e em bando — chama aliados, foge com pouca vida, dá botes.</li>
  *   <li>{@link EliteBrain} (OP): duelista — circula o alvo, apara golpes e contra-ataca, investidas e combos.</li>
  *   <li>{@link GuardianBrain} (SUB_BOSS): mago tático — mantém distância, orbes, repulsão, salto e teleporte.</li>
- *   <li>{@link SovereignBrain} (BOSS): três fases, lê o estilo do jogador e escolhe ataques contra ele.</li>
+ *   <li>{@link MonarchBrain} (BOSS): três fases, lê o estilo do jogador e escolhe ataques contra ele.</li>
+ *   <li>{@link SovereignBrain} (BOSS, só a entidade {@link Sovereign}): chefe final com 6 estágios.</li>
  * </ul>
  *
  * <p>Ataques especiais são {@link Move}s: cada um tem recarga, peso e condição de uso; quando nenhum está
  * pronto, o cérebro executa {@link #engage()} (posicionamento + golpe básico próprio do tier).
  *
- * <p><b>Fúria</b> (Guardião e Soberano): ao chegar a 1/4 da vida o chefe ruge (invulnerável), arremessa
+ * <p><b>Fúria</b> (Guardião e Monarca): ao chegar a 1/4 da vida o chefe ruge (invulnerável), arremessa
  * quem está perto, chama Lacaios e entra em Fúria por {@link #RAGE_TICKS} ticks: aura vermelha, um conjunto
  * de ataques TOTALMENTE diferente ({@link #addRageMove}), +35% de dano e -35% de dano recebido.
- * Quando acaba, fica exausto por 3 s (recebe +25% de dano) e volta aos ataques normais.
+ * Quando acaba, fica exausto por 3 s (recebe +25% de dano) e volta aos ataques normais. Subclasses podem
+ * mudar o gatilho ({@link #rageThreshold}), começar a Fúria por conta própria ({@link #beginRage}) e torná-la
+ * sem fim ({@link #endlessRage}), como o Soberano.
  *
  * <p>Fora de combate os goals vanilla (vagar, olhar ao redor) continuam funcionando.
  */
@@ -82,7 +86,7 @@ public abstract class TierBrain extends Goal {
             case NORMAL -> new MinionBrain(mob, profile.element());
             case OP -> new EliteBrain(mob, profile.element());
             case SUB_BOSS -> new GuardianBrain(mob, profile.element());
-            case BOSS -> new SovereignBrain(mob, profile.element());
+            case BOSS -> mob instanceof Sovereign ? new SovereignBrain(mob) : new MonarchBrain(mob, profile.element());
         };
         mob.goalSelector.addGoal(0, brain);
         // Todo mob do mod é hostil ao jogador, mesmo que o mob vanilla seja passivo.
@@ -214,7 +218,7 @@ public abstract class TierBrain extends Goal {
     /** Chance de o golpe básico aplicar a passiva do elemento. */
     protected abstract float meleeElementChance();
 
-    /** Multiplicador das recargas (o Soberano acelera por fase). */
+    /** Multiplicador das recargas (o Monarca acelera por fase). */
     protected float cooldownScale() { return 1.0F; }
 
     /** Primeiro tick com um alvo. */
@@ -233,11 +237,17 @@ public abstract class TierBrain extends Goal {
         summon(MobTier.NORMAL, 2);
     }
 
+    /** Fração da vida em que a Fúria começa sozinha (se houver ataques de Fúria). 0 = nunca sozinha. */
+    protected float rageThreshold() { return 0.25F; }
+
+    /** Fúria sem fim: não conta o tempo e nunca entra em exaustão. */
+    protected boolean endlessRage() { return false; }
+
     /** Chamado pelo MobEvents a cada tick do mob vivo: contagem e visual da Fúria + {@link #passiveTick}. */
     public final void baseTick() {
         if (exhaustedTicks > 0) exhaustedTicks--;
         if (rageTicks > 0) {
-            rageTicks--;
+            if (!endlessRage()) rageTicks--;
             rageVisuals();
             if (rageTicks == 0) endRage();
         }
@@ -247,7 +257,7 @@ public abstract class TierBrain extends Goal {
     /** Antes do dano entrar. Devolve true para cancelar o golpe (aparar, invulnerabilidade). */
     public boolean onIncomingDamage(DamageSource source, float amount) { return false; }
 
-    /** Depois que o dano entrou. */
+    /** Depois que o dano entrou e antes da checagem de morte (mudar a vida aqui pode evitar a morte). */
     public void onHurt(DamageSource source, float amount) {}
 
     public void onDeath() {}
@@ -302,7 +312,7 @@ public abstract class TierBrain extends Goal {
             if (current != null) finishMove();
             return;
         }
-        if (!rageMoves.isEmpty() && !rageUsed && mob.getHealth() <= mob.getMaxHealth() * 0.25F) {
+        if (!rageMoves.isEmpty() && !rageUsed && mob.getHealth() <= mob.getMaxHealth() * rageThreshold()) {
             force(new RageStart());
             return;
         }
@@ -337,6 +347,11 @@ public abstract class TierBrain extends Goal {
 
     protected boolean isBusy() {
         return current != null;
+    }
+
+    /** Para o ataque em andamento (as áreas já lançadas no mundo continuam). */
+    protected void interrupt() {
+        if (current != null) finishMove();
     }
 
     protected boolean isRunning(Move move) {
@@ -506,6 +521,17 @@ public abstract class TierBrain extends Goal {
         if (mob.tickCount % 20 == 0) sound(SoundEvents.WARDEN_HEARTBEAT, 2.0F, 0.6F);
     }
 
+    /**
+     * Entra em Fúria agora, sem o rugido padrão (quem chama faz a própria entrada). Os ataques de Fúria ficam
+     * prontos em até 1 s.
+     */
+    protected void beginRage() {
+        rageUsed = true;
+        rageTicks = RAGE_TICKS;
+        onRageStart();
+        for (Move m : rageMoves) m.readyAt = now() + random.nextInt(20);
+    }
+
     private void endRage() {
         exhaustedTicks = EXHAUST_TICKS;
         onRageEnd();
@@ -581,8 +607,9 @@ public abstract class TierBrain extends Goal {
         if (mob.tickCount % 10 != 0) return;
         Component name = bossBarName();
         if (isRaging()) {
-            name = name.copy().append(Component.translatable("message.solomod.rage_bar", (rageTicks + 19) / 20)
-                    .withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+            Component suffix = endlessRage() ? Component.translatable("message.solomod.rage_bar_endless")
+                    : Component.translatable("message.solomod.rage_bar", (rageTicks + 19) / 20);
+            name = name.copy().append(suffix.copy().withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
         }
         bar.setName(name);
         for (ServerPlayer player : level().players()) {

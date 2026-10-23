@@ -23,7 +23,9 @@ O **Solo Mod** transforma o Minecraft num RPG de progressão. O jogador fica mai
 
 Uma arma poderosa não serve a qualquer um. Sem o stat exigido, o elemento e a habilidade ficam **adormecidos** e ela bate como uma arma comum. Para despertá-la, é preciso caçar monstros mais fortes, ganhar XP, subir de Maestria e acertar o elemento certo no inimigo certo.
 
-Os inimigos acompanham: cada **tier** de monstro tem corpo, IA e ataques próprios. Lacaios que caçam em bando, Elites que aparam golpes, Guardiões que teleportam e Soberanos com três fases que **leem o seu estilo de luta**.
+Os inimigos acompanham: cada **tier** de monstro tem corpo, IA e ataques próprios. Lacaios que caçam em bando, Elites que aparam golpes, Guardiões que teleportam e Monarcas com três fases que **leem o seu estilo de luta**.
+
+E acima deles, o **Soberano**: há eras os cinco Monarcas se uniram para derrotá-lo, e ele voltou com o poder de todos. É o chefe final desta versão de testes.
 
 > 🧪 **Status:** MVP jogável. Os sistemas centrais estão prontos; há uma tela de testes (tecla **K**) e o comando `/modtest` para experimentar tudo no modo criativo.
 
@@ -54,22 +56,32 @@ Quatro atributos (**FOR · AGI · INT · VIT**) que mudam dano, velocidade, mana
 <td valign="top">
 
 ### 👹 Monstros por Tier
-**Lacaio → Elite → Guardião → Soberano**, cada um com IA própria, ataques telegrafados e **Fúria** a 25% de vida. **20 criaturas** com modelo e textura exclusivos por elemento.
+**Lacaio → Elite → Guardião → Monarca**, cada um com IA própria, ataques telegrafados e **Fúria** a 25% de vida. **20 criaturas** com modelo e textura exclusivos por elemento.
 
 </td>
 </tr>
 <tr>
 <td valign="top">
 
-### 🎬 Espetáculo e Conquistas
-Números de dano flutuantes, partículas por habilidade, animações, brilho emissivo, **cinemática** na queda do Soberano e aba de **Conquistas do Minecraft** com desafios narrativos para cada chefe final.
+### 👑 O Soberano
+Chefe final gigante, feito de pedaços dos cinco Monarcas. **6 estágios**: a cada um ele agoniza num **close cinemático** e desperta um ataque novo; no último entra em **Fúria até morrer**. Derrotá-lo encerra o mod com **créditos**.
 
 </td>
+<td valign="top">
+
+### 🎬 Espetáculo e Conquistas
+Números de dano flutuantes, partículas por habilidade, animações, brilho emissivo, **cinemáticas** dos chefes e aba de **Conquistas do Minecraft** com desafios narrativos (e duas secretas).
+
+</td>
+</tr>
+<tr>
 <td valign="top">
 
 ### 🧰 Feito para testar
 Tecla **K**: distribua pontos ou gere qualquer arma ou monstro com um clique. Comando `/modtest` para controle total.
 
+</td>
+<td valign="top">
 </td>
 </tr>
 </table>
@@ -81,7 +93,8 @@ Tecla **K**: distribua pontos ou gere qualquer arma ou monstro com um clique. Co
 | **• Lacaio** | Diabrete | Diabrete Ígneo | Diabrete Abissal | Diabrete de Pedra | Sílfide Travessa |
 | **★ Elite** | Duelista Espectral | Executor Infernal | Tritão Corsário | Sentinela de Granito | Valquíria do Vento |
 | **✦ Guardião** | Oráculo | Arauto Solar | Medusa Abissal | Monólito Ancestral | Olho da Tempestade |
-| **♛ Soberano** | Colosso Rei | Rei Vulcânico | Leviatã Coroado | Titã Ancestral | Imperador dos Céus |
+| **♛ Monarca** | Colosso Rei | Rei Vulcânico | Leviatã Coroado | Titã Ancestral | Imperador dos Céus |
+| **☬ Chefe final** | Soberano (todos os elementos) | | | | |
 
 ➡️ Todas as regras, números e ataques: **[docs/GAMEPLAY.md](docs/GAMEPLAY.md)**
 
@@ -212,6 +225,7 @@ Todos exigem OP (nível 2), ou seja, cheats ligados no singleplayer.
 | `/modtest mob <alvos> <tier> <elemento>` | transforma mobs vanilla em mobs do mod |
 | `/modtest unmark <alvos>` | remove o perfil do mob |
 | `/modtest spawn <tier> <elemento>` | invoca a criatura própria do tier |
+| `/modtest sovereign [estágio]` | invoca o Soberano (chefe final), opcionalmente já no estágio 1–6 |
 
 <sub>Classes: `greatsword` `axe` `longsword` `dagger` `rapier` `kunai` `wand` · Tiers: `normal` `op` `sub_boss` `boss` · Elementos: `none` `fire` `water` `earth` `air`</sub>
 

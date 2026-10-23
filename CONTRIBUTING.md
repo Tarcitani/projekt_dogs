@@ -36,7 +36,7 @@ Se a `main` andou enquanto você trabalhava: `git pull origin main` na sua branc
 |---|---|---|
 | `feat/` | funcionalidade nova | `feat/arco-elemental` |
 | `fix/` | correção de bug | `fix/mana-nao-regenera` |
-| `art/` | texturas, modelos, scripts de `tools/` | `art/soberano-agua` |
+| `art/` | texturas, modelos, scripts de `tools/` | `art/monarca-agua` |
 | `docs/` | documentação | `docs/readme-comandos` |
 | `refactor/` | reorganização sem mudar comportamento | `refactor/brains` |
 

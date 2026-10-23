@@ -45,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
  * Cada criatura ainda tem uma forma completamente diferente por elemento (ver tools/mob_variants.py).
  * O combate vem do {@link com.tarcitani.solomod.mob.TierBrain} do tier; aqui ficam só corpo, sons e morte.
  *
- * <p>O Colosso não morre como um mob comum: por {@link #DISSOLVE_TICKS} ticks ele se desintegra
+ * <p>Os chefes BOSS (Monarcas e Soberano) não morrem como um mob comum: por {@link #DISSOLVE_TICKS} ticks se desintegram
  * (o modelo se desfaz em pedaços e vira cinza) enquanto os jogadores veem a cinemática.
  */
 public class TierMob extends Monster {

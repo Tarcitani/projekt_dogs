@@ -19,14 +19,14 @@ public final class MobMeshes {
     private MobMeshes() {}
 
     /** Todas as variantes (nome = textura em textures/entity/&lt;nome&gt;.png). */
-    public static final String[] VARIANTS = {"minion", "elite", "guardian", "sovereign", "minion_fire", "minion_water", "minion_earth", "minion_air", "elite_fire", "elite_water", "elite_earth", "elite_air", "guardian_fire", "guardian_water", "guardian_earth", "guardian_air", "sovereign_fire", "sovereign_water", "sovereign_earth", "sovereign_air"};
+    public static final String[] VARIANTS = {"minion", "elite", "guardian", "monarch", "minion_fire", "minion_water", "minion_earth", "minion_air", "elite_fire", "elite_water", "elite_earth", "elite_air", "guardian_fire", "guardian_water", "guardian_earth", "guardian_air", "monarch_fire", "monarch_water", "monarch_earth", "monarch_air", "sovereign"};
 
     /** Partes decorativas de cada variante, animadas por prefixo em TierMobModel. */
     public static final Map<String, String[]> DECOR = Map.ofEntries(
             Map.entry("minion", new String[]{}),
             Map.entry("elite", new String[]{}),
             Map.entry("guardian", new String[]{}),
-            Map.entry("sovereign", new String[]{}),
+            Map.entry("monarch", new String[]{}),
             Map.entry("minion_fire", new String[]{"flick_crest_1", "flick_crest_2", "flick_crest_3", "flick_jet_l", "flick_jet_r"}),
             Map.entry("minion_water", new String[]{"sway_dorsal", "sway_lure", "pulse_bulb"}),
             Map.entry("minion_earth", new String[]{"pulse_crystal_1", "pulse_crystal_2", "pulse_crystal_3", "orbit_pebbles"}),
@@ -39,17 +39,18 @@ public final class MobMeshes {
             Map.entry("guardian_water", new String[]{"pulse_core", "sway_tent_5", "sway_tent_6", "sway_tent_7", "sway_tent_8"}),
             Map.entry("guardian_earth", new String[]{"spin_ring"}),
             Map.entry("guardian_air", new String[]{"flick_bolt_1", "flick_bolt_2", "flick_bolt_3", "spin_ring_a", "roll_ring_b"}),
-            Map.entry("sovereign_fire", new String[]{"flick_plume", "flick_plume2", "flick_plume3", "flick_shoulder_r", "flick_drip_r", "flick_shoulder_l", "flick_drip_l"}),
-            Map.entry("sovereign_water", new String[]{"sway_beard_1", "sway_beard_2", "sway_beard_3", "sway_beard_4", "sway_pincer_r", "sway_pincer_l"}),
-            Map.entry("sovereign_earth", new String[]{"orbit_pollen"}),
-            Map.entry("sovereign_air", new String[]{"bob_cloud", "flap_wing_l", "flap_wing_r", "flap_helm_l", "flap_helm_r", "spin_halo"}));
+            Map.entry("monarch_fire", new String[]{"flick_plume", "flick_plume2", "flick_plume3", "flick_shoulder_r", "flick_drip_r", "flick_shoulder_l", "flick_drip_l"}),
+            Map.entry("monarch_water", new String[]{"sway_beard_1", "sway_beard_2", "sway_beard_3", "sway_beard_4", "sway_pincer_r", "sway_pincer_l"}),
+            Map.entry("monarch_earth", new String[]{"orbit_pollen"}),
+            Map.entry("monarch_air", new String[]{"bob_cloud", "flap_wing_l", "flap_wing_r", "flap_helm_l", "flap_helm_r", "spin_halo"}),
+            Map.entry("sovereign", new String[]{"flick_lava_r", "flick_plume", "flick_plume2", "flick_plume3", "flap_wing_l", "flap_wing_r", "sway_beard_1", "sway_beard_2", "sway_beard_3", "sway_beard_4", "spin_halo", "sway_pincer_l", "orbit_shards"}));
 
     public static LayerDefinition get(String variant) {
         return switch (variant) {
             case "minion" -> minion();
             case "elite" -> elite();
             case "guardian" -> guardian();
-            case "sovereign" -> sovereign();
+            case "monarch" -> monarch();
             case "minion_fire" -> minionFire();
             case "minion_water" -> minionWater();
             case "minion_earth" -> minionEarth();
@@ -62,10 +63,11 @@ public final class MobMeshes {
             case "guardian_water" -> guardianWater();
             case "guardian_earth" -> guardianEarth();
             case "guardian_air" -> guardianAir();
-            case "sovereign_fire" -> sovereignFire();
-            case "sovereign_water" -> sovereignWater();
-            case "sovereign_earth" -> sovereignEarth();
-            case "sovereign_air" -> sovereignAir();
+            case "monarch_fire" -> monarchFire();
+            case "monarch_water" -> monarchWater();
+            case "monarch_earth" -> monarchEarth();
+            case "monarch_air" -> monarchAir();
+            case "sovereign" -> sovereign();
             default -> throw new IllegalArgumentException("Variante desconhecida: " + variant);
         };
     }
@@ -302,8 +304,8 @@ public final class MobMeshes {
         return LayerDefinition.create(mesh, 128, 64);
     }
 
-    /** Gerado de tools/gen_mob_art.py (sovereign). */
-    private static LayerDefinition sovereign() {
+    /** Gerado de tools/gen_mob_art.py (monarch). */
+    private static LayerDefinition monarch() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
         PartDefinition p_leg_r = root.addOrReplaceChild("leg_r", CubeListBuilder.create()
@@ -1156,8 +1158,8 @@ public final class MobMeshes {
         return LayerDefinition.create(mesh, 128, 128);
     }
 
-    /** Gerado de tools/gen_mob_art.py (sovereign_fire). */
-    private static LayerDefinition sovereignFire() {
+    /** Gerado de tools/gen_mob_art.py (monarch_fire). */
+    private static LayerDefinition monarchFire() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
         PartDefinition p_leg_r = root.addOrReplaceChild("leg_r", CubeListBuilder.create()
@@ -1249,8 +1251,8 @@ public final class MobMeshes {
         return LayerDefinition.create(mesh, 256, 128);
     }
 
-    /** Gerado de tools/gen_mob_art.py (sovereign_water). */
-    private static LayerDefinition sovereignWater() {
+    /** Gerado de tools/gen_mob_art.py (monarch_water). */
+    private static LayerDefinition monarchWater() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
         PartDefinition p_leg_r = root.addOrReplaceChild("leg_r", CubeListBuilder.create()
@@ -1345,8 +1347,8 @@ public final class MobMeshes {
         return LayerDefinition.create(mesh, 256, 128);
     }
 
-    /** Gerado de tools/gen_mob_art.py (sovereign_earth). */
-    private static LayerDefinition sovereignEarth() {
+    /** Gerado de tools/gen_mob_art.py (monarch_earth). */
+    private static LayerDefinition monarchEarth() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
         PartDefinition p_leg_r = root.addOrReplaceChild("leg_r", CubeListBuilder.create()
@@ -1442,8 +1444,8 @@ public final class MobMeshes {
         return LayerDefinition.create(mesh, 256, 128);
     }
 
-    /** Gerado de tools/gen_mob_art.py (sovereign_air). */
-    private static LayerDefinition sovereignAir() {
+    /** Gerado de tools/gen_mob_art.py (monarch_air). */
+    private static LayerDefinition monarchAir() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
         PartDefinition p_leg_r = root.addOrReplaceChild("leg_r", CubeListBuilder.create()
@@ -1526,5 +1528,158 @@ public final class MobMeshes {
                 .texOffs(0, 110).addBox(-1F, 7F, -1F, 2F, 3F, 2F),
                 PartPose.offset(0F, 13F, 0F));
         return LayerDefinition.create(mesh, 256, 128);
+    }
+
+    /** Gerado de tools/gen_mob_art.py (sovereign). */
+    private static LayerDefinition sovereign() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        PartDefinition p_leg_r = root.addOrReplaceChild("leg_r", CubeListBuilder.create()
+                .texOffs(0, 92).addBox(-4.5F, 0F, -4.5F, 9F, 10F, 9F),
+                PartPose.offset(-7F, 6F, 0F));
+        PartDefinition p_shin_r = p_leg_r.addOrReplaceChild("shin_r", CubeListBuilder.create()
+                .texOffs(188, 70).addBox(-5F, 0F, -5F, 10F, 9F, 10F)
+                .texOffs(68, 128).addBox(-6F, 6F, -7F, 12F, 3F, 12F),
+                PartPose.offset(0F, 9F, 0F));
+        PartDefinition p_flick_lava_r = p_shin_r.addOrReplaceChild("flick_lava_r", CubeListBuilder.create()
+                .texOffs(148, 155).addBox(-1.5F, 0F, -1F, 3F, 5F, 1F),
+                PartPose.offset(0F, 2F, -5F));
+        PartDefinition p_leg_l = root.addOrReplaceChild("leg_l", CubeListBuilder.create()
+                .texOffs(36, 92).addBox(-4.5F, 0F, -4.5F, 9F, 10F, 9F)
+                .texOffs(156, 128).addBox(-5F, -1F, -5F, 10F, 3F, 10F),
+                PartPose.offset(7F, 6F, 0F));
+        PartDefinition p_shin_l = p_leg_l.addOrReplaceChild("shin_l", CubeListBuilder.create()
+                .texOffs(136, 92).addBox(-4.5F, 0F, -4.5F, 9F, 9F, 9F)
+                .texOffs(172, 92).addBox(-6F, 6F, -8F, 12F, 3F, 14F)
+                .texOffs(72, 164).addBox(4F, 7F, -2F, 4F, 2F, 2F),
+                PartPose.offset(0F, 9F, 0F));
+        PartDefinition p_body = root.addOrReplaceChild("body", CubeListBuilder.create()
+                .texOffs(72, 92).addBox(-10F, -4F, -6F, 20F, 6F, 12F)
+                .texOffs(0, 128).addBox(-10.5F, -4.5F, -6.5F, 21F, 2F, 13F)
+                .texOffs(64, 143).addBox(-7F, 2F, -6.5F, 14F, 10F, 1F),
+                PartPose.offset(0F, 6F, 0F));
+        PartDefinition p_chest = p_body.addOrReplaceChild("chest", CubeListBuilder.create()
+                .texOffs(0, 0).addBox(-13F, -26F, -9F, 26F, 26F, 18F)
+                .texOffs(162, 143).addBox(-9F, -12F, -9.5F, 18F, 8F, 1F)
+                .texOffs(228, 143).addBox(-4F, -22F, -10F, 8F, 8F, 1F)
+                .texOffs(84, 164).addBox(-9F, -24F, -9.5F, 3F, 3F, 1F)
+                .texOffs(92, 164).addBox(6F, -24F, -9.5F, 3F, 3F, 1F)
+                .texOffs(100, 164).addBox(-9F, -15F, -9.5F, 3F, 3F, 1F)
+                .texOffs(108, 164).addBox(6F, -15F, -9.5F, 3F, 3F, 1F)
+                .texOffs(94, 143).addBox(-13F, -30F, -1F, 7F, 4F, 7F),
+                PartPose.offsetAndRotation(0F, -4F, 0F, 0.15F, 0F, 0F));
+        PartDefinition p_flick_plume = p_chest.addOrReplaceChild("flick_plume", CubeListBuilder.create()
+                .texOffs(0, 143).addBox(-3F, -6F, -3F, 6F, 6F, 6F),
+                PartPose.offset(-9.5F, -30F, 2.5F));
+        PartDefinition p_flick_plume2 = p_flick_plume.addOrReplaceChild("flick_plume2", CubeListBuilder.create()
+                .texOffs(0, 155).addBox(-2F, -5F, -2F, 4F, 5F, 4F),
+                PartPose.offset(0F, -6F, 0F));
+        PartDefinition p_flick_plume3 = p_flick_plume2.addOrReplaceChild("flick_plume3", CubeListBuilder.create()
+                .texOffs(156, 155).addBox(-1F, -4F, -1F, 2F, 4F, 2F),
+                PartPose.offset(0F, -5F, 0F));
+        PartDefinition p_canopy = p_chest.addOrReplaceChild("canopy", CubeListBuilder.create()
+                .texOffs(0, 111).addBox(-6F, -7F, -5F, 12F, 7F, 10F)
+                .texOffs(200, 143).addBox(-4F, -10F, -3F, 8F, 3F, 6F)
+                .texOffs(148, 164).addBox(-5F, -4F, -5.5F, 2F, 2F, 1F)
+                .texOffs(154, 164).addBox(3F, -6F, -5.5F, 2F, 2F, 1F)
+                .texOffs(164, 155).addBox(-1F, 0F, -1F, 2F, 4F, 2F),
+                PartPose.offset(9F, -26F, 2F));
+        PartDefinition p_flap_wing_l = p_chest.addOrReplaceChild("flap_wing_l", CubeListBuilder.create()
+                .texOffs(174, 0).addBox(0F, -20F, 0F, 34F, 26F, 0F)
+                .texOffs(180, 155).addBox(0F, -20.5F, -1F, 34F, 2F, 2F),
+                PartPose.offset(7F, -22F, 9F));
+        PartDefinition p_flap_wing_r = p_chest.addOrReplaceChild("flap_wing_r", CubeListBuilder.create()
+                .texOffs(0, 44).addBox(-34F, -20F, 0F, 34F, 26F, 0F)
+                .texOffs(0, 164).addBox(-34F, -20.5F, -1F, 34F, 2F, 2F),
+                PartPose.offset(-7F, -22F, 9F));
+        PartDefinition p_cape = p_chest.addOrReplaceChild("cape", CubeListBuilder.create()
+                .texOffs(88, 0).addBox(-11F, 0F, 0F, 22F, 28F, 1F),
+                PartPose.offset(0F, -25F, 9F));
+        PartDefinition p_head = p_chest.addOrReplaceChild("head", CubeListBuilder.create()
+                .texOffs(0, 70).addBox(-5.5F, -10F, -6F, 11F, 11F, 11F),
+                PartPose.offset(0F, -26F, -6F));
+        PartDefinition p_jaw = p_head.addOrReplaceChild("jaw", CubeListBuilder.create()
+                .texOffs(196, 128).addBox(-5F, 0F, -5.5F, 10F, 3F, 9F),
+                PartPose.offset(0F, 1F, -1F));
+        PartDefinition p_sway_beard_1 = p_jaw.addOrReplaceChild("sway_beard_1", CubeListBuilder.create()
+                .texOffs(24, 143).addBox(-1F, 0F, -1F, 2F, 10F, 2F)
+                .texOffs(116, 164).addBox(-1F, 10F, -1F, 2F, 2F, 2F),
+                PartPose.offset(-4F, 3F, -4.5F));
+        PartDefinition p_sway_beard_2 = p_jaw.addOrReplaceChild("sway_beard_2", CubeListBuilder.create()
+                .texOffs(32, 143).addBox(-1F, 0F, -1F, 2F, 10F, 2F)
+                .texOffs(124, 164).addBox(-1F, 10F, -1F, 2F, 2F, 2F),
+                PartPose.offset(-1.5F, 3F, -4.5F));
+        PartDefinition p_sway_beard_3 = p_jaw.addOrReplaceChild("sway_beard_3", CubeListBuilder.create()
+                .texOffs(40, 143).addBox(-1F, 0F, -1F, 2F, 10F, 2F)
+                .texOffs(132, 164).addBox(-1F, 10F, -1F, 2F, 2F, 2F),
+                PartPose.offset(1.5F, 3F, -4.5F));
+        PartDefinition p_sway_beard_4 = p_jaw.addOrReplaceChild("sway_beard_4", CubeListBuilder.create()
+                .texOffs(48, 143).addBox(-1F, 0F, -1F, 2F, 10F, 2F)
+                .texOffs(140, 164).addBox(-1F, 10F, -1F, 2F, 2F, 2F),
+                PartPose.offset(4F, 3F, -4.5F));
+        PartDefinition p_crown = p_head.addOrReplaceChild("crown", CubeListBuilder.create()
+                .texOffs(112, 111).addBox(-6.5F, -2F, -7F, 13F, 3F, 13F)
+                .texOffs(64, 155).addBox(-6F, -8F, -6.5F, 2F, 6F, 2F)
+                .texOffs(146, 143).addBox(-3.5F, -10F, -7F, 2F, 8F, 2F)
+                .texOffs(56, 143).addBox(-1F, -12F, -7F, 2F, 10F, 2F)
+                .texOffs(154, 143).addBox(1.5F, -10F, -7F, 2F, 8F, 2F)
+                .texOffs(72, 155).addBox(4F, -8F, -6.5F, 2F, 6F, 2F),
+                PartPose.offset(0F, -10F, 0F));
+        PartDefinition p_spin_halo = p_head.addOrReplaceChild("spin_halo", CubeListBuilder.create()
+                .texOffs(160, 164).addBox(-9F, 0F, -9F, 18F, 1F, 1F)
+                .texOffs(198, 164).addBox(-9F, 0F, 8F, 18F, 1F, 1F)
+                .texOffs(44, 111).addBox(-9F, 0F, -8F, 1F, 1F, 16F)
+                .texOffs(78, 111).addBox(8F, 0F, -8F, 1F, 1F, 16F),
+                PartPose.offset(0F, -17F, 0F));
+        PartDefinition p_horn_r = p_head.addOrReplaceChild("horn_r", CubeListBuilder.create()
+                .texOffs(16, 155).addBox(-8F, -2F, -2F, 8F, 4F, 4F),
+                PartPose.offsetAndRotation(-5.5F, -7F, -1F, 0F, 0F, -0.4F));
+        PartDefinition p_horn_r2 = p_horn_r.addOrReplaceChild("horn_r2", CubeListBuilder.create()
+                .texOffs(122, 143).addBox(-1.5F, -8F, -1.5F, 3F, 8F, 3F),
+                PartPose.offsetAndRotation(-8F, 0F, 0F, 0F, 0F, 0.9F));
+        PartDefinition p_horn_l = p_head.addOrReplaceChild("horn_l", CubeListBuilder.create()
+                .texOffs(40, 155).addBox(0F, -2F, -2F, 8F, 4F, 4F),
+                PartPose.offsetAndRotation(5.5F, -7F, -1F, 0F, 0F, 0.4F));
+        PartDefinition p_horn_l2 = p_horn_l.addOrReplaceChild("horn_l2", CubeListBuilder.create()
+                .texOffs(134, 143).addBox(-1.5F, -8F, -1.5F, 3F, 8F, 3F),
+                PartPose.offsetAndRotation(8F, 0F, 0F, 0F, 0F, -0.9F));
+        PartDefinition p_arm_r = p_chest.addOrReplaceChild("arm_r", CubeListBuilder.create()
+                .texOffs(134, 0).addBox(-5F, -2F, -5F, 10F, 17F, 10F),
+                PartPose.offset(-16F, -22F, 0F));
+        PartDefinition p_pauldron_r = p_arm_r.addOrReplaceChild("pauldron_r", CubeListBuilder.create()
+                .texOffs(44, 70).addBox(-7F, -5F, -6F, 12F, 8F, 12F)
+                .texOffs(80, 155).addBox(-4F, -10F, -1F, 2F, 5F, 2F)
+                .texOffs(172, 155).addBox(0F, -9F, -1F, 2F, 4F, 2F),
+                PartPose.offset(0F, 0F, 0F));
+        PartDefinition p_forearm_r = p_arm_r.addOrReplaceChild("forearm_r", CubeListBuilder.create()
+                .texOffs(104, 44).addBox(-5.5F, 0F, -5.5F, 11F, 14F, 11F)
+                .texOffs(164, 111).addBox(-6F, 2F, -6F, 12F, 4F, 12F),
+                PartPose.offset(0F, 15F, 0F));
+        PartDefinition p_fist_r = p_forearm_r.addOrReplaceChild("fist_r", CubeListBuilder.create()
+                .texOffs(148, 44).addBox(-6.5F, 0F, -6.5F, 13F, 10F, 13F),
+                PartPose.offset(0F, 14F, 0F));
+        PartDefinition p_arm_l = p_chest.addOrReplaceChild("arm_l", CubeListBuilder.create()
+                .texOffs(68, 44).addBox(-4.5F, -2F, -4.5F, 9F, 17F, 9F),
+                PartPose.offset(16F, -22F, 0F));
+        PartDefinition p_pauldron_l = p_arm_l.addOrReplaceChild("pauldron_l", CubeListBuilder.create()
+                .texOffs(92, 70).addBox(-5F, -5F, -6F, 12F, 7F, 12F),
+                PartPose.offset(0F, 0F, 0F));
+        PartDefinition p_forearm_l = p_arm_l.addOrReplaceChild("forearm_l", CubeListBuilder.create()
+                .texOffs(200, 44).addBox(-5F, 0F, -5F, 10F, 13F, 10F),
+                PartPose.offset(0F, 15F, 0F));
+        PartDefinition p_fist_l = p_forearm_l.addOrReplaceChild("fist_l", CubeListBuilder.create()
+                .texOffs(140, 70).addBox(-5F, 0F, -11F, 10F, 5F, 14F),
+                PartPose.offset(0F, 13F, 0F));
+        PartDefinition p_sway_pincer_l = p_fist_l.addOrReplaceChild("sway_pincer_l", CubeListBuilder.create()
+                .texOffs(116, 128).addBox(-4F, 0F, -10F, 8F, 3F, 12F),
+                PartPose.offset(0F, 5F, 0F));
+        PartDefinition p_orbit_shards = root.addOrReplaceChild("orbit_shards", CubeListBuilder.create()
+                .texOffs(88, 155).addBox(22F, 0F, 0F, 3F, 3F, 3F)
+                .texOffs(100, 155).addBox(-25F, 4F, 4F, 3F, 3F, 3F)
+                .texOffs(112, 155).addBox(4F, -3F, 22F, 3F, 3F, 3F)
+                .texOffs(124, 155).addBox(-6F, 2F, -25F, 3F, 3F, 3F)
+                .texOffs(136, 155).addBox(15F, 6F, -18F, 3F, 3F, 3F),
+                PartPose.offset(0F, -12F, 0F));
+        return LayerDefinition.create(mesh, 256, 256);
     }
 }

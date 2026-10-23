@@ -1,19 +1,19 @@
 {
-  "parent": "solomod:root",
+  "parent": "solomod:broken_seal",
   "display": {
     "icon": {
-      "id": "solomod:sovereign_earth_spawn_egg"
+      "id": "solomod:sovereign_spawn_egg"
     },
     "title": {
-      "translate": "advancements.solomod.defeat_sovereign_earth.title"
+      "translate": "advancements.solomod.defeat_sovereign.title"
     },
     "description": {
-      "translate": "advancements.solomod.defeat_sovereign_earth.description"
+      "translate": "advancements.solomod.defeat_sovereign.description"
     },
     "frame": "challenge",
     "show_toast": true,
     "announce_to_chat": true,
-    "hidden": false
+    "hidden": true
   },
   "criteria": {
     "defeated": {
@@ -24,6 +24,6 @@
     ["defeated"]
   ],
   "rewards": {
-    "experience": 150
+    "experience": 2000
   }
 }

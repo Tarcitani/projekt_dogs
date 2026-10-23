@@ -27,8 +27,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Itens do mod: uma arma por classe (solomod:greatsword, solomod:dagger...), um ovo por criatura e elemento
- * e a aba própria do mod no inventário criativo.
+ * Itens do mod: uma arma por classe (solomod:greatsword, solomod:dagger...), um ovo por criatura e elemento,
+ * o ovo do Soberano e a aba própria do mod no inventário criativo.
  */
 public final class ModItems {
     private ModItems() {}
@@ -39,6 +39,9 @@ public final class ModItems {
     public static final Map<WeaponClass, DeferredItem<ModularWeaponItem>> WEAPONS = new EnumMap<>(WeaponClass.class);
     /** Ovos: tier -> elemento -> item. O de elemento NONE nasce sem elemento. */
     public static final Map<MobTier, Map<ElementType, DeferredItem<DeferredSpawnEggItem>>> EGGS = new EnumMap<>(MobTier.class);
+    /** O Soberano não tem elemento: um ovo só (preto com manchas douradas). */
+    public static final DeferredItem<DeferredSpawnEggItem> SOVEREIGN_EGG = ITEMS.register("sovereign_spawn_egg",
+            () -> new DeferredSpawnEggItem(ModEntities.SOVEREIGN, 0x1A1020, 0xE8C547, new Item.Properties()));
 
     static {
         for (WeaponClass wc : WeaponClass.values()) {
@@ -47,7 +50,7 @@ public final class ModItems {
         egg(MobTier.NORMAL, "minion", ModEntities.MINION, 0x5B2A4A);
         egg(MobTier.OP, "elite", ModEntities.ELITE, 0x262433);
         egg(MobTier.SUB_BOSS, "guardian", ModEntities.GUARDIAN, 0x173A4D);
-        egg(MobTier.BOSS, "sovereign", ModEntities.SOVEREIGN, 0x4A4540);
+        egg(MobTier.BOSS, "monarch", ModEntities.MONARCH, 0x4A4540);
     }
 
     /** Ovo com o elemento gravado nos dados da entidade (lido por TierMob.readAdditionalSaveData). */
@@ -96,6 +99,7 @@ public final class ModItems {
                 for (MobTier tier : MobTier.values()) {
                     EGGS.get(tier).values().forEach(egg -> output.accept(new ItemStack(egg.get())));
                 }
+                output.accept(new ItemStack(SOVEREIGN_EGG.get()));
             })
             .build());
 

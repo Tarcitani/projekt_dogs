@@ -1,5 +1,5 @@
 """
-Variantes elementais das 4 criaturas (usadas por gen_mob_art.py).
+Variantes elementais das 4 criaturas e o modelo do Soberano (usados por gen_mob_art.py).
 
 Cada variante é um modelo COMPLETAMENTE diferente (silhueta, peças e materiais próprios), mas reaproveita
 os nomes das partes que a animação do tier conhece (body, head, arm_r, leg_l, tail, sword, cape, orb_1...).
@@ -293,9 +293,9 @@ def guardian_air():
 
 # ============================================================================================ SOBERANO
 
-def sovereign_fire():
+def monarch_fire():
     """Rei Vulcânico: o tronco é um vulcão com pluma de lava, coroa derretida, punhos de magma e pilares de fogo."""
-    m = Model("sovereign_fire", 256)
+    m = Model("monarch_fire", 256)
     for side, x in (("r", -7), ("l", 7)):
         m.part(f"leg_{side}", "root", (x, 6, 0), C(-4.5, 0, -4.5, 9, 10, 9, "magma"))
         m.part(f"shin_{side}", f"leg_{side}", (0, 9, 0), C(-5, 0, -5, 10, 9, 10, "char"), C(-6, 6, -7, 12, 3, 12, "char"))
@@ -321,9 +321,9 @@ def sovereign_fire():
     return m
 
 
-def sovereign_water():
+def monarch_water():
     """Leviatã Coroado: rei-kraken de escamas, barba de tentáculos, coroa de coral, pinças de caranguejo e capa de algas."""
-    m = Model("sovereign_water", 256)
+    m = Model("monarch_water", 256)
     for side, x in (("r", -7), ("l", 7)):
         m.part(f"leg_{side}", "root", (x, 6, 0), C(-4, 0, -4, 8, 10, 8, "scales"))
         m.part(f"shin_{side}", f"leg_{side}", (0, 9, 0), C(-4.5, 0, -4.5, 9, 9, 9, "scales"), C(-5.5, 6, -8, 11, 3, 13, "fin"))
@@ -348,9 +348,9 @@ def sovereign_water():
     return m
 
 
-def sovereign_earth():
+def monarch_earth():
     """Titã Ancestral: árvore colossal de casca e musgo, copa frondosa com frutos de âmbar e coração de cristal."""
-    m = Model("sovereign_earth", 256)
+    m = Model("monarch_earth", 256)
     for side, x in (("r", -7), ("l", 7)):
         m.part(f"leg_{side}", "root", (x, 6, 0), C(-4, 0, -4, 8, 10, 8, "bark"))
         m.part(f"shin_{side}", f"leg_{side}", (0, 9, 0), C(-4.5, 0, -4.5, 9, 9, 9, "bark"), C(-6, 6, -8, 12, 3, 14, "bark"))
@@ -377,9 +377,9 @@ def sovereign_earth():
     return m
 
 
-def sovereign_air():
+def monarch_air():
     """Imperador dos Céus: gigante de armadura prateada com asas imensas, elmo alado, auréola de vento e trono de nuvem."""
-    m = Model("sovereign_air", 256)
+    m = Model("monarch_air", 256)
     for side, x in (("r", -6), ("l", 6)):
         m.part(f"leg_{side}", "root", (x, 6, 0), C(-3.5, 0, -3.5, 7, 10, 7, "silver"))
         m.part(f"shin_{side}", f"leg_{side}", (0, 9, 0), C(-4, 0, -4, 8, 9, 8, "silver"), C(-4.5, 6, -6, 9, 3, 10, "steel"))
@@ -404,9 +404,79 @@ def sovereign_air():
     return m
 
 
+# ============================================================================================ O SOBERANO
+
+def sovereign():
+    """O Soberano: o gigante que tomou o poder dos cinco Monarcas. Cada pedaço do corpo vem de um deles:
+    braço de pedra e chifres do Colosso Rei, perna de magma e pluma de vulcão do Rei Vulcânico, pinça e
+    barba de tentáculos do Leviatã Coroado, perna de raízes e copa do Titã Ancestral, asas e auréola do
+    Imperador dos Céus. A coroa tem uma ponta de cada Monarca e cinco fragmentos orbitam em volta dele.
+    Não tem variante elemental (o renderer desenha o brilho trocando de cor entre os elementos)."""
+    m = Model("sovereign", 256)
+    # Pernas: direita de magma (Rei Vulcânico), esquerda de casca e raízes (Titã Ancestral).
+    m.part("leg_r", "root", (-7, 6, 0), C(-4.5, 0, -4.5, 9, 10, 9, "magma"))
+    m.part("shin_r", "leg_r", (0, 9, 0), C(-5, 0, -5, 10, 9, 10, "char"), C(-6, 6, -7, 12, 3, 12, "char"))
+    m.part("flick_lava_r", "shin_r", (0, 2, -5), C(-1.5, 0, -1, 3, 5, 1, "flame"))
+    m.part("leg_l", "root", (7, 6, 0), C(-4.5, 0, -4.5, 9, 10, 9, "bark"), C(-5, -1, -5, 10, 3, 10, "moss"))
+    m.part("shin_l", "leg_l", (0, 9, 0), C(-4.5, 0, -4.5, 9, 9, 9, "bark"), C(-6, 6, -8, 12, 3, 14, "bark"),
+           C(4, 7, -2, 4, 2, 2, "bark"))
+    # Cintura de obsidiana com cinto de ouro e saiote de algas (Leviatã Coroado).
+    m.part("body", "root", (0, 6, 0), C(-10, -4, -6, 20, 6, 12, "obsidian"), C(-10.5, -4.5, -6.5, 21, 2, 13, "gold"),
+           C(-7, 2, -6.5, 14, 10, 1, "kelp"))
+    # Peito: obsidiana com o núcleo e um fragmento de cada Monarca elemental cravado em volta dele.
+    m.part("chest", "body", (0, -4, 0),
+           C(-13, -26, -9, 26, 26, 18, "obsidian"),
+           C(-9, -12, -9.5, 18, 8, 1, "rock"),
+           C(-4, -22, -10, 8, 8, 1, "gem", "core"),
+           C(-9, -24, -9.5, 3, 3, 1, "flame"), C(6, -24, -9.5, 3, 3, 1, "pearl"),
+           C(-9, -15, -9.5, 3, 3, 1, "amber"), C(6, -15, -9.5, 3, 3, 1, "lightning"),
+           C(-13, -30, -1, 7, 4, 7, "char"),
+           rot=(0.15, 0, 0))
+    # Ombro direito: o vulcão do Rei Vulcânico. Ombro esquerdo: a copa do Titã Ancestral.
+    m.part("flick_plume", "chest", (-9.5, -30, 2.5), C(-3, -6, -3, 6, 6, 6, "flame"))
+    m.part("flick_plume2", "flick_plume", (0, -6, 0), C(-2, -5, -2, 4, 5, 4, "flame"))
+    m.part("flick_plume3", "flick_plume2", (0, -5, 0), C(-1, -4, -1, 2, 4, 2, "ember"))
+    m.part("canopy", "chest", (9, -26, 2), C(-6, -7, -5, 12, 7, 10, "leaf"), C(-4, -10, -3, 8, 3, 6, "leaf"),
+           C(-5, -4, -5.5, 2, 2, 1, "amber"), C(3, -6, -5.5, 2, 2, 1, "amber"), C(-1, 0, -1, 2, 4, 2, "bark"))
+    # Asas do Imperador dos Céus e capa.
+    m.part("flap_wing_l", "chest", (7, -22, 9), C(0, -20, 0, 34, 26, 0, "feather"), C(0, -20.5, -1, 34, 2, 2, "silver"))
+    m.part("flap_wing_r", "chest", (-7, -22, 9), C(-34, -20, 0, 34, 26, 0, "feather"), C(-34, -20.5, -1, 34, 2, 2, "silver"))
+    m.part("cape", "chest", (0, -25, 9), C(-11, 0, 0, 22, 28, 1, "cape"))
+    # Cabeça do Colosso com a barba de tentáculos do Leviatã.
+    m.part("head", "chest", (0, -26, -6), C(-5.5, -10, -6, 11, 11, 11, "rock", "colossus_face"))
+    m.part("jaw", "head", (0, 1, -1), C(-5, 0, -5.5, 10, 3, 9, "rock", "teeth"))
+    for i, x in enumerate((-4, -1.5, 1.5, 4), start=1):
+        m.part(f"sway_beard_{i}", "jaw", (x, 3, -4.5), C(-1, 0, -1, 2, 10, 2, "deep"), C(-1, 10, -1, 2, 2, 2, "pearl"))
+    # Coroa das cinco coroas: uma ponta de cada Monarca (fogo, coral, ouro, âmbar, raio).
+    m.part("crown", "head", (0, -10, 0),
+           C(-6.5, -2, -7, 13, 3, 13, "gold", "crown_gems"),
+           C(-6, -8, -6.5, 2, 6, 2, "flame"), C(-3.5, -10, -7, 2, 8, 2, "coral"), C(-1, -12, -7, 2, 10, 2, "gold"),
+           C(1.5, -10, -7, 2, 8, 2, "amber"), C(4, -8, -6.5, 2, 6, 2, "lightning"))
+    m.part("spin_halo", "head", (0, -17, 0), *ring(9, "wind"))
+    for side, sx in (("r", -1), ("l", 1)):
+        m.part(f"horn_{side}", "head", (5.5 * sx, -7, -1), C(-8 if sx < 0 else 0, -2, -2, 8, 4, 4, "bone"), rot=(0, 0, 0.4 * sx))
+        m.part(f"horn_{side}2", f"horn_{side}", (8 * sx, 0, 0), C(-1.5, -8, -1.5, 3, 8, 3, "bone"), rot=(0, 0, -0.9 * sx))
+    # Braço direito: pedra e ouro do Colosso Rei.
+    m.part("arm_r", "chest", (-16, -22, 0), C(-5, -2, -5, 10, 17, 10, "rock"))
+    m.part("pauldron_r", "arm_r", (0, 0, 0), C(-7, -5, -6, 12, 8, 12, "obsidian"),
+           C(-4, -10, -1, 2, 5, 2, "bone"), C(0, -9, -1, 2, 4, 2, "bone"))
+    m.part("forearm_r", "arm_r", (0, 15, 0), C(-5.5, 0, -5.5, 11, 14, 11, "rock"), C(-6, 2, -6, 12, 4, 12, "gold"))
+    m.part("fist_r", "forearm_r", (0, 14, 0), C(-6.5, 0, -6.5, 13, 10, 13, "obsidian"))
+    # Braço esquerdo: escamas e pinça do Leviatã Coroado.
+    m.part("arm_l", "chest", (16, -22, 0), C(-4.5, -2, -4.5, 9, 17, 9, "scales"))
+    m.part("pauldron_l", "arm_l", (0, 0, 0), C(-5, -5, -6, 12, 7, 12, "coral"))
+    m.part("forearm_l", "arm_l", (0, 15, 0), C(-5, 0, -5, 10, 13, 10, "scales"))
+    m.part("fist_l", "forearm_l", (0, 13, 0), C(-5, 0, -11, 10, 5, 14, "coral"))
+    m.part("sway_pincer_l", "fist_l", (0, 5, 0), C(-4, 0, -10, 8, 3, 12, "coral"))
+    # Os cinco fragmentos dos Monarcas orbitando o corpo.
+    m.part("orbit_shards", "root", (0, -12, 0), C(22, 0, 0, 3, 3, 3, "flame"), C(-25, 4, 4, 3, 3, 3, "pearl"),
+           C(4, -3, 22, 3, 3, 3, "amber"), C(-6, 2, -25, 3, 3, 3, "lightning"), C(15, 6, -18, 3, 3, 3, "gem"))
+    return m
+
+
 VARIANTS = [
     minion_fire, minion_water, minion_earth, minion_air,
     elite_fire, elite_water, elite_earth, elite_air,
     guardian_fire, guardian_water, guardian_earth, guardian_air,
-    sovereign_fire, sovereign_water, sovereign_earth, sovereign_air,
+    monarch_fire, monarch_water, monarch_earth, monarch_air,
 ]

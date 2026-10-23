@@ -191,7 +191,9 @@ if __name__ == "__main__":
         "textures": {"layer0": "solomod:item/dagger_thrown"},
     })
     # Ovos: um por criatura e elemento ("minion_spawn_egg" = sem elemento, "minion_fire_spawn_egg"...).
-    for egg in ("minion", "elite", "guardian", "sovereign"):
+    for egg in ("minion", "elite", "guardian", "monarch"):
         for suffix in ("",) + tuple("_" + e for e in ELEMENTS):
             dump(f"{egg}{suffix}_spawn_egg", {"parent": "minecraft:item/template_spawn_egg"})
+    # O Soberano não tem elemento: um ovo só.
+    dump("sovereign_spawn_egg", {"parent": "minecraft:item/template_spawn_egg"})
     print("ok")

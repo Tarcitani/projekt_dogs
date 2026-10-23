@@ -2,13 +2,13 @@
   "parent": "solomod:root",
   "display": {
     "icon": {
-      "id": "solomod:sovereign_fire_spawn_egg"
+      "id": "solomod:monarch_fire_spawn_egg"
     },
     "title": {
-      "translate": "advancements.solomod.defeat_sovereign_fire.title"
+      "translate": "advancements.solomod.defeat_monarch_fire.title"
     },
     "description": {
-      "translate": "advancements.solomod.defeat_sovereign_fire.description"
+      "translate": "advancements.solomod.defeat_monarch_fire.description"
     },
     "frame": "challenge",
     "show_toast": true,

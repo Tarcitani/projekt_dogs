@@ -7,143 +7,264 @@ import com.tarcitani.solomod.entity.TierMob;
 import com.tarcitani.solomod.network.CinematicPayload;
 import com.tarcitani.solomod.network.ModNetwork;
 import com.tarcitani.solomod.skill.SkillVfx;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Soberano (BOSS): gigante, lento e implacável. Luta em três fases e se adapta ao jogador.
+ * O Soberano: chefe final da versão de testes. Há eras os cinco Monarcas se uniram para derrotá-lo; ele
+ * voltou com o poder de todos eles.
  *
- * <p><b>Fases</b> (por vida): 1 acima de 60% · 2 até 25% · 3 abaixo. A troca para a fase 2 é um rugido
- * invulnerável de 2 s que arremessa todos em volta e convoca 2 Elites. A fase 3 começa com a FÚRIA
- * (ver {@link TierBrain}): barra vermelha, tela escura, aura que queima quem fica colado, 4 Lacaios e
- * 20 s de ataques exclusivos — Marcha Sísmica, Meteoro Colossal, Investida Sem Fim e Anel de Erupções.
+ * <p><b>Estágios</b>: a vida é dividida em 6 faixas iguais (barra com 6 marcas). Cada vez que o jogador
+ * termina uma faixa, o Soberano <b>agoniza</b> por 4 s: fica invulnerável e parado, os jogadores ganham um
+ * close cinemático no rosto dele e ele desperta o poder de mais um Monarca (um ataque novo). Nenhum golpe
+ * pula estágio: a vida para no limite da faixa atual, mesmo num golpe fatal (só {@code /kill} ignora).
  *
- * <p><b>Invocação</b>: em qualquer fase convoca 3 Lacaios do seu elemento (até 6 vivos por perto).
+ * <table>
+ *   <tr><th>Estágio</th><th>Vida</th><th>Poder despertado</th><th>Ataque liberado</th></tr>
+ *   <tr><td>1</td><td>100–83%</td><td>Colosso Rei</td><td>Punho do Colosso</td></tr>
+ *   <tr><td>2</td><td>83–67%</td><td>Rei Vulcânico</td><td>Erupção</td></tr>
+ *   <tr><td>3</td><td>67–50%</td><td>Leviatã Coroado</td><td>Maremoto</td></tr>
+ *   <tr><td>4</td><td>50–33%</td><td>Titã Ancestral</td><td>Raízes Ancestrais</td></tr>
+ *   <tr><td>5</td><td>33–17%</td><td>Imperador dos Céus</td><td>Tempestade</td></tr>
+ *   <tr><td>6</td><td>17–0%</td><td>todos</td><td>Convergência + FÚRIA sem fim</td></tr>
+ * </table>
+ * Os ataques se acumulam: no estágio 5 ele usa os cinco. No 6 entra em Fúria até morrer (+35% de dano,
+ * -35% de dano recebido, recargas e pausas menores) e ganha a Convergência.
  *
- * <p><b>Leitura do jogador</b>: conta golpes de perto e de longe (com decaimento). Quem luta à distância
- * atrai Vórtice e Chuva Elemental; quem cola atrai Golpe Sísmico e Sopro.
- *
- * <p><b>Ataques</b>:
+ * <p><b>Ataques</b> (todos telegrafados):
  * <ul>
- *   <li>Golpe Sísmico: ergue os braços e esmaga; onda de choque no chão — pule para esquivar.</li>
- *   <li>Chuva Elemental: marca círculos no chão (mais por fase) que explodem após um tempo.</li>
- *   <li>Investida Devastadora: 1/2/3 investidas seguidas; bater numa parede o deixa atordoado.</li>
- *   <li>Vórtice (fase 2+): puxa todos por 2 s e detona.</li>
- *   <li>Sopro Elemental: varre um cone à frente com o elemento.</li>
- *   <li>Convocar Lacaios: ergue os braços e chama 3 Diabretes do seu elemento.</li>
+ *   <li>Punho do Colosso: ergue o punho e esmaga; ondas de choque no chão (duas a partir do estágio 4) — pule.</li>
+ *   <li>Erupção: marca círculos de fogo sob os jogadores e um anel de círculos em volta de si.</li>
+ *   <li>Maremoto: mostra a faixa no chão e lança uma onda reta que arrasta quem estiver nela.</li>
+ *   <li>Raízes Ancestrais: duas levas de raízes brotam sob cada jogador (a segunda onde ele estiver).</li>
+ *   <li>Tempestade: puxa todos para perto e chama raios sobre cada jogador por 3 s.</li>
+ *   <li>Convergência (só estágio 6): três rajadas de orbes dos cinco elementos e uma estrela de explosões.</li>
  * </ul>
  *
- * <p><b>Morte</b>: cinemática para todos a até 64 blocos. A conquista do Soberano
- * ({@link ModAdvancements#awardBossDefeat}) vai só para quem causou dano a ele e ainda está online, e só
- * se ele for a criatura Soberano ({@link TierMob}); mob vanilla marcado como BOSS não conta. A lista de
- * participantes não é salva: se o chunk descarregar no meio da luta, ela recomeça vazia.
+ * <p><b>Morte</b>: desintegra como os Monarcas. Quem estava perto ou lutou vê a cinemática final e, ao fim
+ * dela, os créditos. Quem causou dano ganha a conquista do Soberano. A lista de quem lutou não é salva.
  */
-final class SovereignBrain extends TierBrain {
+public final class SovereignBrain extends TierBrain {
+    public static final int STAGES = 6;
+    /** Duração da agonia (e do close) a cada estágio. */
+    public static final int AGONY_TICKS = 80;
+    /** Poder despertado ao ENTRAR em cada estágio (índice = estágio - 1); o 6 desperta todos. */
+    private static final ElementType[] AWAKENED = {
+            ElementType.NONE, ElementType.FIRE, ElementType.WATER, ElementType.EARTH, ElementType.AIR, ElementType.NONE};
+    private static final ElementType[] ALL = {
+            ElementType.NONE, ElementType.FIRE, ElementType.WATER, ElementType.EARTH, ElementType.AIR};
+
     private final ServerBossEvent bar;
-    private final PhaseShift phaseShift = new PhaseShift();
     /** Jogadores que causaram dano nesta luta (UUID, para sobreviver a relog). */
     private final Set<UUID> fighters = new HashSet<>();
-    private int phase = 1;
-    private int meleePressure;
-    private int rangedPressure;
+    private int stage = 1;
+    /** Ticks restantes da agonia (0 = lutando). */
+    private int agonyTicks;
 
-    SovereignBrain(PathfinderMob mob, ElementType element) {
-        super(mob, MobTier.BOSS, element);
-        bar = new ServerBossEvent(mob.getDisplayName(), BossEvent.BossBarColor.YELLOW, BossEvent.BossBarOverlay.PROGRESS);
-        addMove(new Seismic());
-        addMove(new MeteorRain());
-        addMove(new Charge());
-        addMove(new Vortex());
-        addMove(new Breath());
-        addMove(new SummonMinions());
-        addRageMove(new QuakeMarch());
-        addRageMove(new GiantMeteor());
-        addRageMove(new EndlessCharge());
-        addRageMove(new EruptionRing());
+    SovereignBrain(PathfinderMob mob) {
+        super(mob, MobTier.BOSS, ElementType.NONE);
+        bar = new ServerBossEvent(mob.getDisplayName(), barColor(1), BossEvent.BossBarOverlay.NOTCHED_6);
+        // Os mesmos ataques valem na Fúria (já liberados), mais a Convergência.
+        for (Move move : List.of(new ColossusFist(), new Eruption(), new TidalWave(), new AncientRoots(), new SkyStorm())) {
+            addMove(move);
+            addRageMove(move);
+        }
+        addRageMove(new Convergence());
     }
 
-    @Override public int phase() { return phase; }
+    /** Teste ({@code /modtest sovereign <estágio>}): pula direto para o estágio, sem as cinemáticas do caminho. */
+    public static boolean skipToStage(Entity entity, int target) {
+        if (!(TierBrain.of(entity) instanceof SovereignBrain brain)) return false;
+        brain.jumpTo(Mth.clamp(target, 1, STAGES));
+        return true;
+    }
+
+    // ------------------------------------------------------------------ estágios
+
+    @Override public int phase() { return stage; }
     @Override protected Component bossBarName() {
-        return mob.getDisplayName().copy().append(Component.translatable("mob_title.solomod.phase", phase));
+        return mob.getDisplayName().copy().append(Component.translatable("mob_title.solomod.stage", stage, STAGES));
     }
-    @Override protected int thinkGap() { return phase == 1 ? 30 : phase == 2 ? 20 : 12; }
-    @Override protected int meleeInterval() { return 28 - 4 * phase; }
-    @Override protected float meleeElementChance() { return 0.5F; }
-    @Override protected float cooldownScale() { return phase == 1 ? 1.0F : phase == 2 ? 0.8F : 0.6F; }
+    @Override protected int thinkGap() { return 40 - 4 * stage; }
+    @Override protected int meleeInterval() { return 30 - 2 * stage; }
+    @Override protected float meleeElementChance() { return 0F; }
+    @Override protected float cooldownScale() { return 1.0F - 0.06F * (stage - 1); }
+    /** A Fúria não começa pela vida: ela vem no fim da última agonia. */
+    @Override protected float rageThreshold() { return 0F; }
+    @Override protected boolean endlessRage() { return true; }
+
+    /** Vida mínima do estágio (o limite de baixo da faixa). */
+    private float stageFloor(int s) {
+        return mob.getMaxHealth() * (STAGES - s) / STAGES;
+    }
+
+    private static BossEvent.BossBarColor barColor(int s) {
+        return switch (s) {
+            case 1 -> BossEvent.BossBarColor.YELLOW;
+            case 2 -> BossEvent.BossBarColor.RED;
+            case 3 -> BossEvent.BossBarColor.BLUE;
+            case 4 -> BossEvent.BossBarColor.GREEN;
+            case 5 -> BossEvent.BossBarColor.WHITE;
+            default -> BossEvent.BossBarColor.PURPLE;
+        };
+    }
 
     @Override
     public void tick() {
-        int wanted = phaseFor(mob.getHealth() / mob.getMaxHealth());
-        if (wanted > phase && !isRunning(phaseShift)) {
-            phaseShift.next = wanted;
-            force(phaseShift);
+        // Agonizando: não ataca nem anda (a agonia em si roda no passiveTick, com ou sem alvo).
+        if (agonyTicks > 0) {
+            mob.getNavigation().stop();
+            return;
         }
         super.tick();
     }
 
-    /** A fase 3 começa junto com a Fúria. */
     @Override
-    protected void onRageStart() {
-        phase = 3;
-        bar.setColor(BossEvent.BossBarColor.RED);
-        bar.setDarkenScreen(true);
-    }
-
-    @Override
-    protected void rageSummon() {
-        summon(MobTier.NORMAL, 4);
-    }
-
-    @Override
-    protected void engage() {
-        chase(isRaging() ? 1.45 : phase == 3 ? 1.25 : 1.0);
-        if (tryMelee(1.0F, SoundEvents.IRON_GOLEM_ATTACK, 0.6F)) {
-            particles(ParticleTypes.CRIT, target.getEyePosition(), 8, 0.3, 0.2);
+    public void passiveTick() {
+        if (agonyTicks > 0) {
+            tickAgony();
+        } else if (stage < STAGES && mob.getHealth() <= stageFloor(stage) + 0.01F) {
+            beginAgony();
         }
+        // Aura: um anel por segundo de cada poder já despertado, alternando.
+        if (mob.tickCount % 4 == 0) {
+            ElementType e = ALL[(mob.tickCount / 20) % Math.min(stage, ALL.length)];
+            SkillVfx.ring(level(), mob.position().add(0, 0.1, 0), 2.2 + 0.2 * stage, Hazards.dust(e, 1.6F), 12 + 3 * stage);
+        }
+        updateBossBar(bar, 64);
     }
 
     @Override
     public void onHurt(DamageSource source, float amount) {
-        if (!(source.getEntity() instanceof Player player)) return;
-        fighters.add(player.getUUID());
-        boolean ranged = source.getDirectEntity() != player || player.distanceTo(mob) > 5 + mob.getBbWidth() / 2;
-        if (ranged) rangedPressure += 2;
-        else meleePressure += 1;
+        if (source.getEntity() instanceof Player player) fighters.add(player.getUUID());
+        // Não pula estágio: a vida para no limite da faixa (até num golpe fatal) e a agonia acontece.
+        if (stage < STAGES && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            float floor = stageFloor(stage);
+            if (mob.getHealth() < floor) mob.setHealth(floor);
+        }
+    }
+
+    private void beginAgony() {
+        interrupt();
+        stage++;
+        agonyTicks = AGONY_TICKS;
+        invulnerable = true;
+        anim(MobAnim.AGONY, AGONY_TICKS);
+        bar.setColor(barColor(stage));
+        bar.setName(bossBarName());
+        sound(SoundEvents.WITHER_HURT, 3.0F, 0.4F);
+        sound(SoundEvents.ENDER_DRAGON_GROWL, 2.5F, 0.5F);
+        String power = stage == STAGES ? "all" : AWAKENED[stage - 1].getSerializedName();
+        CinematicPayload closeUp = new CinematicPayload(mob.getId(), AGONY_TICKS, CinematicPayload.Kind.CLOSE_UP,
+                Component.translatable("cinematic.solomod.agony"), Component.translatable("cinematic.solomod.awaken." + power));
+        for (ServerPlayer player : audience()) ModNetwork.sendCinematic(player, closeUp);
+    }
+
+    /** Agonia: o poder despertado converge para o corpo e explode no fim. */
+    private void tickAgony() {
+        int t = AGONY_TICKS - agonyTicks--;
+        mob.getNavigation().stop();
+        mob.setDeltaMovement(0, Math.min(0, mob.getDeltaMovement().y), 0);
+        ElementType power = stage == STAGES ? ALL[(t / 6) % ALL.length] : AWAKENED[stage - 1];
+
+        double r = Math.max(0.8, 9.0 * (1 - t / 60.0));
+        if (t < 60 && t % 2 == 0) {
+            SkillVfx.ring(level(), center(), r, Hazards.dust(power, 2.0F), 24);
+            particles(SkillVfx.particleFor(power), center(), 4, 1.2, 0.05);
+        }
+        if (t % 10 == 0) sound(SoundEvents.WARDEN_HEARTBEAT, 2.5F, 0.5F);
+        if (t == 20 || t == 45) sound(SoundEvents.RAVAGER_HURT, 2.5F, 0.4F);
+        if (t == 60) {
+            particles(ParticleTypes.EXPLOSION_EMITTER, center(), 2, 0.6, 0);
+            particles(SkillVfx.particleFor(power), center(), 80, 2.0, 0.25);
+            sound(SoundEvents.GENERIC_EXPLODE.value(), 2.5F, 0.5F);
+            sound(Hazards.impactSound(power), 2.5F, 0.6F);
+            for (LivingEntity e : enemiesWithin(12)) {
+                Hazards.push(e, flatDirTo(e.position()).scale(1.4).add(0, 0.5, 0));
+            }
+            Hazards.add(new Hazards.Shockwave(level(), mob, power, mob.position(), 14, 0.6, baseDamage() * 0.6F, potency()));
+        }
+        if (agonyTicks == 0) endAgony();
+    }
+
+    private void endAgony() {
+        invulnerable = false;
+        if (stage == STAGES && !isRaging()) awaken();
+        else anim(MobAnim.NONE, 0);
+    }
+
+    /** Fim da última agonia: liberta o poder dos cinco Monarcas e entra em Fúria até morrer. */
+    private void awaken() {
+        beginRage();
+        anim(MobAnim.ROAR, 30);
+        sound(SoundEvents.WARDEN_ROAR, 3.0F, 0.6F);
+        sound(SoundEvents.WITHER_SPAWN, 2.0F, 0.7F);
+        Component warning = Component.translatable("message.solomod.rage", mob.getDisplayName())
+                .withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
+        for (ServerPlayer player : audience()) player.displayClientMessage(warning, true);
     }
 
     @Override
-    public void passiveTick() {
-        // A leitura do jogador "esquece" aos poucos: metade a cada 5 s.
-        if (mob.tickCount % 100 == 0) {
-            meleePressure /= 2;
-            rangedPressure /= 2;
+    protected void onRageStart() {
+        bar.setColor(BossEvent.BossBarColor.PURPLE);
+        bar.setDarkenScreen(true);
+        bar.setCreateWorldFog(true);
+    }
+
+    private void jumpTo(int target) {
+        interrupt();
+        agonyTicks = 0;
+        invulnerable = false;
+        stage = target;
+        mob.setHealth(mob.getMaxHealth() * (STAGES - target + 1) / STAGES);
+        bar.setColor(barColor(stage));
+        if (stage == STAGES && !isRaging()) awaken();
+        else anim(MobAnim.NONE, 0);
+    }
+
+    /** Quem vê as cinemáticas: os jogadores a até 64 blocos e quem lutou (se ainda estiver online). */
+    private Set<ServerPlayer> audience() {
+        Set<ServerPlayer> players = new LinkedHashSet<>();
+        for (ServerPlayer player : level().players()) {
+            if (player.distanceToSqr(mob) < 64 * 64) players.add(player);
         }
-        if (mob.tickCount % 4 == 0) {
-            SkillVfx.ring(level(), mob.position().add(0, 0.1, 0), 0.7 * mob.getScale(), elementParticle(), 10 + 4 * phase);
+        for (UUID id : fighters) {
+            ServerPlayer player = level().getServer().getPlayerList().getPlayer(id);
+            if (player != null) players.add(player);
         }
-        if (phase == 3) {
-            particles(ParticleTypes.LARGE_SMOKE, center(), 1, 0.5, 0.01);
-            if (mob.tickCount % 20 == 0) {
-                SkillVfx.ring(level(), mob.position().add(0, 0.2, 0), 4.5, Hazards.dust(element, 1.6F), 36);
-                sound(SoundEvents.WARDEN_HEARTBEAT, 1.5F, 0.7F);
-                for (LivingEntity e : enemiesWithin(4.5)) magicStrike(e, baseDamage() * 0.3F);
-            }
+        return players;
+    }
+
+    // ------------------------------------------------------------------ combate básico
+
+    @Override
+    protected void engage() {
+        chase(isRaging() ? 1.35 : 1.0);
+        if (tryMelee(1.2F, SoundEvents.IRON_GOLEM_ATTACK, 0.5F)) {
+            particles(ParticleTypes.CRIT, target.getEyePosition(), 10, 0.4, 0.2);
         }
-        updateBossBar(bar, 48);
     }
 
     @Override
@@ -153,496 +274,297 @@ final class SovereignBrain extends TierBrain {
 
     @Override
     public void onDeath() {
-        // Cinemática para quem estava na luta: faixas pretas, câmera no chefe se desintegrando.
         int duration = TierMob.DISSOLVE_TICKS + 40;
-        Component title = mob.getDisplayName();
-        for (ServerPlayer player : level().players()) {
-            if (player.distanceToSqr(mob) < 64 * 64) {
-                ModNetwork.sendCinematic(player, new CinematicPayload(mob.getId(), duration, title));
-            }
-        }
+        CinematicPayload finale = new CinematicPayload(mob.getId(), duration, CinematicPayload.Kind.FINALE,
+                Component.translatable("cinematic.solomod.sovereign_defeated"), mob.getDisplayName());
+        for (ServerPlayer player : audience()) ModNetwork.sendCinematic(player, finale);
         // Conquista: só quem lutou (o golpe final passa por onHurt antes da morte).
-        if (mob instanceof TierMob creature && creature.tier() == MobTier.BOSS) {
-            for (UUID id : fighters) {
-                ServerPlayer player = level().getServer().getPlayerList().getPlayer(id);
-                if (player != null) ModAdvancements.awardBossDefeat(player, element);
-            }
+        for (UUID id : fighters) {
+            ServerPlayer player = level().getServer().getPlayerList().getPlayer(id);
+            if (player != null) ModAdvancements.awardSovereignDefeat(player);
         }
-        sound(SoundEvents.WITHER_DEATH, 2.0F, 0.8F);
+        sound(SoundEvents.WITHER_DEATH, 3.0F, 0.6F);
+        sound(SoundEvents.ENDER_DRAGON_DEATH, 2.0F, 0.8F);
         sound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F);
-        particles(ParticleTypes.EXPLOSION_EMITTER, center(), 2, 0.5, 0);
-        particles(elementParticle(), center(), 80, 1.5, 0.2);
+        particles(ParticleTypes.EXPLOSION_EMITTER, center(), 3, 0.8, 0);
+        for (ElementType e : ALL) particles(SkillVfx.particleFor(e), center(), 40, 2.0, 0.25);
         bar.removeAllPlayers();
-    }
-
-    private static int phaseFor(float healthRatio) {
-        // A fase 3 não vem daqui: ela começa com a Fúria (TierBrain) a 1/4 da vida.
-        return healthRatio <= 0.6F ? 2 : 1;
     }
 
     // ------------------------------------------------------------------ ataques
 
-    /** Troca de fase: rugido invulnerável, onda que arremessa, reforços ou fúria. */
-    private final class PhaseShift extends Move {
-        int next;
+    /** Ataque liberado a partir de um estágio. */
+    private abstract class StageMove extends Move {
+        private final int unlock;
 
-        PhaseShift() { super(0, 0); }
-
-        @Override
-        protected void begin() {
-            phase = next;
-            invulnerable = true;
-            anim(MobAnim.PHASE, 40);
-            sound(phase == 3 ? SoundEvents.WITHER_SPAWN : SoundEvents.ENDER_DRAGON_GROWL, 2.0F, 0.8F);
-            bar.setName(bossBarName());
-            if (phase == 3) {
-                bar.setColor(BossEvent.BossBarColor.RED);
-                bar.setDarkenScreen(true);
-            }
+        StageMove(int unlock, int cooldown, int weight) {
+            super(cooldown, weight);
+            this.unlock = unlock;
         }
 
         @Override
-        protected boolean tick(int t) {
-            particles(ParticleTypes.LARGE_SMOKE, center(), 3, 0.8, 0.05);
-            if (t == 20) {
-                particles(ParticleTypes.EXPLOSION_EMITTER, center(), 1, 0, 0);
-                sound(SoundEvents.GENERIC_EXPLODE.value(), 2.0F, 0.6F);
-                for (LivingEntity e : enemiesWithin(10)) {
-                    Hazards.push(e, flatDirTo(e.position()).scale(1.6).add(0, 0.6, 0));
-                }
-                Hazards.add(new Hazards.Shockwave(level(), mob, element, mob.position(), 12, 0.6, baseDamage() * 0.6F, potency()));
-            }
-            if (t == 30 && phase == 2) {
-                summon(MobTier.OP, 2);
-                sound(SoundEvents.EVOKER_PREPARE_SUMMON, 2.0F, 0.6F);
-            }
-            return t < 40;
+        protected final boolean usable(double dist) {
+            return stage >= unlock && inRange(dist);
         }
 
-        @Override
-        protected void end() {
-            invulnerable = false;
-        }
+        protected boolean inRange(double dist) { return true; }
     }
 
-    /** Golpe Sísmico: 20 ticks erguendo, esmaga e solta onda(s) de choque. */
-    private final class Seismic extends Move {
-        Seismic() { super(90, 5); }
+    /** Punho do Colosso: 20 ticks erguendo o punho, esmaga e solta onda(s) de choque. */
+    private final class ColossusFist extends StageMove {
+        ColossusFist() { super(1, 80, 5); }
 
         @Override
-        protected boolean usable(double dist) {
-            return dist < 6;
-        }
-
-        @Override
-        protected int weight(double dist) {
-            return weight + meleePressure;
+        protected boolean inRange(double dist) {
+            return dist < 7;
         }
 
         @Override
         protected void begin() {
             anim(MobAnim.WINDUP, 20);
-            sound(SoundEvents.RAVAGER_ROAR, 1.5F, 0.7F);
+            sound(SoundEvents.RAVAGER_ROAR, 2.0F, 0.6F);
         }
 
         @Override
         protected boolean tick(int t) {
             if (t < 20) {
                 face(flatDirTo(target.position()));
-                particles(ParticleTypes.CRIT, center().add(0, mob.getBbHeight() * 0.4, 0), 2, 0.4, 0.1);
+                particles(ParticleTypes.CRIT, center().add(0, mob.getBbHeight() * 0.4, 0), 3, 0.5, 0.1);
                 return true;
             }
-            if (t == 20 || (t == 32 && phase == 3)) {
-                if (t == 20) {
-                    anim(MobAnim.SLAM, 12);
-                    for (LivingEntity e : enemiesWithin(2.5 + mob.getBbWidth() / 2)) {
-                        strike(e, baseDamage() * 1.6F, true);
-                    }
-                }
-                sound(SoundEvents.MACE_SMASH_GROUND_HEAVY, 2.0F, 0.6F);
-                sound(SoundEvents.GENERIC_EXPLODE.value(), 1.2F, 0.6F);
-                particles(ParticleTypes.EXPLOSION, mob.position(), 3, 1.0, 0);
-                Hazards.add(new Hazards.Shockwave(level(), mob, element, mob.position(), 10, 0.5, baseDamage(), potency()));
+            if (t == 20) {
+                anim(MobAnim.SLAM, 12);
+                for (LivingEntity e : enemiesWithin(3 + mob.getBbWidth() / 2)) strike(e, baseDamage() * 1.5F, false);
             }
-            return t < (phase == 3 ? 34 : 24);
+            if (t == 20 || (t == 32 && stage >= 4)) {
+                sound(SoundEvents.MACE_SMASH_GROUND_HEAVY, 2.5F, 0.5F);
+                sound(SoundEvents.GENERIC_EXPLODE.value(), 1.5F, 0.6F);
+                particles(ParticleTypes.EXPLOSION, mob.position(), 4, 1.5, 0);
+                Hazards.add(new Hazards.Shockwave(level(), mob, ElementType.NONE, mob.position(), 12, 0.55, baseDamage() * 0.9F, 0));
+            }
+            return t < 36;
         }
     }
 
-    /** Chuva Elemental: conjura e marca 4/6/8 círculos; o primeiro sempre onde o alvo vai estar. */
-    private final class MeteorRain extends Move {
-        MeteorRain() { super(150, 4); }
-
-        @Override
-        protected int weight(double dist) {
-            return weight + rangedPressure / 2;
-        }
+    /** Erupção (Rei Vulcânico): círculos de fogo sob cada jogador e um anel deles em volta do Soberano. */
+    private final class Eruption extends StageMove {
+        Eruption() { super(2, 140, 4); }
 
         @Override
         protected void begin() {
-            anim(MobAnim.CAST, 24);
+            anim(MobAnim.CAST, 30);
             sound(SoundEvents.EVOKER_PREPARE_ATTACK, 2.0F, 0.5F);
         }
 
         @Override
         protected boolean tick(int t) {
-            particles(elementParticle(), mob.getEyePosition().add(0, 1, 0), 3, 0.4, 0.05);
+            particles(ParticleTypes.FLAME, mob.getEyePosition().add(0, 1.5, 0), 4, 0.6, 0.05);
             if (t == 12) {
-                List<LivingEntity> victims = enemiesWithin(24);
-                int count = 2 + 2 * phase;
-                for (int i = 0; i < count; i++) {
-                    LivingEntity v = victims.isEmpty() ? target : victims.get(i % victims.size());
-                    Vec3 pos = v.position();
-                    if (i == 0) pos = pos.add(v.getDeltaMovement().multiply(1, 0, 1).scale(20));
-                    else pos = pos.add((random.nextDouble() - 0.5) * 10, 0, (random.nextDouble() - 0.5) * 10);
-                    Hazards.add(new Hazards.Blast(level(), mob, element, pos, 2.5, 30 + i * 4, baseDamage() * 1.4F, potency()));
-                }
-                sound(Hazards.castSound(element), 2.0F, 0.6F);
-            }
-            return t < 24;
-        }
-    }
-
-    /**
-     * Investida Devastadora: por investida, 12 ticks mirando + 14 correndo + 6 de pausa; repete 1/2/3 vezes.
-     * Bater numa parede atordoa por 2 s (janela de punição).
-     */
-    private final class Charge extends Move {
-        private static final int AIM = 12, RUN = 14, REST = 6, CYCLE = AIM + RUN + REST;
-        private final Set<Integer> hit = new HashSet<>();
-        private Vec3 dir;
-        private int stunnedUntil = -1;
-
-        Charge() { super(160, 4); }
-
-        @Override
-        protected boolean usable(double dist) {
-            return dist > 5 && dist < 24;
-        }
-
-        @Override
-        protected void begin() {
-            stunnedUntil = -1;
-        }
-
-        @Override
-        protected boolean tick(int t) {
-            if (stunnedUntil >= 0) {
-                if (t % 4 == 0) particles(ParticleTypes.CRIT, mob.getEyePosition().add(0, 0.5, 0), 4, 0.4, 0);
-                return t < stunnedUntil;
-            }
-            int index = t / CYCLE, local = t % CYCLE;
-            if (index >= phase) return false;
-            if (local == 0) {
-                hit.clear();
-                anim(MobAnim.WINDUP, AIM);
-                sound(SoundEvents.RAVAGER_ROAR, 1.5F, 0.9F + 0.1F * index);
-            }
-            if (local < AIM) {
-                dir = flatDirTo(target.position());
-                face(dir);
-                if (local % 2 == 0) {
-                    Vec3 from = mob.position().add(0, 0.2, 0);
-                    SkillVfx.line(level(), from, from.add(dir.scale(16)), Hazards.dust(element, 1.6F), 20);
-                }
-                return true;
-            }
-            if (local < AIM + RUN) {
-                if (local == AIM) {
-                    anim(MobAnim.DASH, RUN);
-                    sound(SoundEvents.TRIDENT_RIPTIDE_1.value(), 1.5F, 0.6F);
-                }
-                face(dir);
-                mob.setDeltaMovement(dir.x * 1.3, mob.getDeltaMovement().y, dir.z * 1.3);
-                particles(ParticleTypes.CLOUD, mob.position().add(0, 0.2, 0), 3, 0.5, 0.02);
-                for (LivingEntity e : Hazards.enemiesIn(level(), mob, mob.getBoundingBox().inflate(0.6))) {
-                    if (hit.add(e.getId())) {
-                        strike(e, baseDamage() * 1.8F, true);
-                        Hazards.push(e, dir.scale(1.6).add(0, 0.5, 0));
-                        sound(SoundEvents.RAVAGER_ATTACK, 1.5F, 0.8F);
+                int i = 0;
+                for (LivingEntity v : targets(28)) {
+                    // O primeiro círculo cai onde o jogador vai estar; os outros, em volta.
+                    Vec3 ahead = v.position().add(v.getDeltaMovement().multiply(1, 0, 1).scale(20));
+                    blast(ElementType.FIRE, ahead, 2.8, 28 + i * 4, 1.3F);
+                    for (int k = 0; k < 2; k++) {
+                        blast(ElementType.FIRE, v.position().add((random.nextDouble() - 0.5) * 9, 0, (random.nextDouble() - 0.5) * 9),
+                                2.5, 34 + i * 4 + k * 5, 1.2F);
                     }
+                    i++;
                 }
-                if (mob.horizontalCollision) {
-                    stunnedUntil = t + 40;
-                    anim(MobAnim.SLAM, 10);
-                    sound(SoundEvents.RAVAGER_STUNNED, 2.0F, 0.7F);
-                    sound(SoundEvents.ANVIL_LAND, 1.0F, 0.5F);
-                    particles(ParticleTypes.EXPLOSION, center(), 2, 0.5, 0);
+                sound(Hazards.castSound(ElementType.FIRE), 2.0F, 0.6F);
+            }
+            if (t == 24) {
+                for (int k = 0; k < 6; k++) {
+                    double a = Math.PI * 2 * k / 6;
+                    blast(ElementType.FIRE, mob.position().add(Math.cos(a) * 6, 0, Math.sin(a) * 6), 2.5, 30, 1.2F);
                 }
-                return true;
-            }
-            mob.setDeltaMovement(mob.getDeltaMovement().multiply(0.5, 1, 0.5));
-            return true;
-        }
-    }
-
-    /** Vórtice: 40 ticks puxando todos num raio de 16, depois detona em volta. */
-    private final class Vortex extends Move {
-        Vortex() { super(240, 4); }
-
-        @Override
-        protected boolean usable(double dist) {
-            return phase >= 2 && dist < 16;
-        }
-
-        @Override
-        protected int weight(double dist) {
-            return weight + rangedPressure;
-        }
-
-        @Override
-        protected void begin() {
-            anim(MobAnim.CAST, 50);
-            sound(SoundEvents.WARDEN_SONIC_CHARGE, 2.0F, 0.7F);
-        }
-
-        @Override
-        protected boolean tick(int t) {
-            if (t < 40) {
-                for (int arm = 0; arm < 2; arm++) {
-                    double a = t * 0.4 + arm * Math.PI;
-                    double r = 6 - (t % 10) * 0.5;
-                    Vec3 p = mob.position().add(Math.cos(a) * r, 0.5 + (t % 10) * 0.1, Math.sin(a) * r);
-                    particles(elementParticle(), p, 2, 0.05, 0);
-                    particles(ParticleTypes.PORTAL, p, 2, 0.1, 0);
-                }
-                for (LivingEntity e : enemiesWithin(16)) {
-                    Hazards.push(e, flatDirTo(e.position()).scale(-0.09));
-                }
-                return true;
-            }
-            if (t == 40) {
-                anim(MobAnim.SLAM, 10);
-                sound(SoundEvents.WARDEN_SONIC_BOOM, 2.0F, 0.8F);
-                particles(ParticleTypes.SONIC_BOOM, center(), 1, 0, 0);
-                particles(ParticleTypes.EXPLOSION, center(), 4, 1.5, 0);
-                for (LivingEntity e : enemiesWithin(5.5)) {
-                    magicStrike(e, baseDamage() * 2.0F);
-                    Hazards.push(e, flatDirTo(e.position()).scale(1.2).add(0, 0.5, 0));
-                }
-            }
-            return t < 46;
-        }
-    }
-
-    /** Sopro Elemental: 10 ticks inspirando, 30 ticks varrendo um cone de 9 blocos de um lado ao outro. */
-    private final class Breath extends Move {
-        private static final double RANGE = 9;
-        private Vec3 baseDir;
-
-        Breath() { super(110, 4); }
-
-        @Override
-        protected boolean usable(double dist) {
-            return dist < RANGE && mob.getSensing().hasLineOfSight(target);
-        }
-
-        @Override
-        protected int weight(double dist) {
-            return weight + meleePressure / 2;
-        }
-
-        @Override
-        protected void begin() {
-            anim(MobAnim.WINDUP, 10);
-            sound(SoundEvents.GHAST_WARN, 1.5F, 0.5F);
-        }
-
-        @Override
-        protected boolean tick(int t) {
-            if (t < 10) {
-                baseDir = flatDirTo(target.position());
-                face(baseDir);
-                return true;
-            }
-            if (t == 10) anim(MobAnim.BREATH, 30);
-            // Varre de -25° a +25° em volta da direção travada.
-            double sweep = Math.toRadians(-25 + 50 * (t - 10) / 30.0);
-            Vec3 dir = new Vec3(baseDir.x * Math.cos(sweep) - baseDir.z * Math.sin(sweep), 0,
-                    baseDir.x * Math.sin(sweep) + baseDir.z * Math.cos(sweep));
-            face(dir);
-            Vec3 mouth = mob.getEyePosition();
-            for (int i = 1; i <= 6; i++) {
-                Vec3 p = mouth.add(dir.scale(i * 1.5)).add(0, -i * 0.15, 0);
-                level().sendParticles(elementParticle(), p.x, p.y, p.z, 2, 0.15 * i, 0.15 * i, 0.15 * i, 0.02);
-            }
-            if (t % 6 == 0) sound(Hazards.castSound(element), 1.2F, 0.7F);
-            if (t % 5 == 0) {
-                for (LivingEntity e : enemiesWithin(RANGE)) {
-                    if (dir.dot(flatDirTo(e.position())) > Math.cos(Math.toRadians(30))) magicStrike(e, baseDamage() * 0.45F);
-                }
-            }
-            return t < 40;
-        }
-    }
-
-    /** Convocar Lacaios: braços ao céu e 3 Diabretes do mesmo elemento (no máximo 6 vivos por perto). */
-    private final class SummonMinions extends Move {
-        SummonMinions() { super(360, 3); }
-
-        @Override
-        protected boolean usable(double dist) {
-            return minionsAround(MobTier.NORMAL) < 6;
-        }
-
-        @Override
-        protected int weight(double dist) {
-            return minionsAround(MobTier.NORMAL) == 0 ? weight + 3 : weight;
-        }
-
-        @Override
-        protected void begin() {
-            anim(MobAnim.SUMMON, 30);
-            sound(SoundEvents.EVOKER_PREPARE_SUMMON, 2.0F, 0.6F);
-        }
-
-        @Override
-        protected boolean tick(int t) {
-            for (int k = 0; k < 3; k++) {
-                double a = t * 0.4 + k * 2.09;
-                particles(elementParticle(), mob.position().add(Math.cos(a) * 3, t * 0.12, Math.sin(a) * 3), 2, 0.05, 0);
-            }
-            if (t == 30) {
-                summon(MobTier.NORMAL, 3);
-                sound(SoundEvents.EVOKER_CAST_SPELL, 2.0F, 0.6F);
+                sound(SoundEvents.FIRECHARGE_USE, 2.0F, 0.5F);
             }
             return t < 30;
         }
     }
 
-    // ------------------------------------------------------------------ ataques da Fúria
-
-    /** Marcha Sísmica: avança sem parar e pisa a cada 16 ticks, soltando ondas de choque. */
-    private final class QuakeMarch extends Move {
-        QuakeMarch() { super(140, 4); }
-
-        @Override
-        protected boolean tick(int t) {
-            chase(1.5);
-            if (t % 16 == 8) {
-                anim(MobAnim.SLAM, 10);
-                sound(SoundEvents.MACE_SMASH_GROUND_HEAVY, 2.0F, 0.5F);
-                particles(ParticleTypes.EXPLOSION, mob.position(), 2, 1.0, 0);
-                Hazards.add(new Hazards.Shockwave(level(), mob, element, mob.position(), 8, 0.6, baseDamage() * 0.9F, potency()));
-            }
-            return t < 80;
-        }
-    }
-
-    /** Meteoro Colossal: um círculo enorme no alvo e um anel de impactos menores em volta. */
-    private final class GiantMeteor extends Move {
-        GiantMeteor() { super(200, 3); }
-
-        @Override
-        protected void begin() {
-            anim(MobAnim.CAST, 24);
-            sound(SoundEvents.WITHER_SHOOT, 2.0F, 0.4F);
-        }
-
-        @Override
-        protected boolean tick(int t) {
-            particles(elementParticle(), mob.getEyePosition().add(0, 2, 0), 6, 0.6, 0.1);
-            if (t == 10) {
-                Vec3 at = target.position().add(target.getDeltaMovement().multiply(1, 0, 1).scale(25));
-                Hazards.add(new Hazards.Blast(level(), mob, element, at, 6.0, 45, baseDamage() * 2.2F, potency()));
-                for (int i = 0; i < 6; i++) {
-                    double a = Math.PI * 2 * i / 6;
-                    Vec3 p = at.add(Math.cos(a) * 8, 0, Math.sin(a) * 8);
-                    Hazards.add(new Hazards.Blast(level(), mob, element, p, 2.5, 30 + i * 3, baseDamage(), potency()));
-                }
-                sound(Hazards.castSound(element), 2.0F, 0.4F);
-            }
-            return t < 24;
-        }
-    }
-
-    /** Investida Sem Fim: 5 investidas curtas; batendo na parede ricocheteia direto para a próxima. */
-    private final class EndlessCharge extends Move {
-        private static final int AIM = 6, RUN = 14, CYCLE = AIM + RUN;
+    /** Maremoto (Leviatã Coroado): 20 ticks mostrando a faixa, depois uma onda reta de 7 de largura. */
+    private final class TidalWave extends StageMove {
+        private static final int AIM = 20, LENGTH = 24;
+        private static final double HALF_WIDTH = 3.5;
         private final Set<Integer> hit = new HashSet<>();
         private Vec3 dir;
-        private int offset;
 
-        EndlessCharge() { super(180, 4); }
+        TidalWave() { super(3, 160, 4); }
 
         @Override
-        protected boolean usable(double dist) {
-            return dist > 3;
+        protected boolean inRange(double dist) {
+            return dist < LENGTH;
         }
 
         @Override
         protected void begin() {
-            offset = 0;
-            sound(SoundEvents.RAVAGER_ROAR, 2.0F, 1.1F);
+            hit.clear();
+            dir = flatDirTo(target.position());
+            face(dir);
+            anim(MobAnim.WINDUP, AIM);
+            sound(SoundEvents.ELDER_GUARDIAN_CURSE, 1.5F, 0.6F);
         }
 
         @Override
         protected boolean tick(int t) {
-            int lt = t + offset;
-            int index = lt / CYCLE, local = lt % CYCLE;
-            if (index >= 5) return false;
-            if (local == 0) {
-                hit.clear();
-                anim(MobAnim.WINDUP, AIM);
-            }
-            if (local < AIM) {
-                dir = flatDirTo(target.position());
+            Vec3 side = new Vec3(-dir.z, 0, dir.x);
+            if (t < AIM) {
                 face(dir);
-                Vec3 from = mob.position().add(0, 0.2, 0);
-                SkillVfx.line(level(), from, from.add(dir.scale(14)), Hazards.dust(element, 1.6F), 16);
+                if (t % 2 == 0) {
+                    for (double d = 2; d < LENGTH; d += 1.5) {
+                        Vec3 p = mob.position().add(dir.scale(d)).add(0, 0.15, 0);
+                        for (double s : new double[]{-HALF_WIDTH, HALF_WIDTH}) {
+                            Vec3 q = p.add(side.scale(s));
+                            level().sendParticles(Hazards.dust(ElementType.WATER, 1.2F), q.x, q.y, q.z, 1, 0, 0, 0, 0);
+                        }
+                    }
+                }
                 return true;
             }
-            if (local == AIM) {
-                anim(MobAnim.DASH, RUN);
-                sound(SoundEvents.TRIDENT_RIPTIDE_1.value(), 1.5F, 0.7F);
+            if (t == AIM) {
+                anim(MobAnim.SLAM, 10);
+                sound(SoundEvents.GENERIC_SPLASH, 3.0F, 0.5F);
+                sound(SoundEvents.ELDER_GUARDIAN_AMBIENT, 2.0F, 0.6F);
             }
-            face(dir);
-            mob.setDeltaMovement(dir.x * 1.5, mob.getDeltaMovement().y, dir.z * 1.5);
-            particles(ParticleTypes.FLAME, mob.position().add(0, 0.3, 0), 4, 0.6, 0.02);
-            for (LivingEntity e : Hazards.enemiesIn(level(), mob, mob.getBoundingBox().inflate(0.6))) {
-                if (hit.add(e.getId())) {
-                    strike(e, baseDamage() * 1.5F, true);
-                    Hazards.push(e, dir.scale(1.4).add(0, 0.5, 0));
-                    sound(SoundEvents.RAVAGER_ATTACK, 1.5F, 0.8F);
+            double front = (t - AIM) * 1.1;
+            Vec3 crest = mob.position().add(dir.scale(front));
+            for (double s = -HALF_WIDTH; s <= HALF_WIDTH; s += 0.7) {
+                Vec3 q = crest.add(side.scale(s));
+                level().sendParticles(ParticleTypes.SPLASH, q.x, q.y + 0.5, q.z, 4, 0.2, 0.6, 0.2, 0.1);
+                level().sendParticles(ParticleTypes.BUBBLE_COLUMN_UP, q.x, q.y + 0.2, q.z, 2, 0.2, 0.4, 0.2, 0.1);
+            }
+            for (LivingEntity e : enemiesWithin(LENGTH + 2)) {
+                Vec3 rel = e.position().subtract(mob.position());
+                double along = rel.dot(dir), across = Math.abs(rel.dot(side));
+                if (along > front - 1.5 && along < front + 0.8 && across <= HALF_WIDTH && hit.add(e.getId())) {
+                    Hazards.hit(mob, e, baseDamage() * 1.2F, ElementType.WATER, potency(), true);
+                    Hazards.push(e, dir.scale(1.6).add(0, 0.4, 0));
                 }
             }
-            if (mob.horizontalCollision) {
-                // Ricochete: pula o resto desta corrida e já mira a próxima.
-                sound(SoundEvents.ANVIL_LAND, 1.2F, 0.6F);
-                particles(ParticleTypes.EXPLOSION, center(), 1, 0.3, 0);
-                offset += CYCLE - local - 1;
-            }
-            return true;
+            return front < LENGTH;
         }
     }
 
-    /** Anel de Erupções: três anéis de explosões a 3, 6 e 9 blocos, um depois do outro — fique no vão. */
-    private final class EruptionRing extends Move {
-        EruptionRing() { super(160, 4); }
+    /** Raízes Ancestrais (Titã Ancestral): duas levas de raízes sob cada jogador. */
+    private final class AncientRoots extends StageMove {
+        AncientRoots() { super(4, 150, 4); }
 
         @Override
         protected void begin() {
             anim(MobAnim.WINDUP, 14);
-            sound(SoundEvents.GHAST_WARN, 1.5F, 0.5F);
+            sound(SoundEvents.ROOTED_DIRT_BREAK, 2.5F, 0.5F);
         }
 
         @Override
         protected boolean tick(int t) {
-            if (t == 14) {
-                anim(MobAnim.SLAM, 10);
-                sound(SoundEvents.MACE_SMASH_GROUND_HEAVY, 2.0F, 0.6F);
-                int[] counts = {6, 10, 14};
-                for (int ring = 0; ring < 3; ring++) {
-                    double radius = 3 + ring * 3;
-                    double turn = random.nextDouble();
-                    for (int i = 0; i < counts[ring]; i++) {
-                        double a = Math.PI * 2 * (i + turn) / counts[ring];
-                        Vec3 p = mob.position().add(Math.cos(a) * radius, 0, Math.sin(a) * radius);
-                        Hazards.add(new Hazards.Blast(level(), mob, element, p, 1.6, 20 + ring * 10,
-                                baseDamage() * 1.1F, potency()));
+            if (t == 14 || t == 34) {
+                if (t == 14) anim(MobAnim.SLAM, 10);
+                for (LivingEntity v : targets(24)) blast(ElementType.EARTH, v.position(), 2.0, t == 14 ? 22 : 18, 1.3F);
+                sound(SoundEvents.EVOKER_FANGS_ATTACK, 2.0F, 0.6F);
+                particles(ParticleTypes.COMPOSTER, mob.position(), 30, 2.0, 0.1);
+            }
+            return t < 40;
+        }
+    }
+
+    /** Tempestade (Imperador dos Céus): puxa todos e chama raios sobre cada jogador a cada 0,5 s. */
+    private final class SkyStorm extends StageMove {
+        private static final int CHANNEL = 50, STRIKE_DELAY = 14;
+        private final List<Strike> pending = new ArrayList<>();
+
+        private record Strike(Vec3 pos, int at) {}
+
+        SkyStorm() { super(5, 170, 4); }
+
+        @Override
+        protected void begin() {
+            pending.clear();
+            anim(MobAnim.CAST, CHANNEL);
+            sound(Hazards.castSound(ElementType.AIR), 2.5F, 0.5F);
+            sound(SoundEvents.TRIDENT_THUNDER.value(), 1.5F, 0.6F);
+        }
+
+        @Override
+        protected boolean tick(int t) {
+            if (t < CHANNEL) {
+                for (LivingEntity e : enemiesWithin(16)) Hazards.push(e, flatDirTo(e.position()).scale(-0.06));
+                SkillVfx.ring(level(), center(), 4 + Mth.sin(t * 0.3F), Hazards.dust(ElementType.AIR, 1.6F), 16);
+                if (t % 10 == 5) {
+                    for (LivingEntity v : targets(24)) {
+                        blast(ElementType.AIR, v.position(), 1.8, STRIKE_DELAY, 1.0F);
+                        pending.add(new Strike(v.position(), t + STRIKE_DELAY));
                     }
                 }
             }
-            return t < 20;
+            // O raio (só visual) cai junto com a explosão da área marcada.
+            pending.removeIf(s -> {
+                if (s.at() != t) return false;
+                LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level());
+                if (bolt != null) {
+                    bolt.moveTo(s.pos());
+                    bolt.setVisualOnly(true);
+                    level().addFreshEntity(bolt);
+                }
+                return true;
+            });
+            return t < CHANNEL + STRIKE_DELAY + 1;
         }
+    }
+
+    /** Convergência (só no estágio 6): três rajadas de orbes dos cinco elementos e uma estrela de explosões. */
+    private final class Convergence extends StageMove {
+        Convergence() { super(6, 200, 6); }
+
+        @Override
+        protected void begin() {
+            anim(MobAnim.CAST, 60);
+            sound(SoundEvents.BEACON_POWER_SELECT, 3.0F, 0.5F);
+            sound(SoundEvents.WARDEN_SONIC_CHARGE, 2.5F, 0.6F);
+        }
+
+        @Override
+        protected boolean tick(int t) {
+            for (int k = 0; k < ALL.length; k++) {
+                double a = t * 0.15 + Math.PI * 2 * k / ALL.length;
+                Vec3 p = center().add(Math.cos(a) * 3, Math.min(t, 30) * 0.06, Math.sin(a) * 3);
+                level().sendParticles(Hazards.dust(ALL[k], 2.0F), p.x, p.y, p.z, 2, 0.1, 0.1, 0.1, 0);
+            }
+            if (t == 30 || t == 40 || t == 50) {
+                sound(SoundEvents.BLAZE_SHOOT, 2.5F, 0.6F);
+                for (LivingEntity v : targets(32)) {
+                    for (int k = 0; k < ALL.length; k++) {
+                        double a = Math.PI * 2 * k / ALL.length;
+                        Vec3 from = center().add(Math.cos(a) * 3, 1, Math.sin(a) * 3);
+                        Vec3 vel = v.getEyePosition().subtract(from).normalize().scale(0.9);
+                        Hazards.add(new Hazards.Orb(level(), mob, ALL[k], from, vel, baseDamage() * 0.7F, potency(), 40));
+                    }
+                }
+            }
+            if (t == 60) {
+                for (int k = 0; k < ALL.length; k++) {
+                    double a = Math.PI * 2 * k / ALL.length;
+                    blast(ALL[k], target.position().add(Math.cos(a) * 4, 0, Math.sin(a) * 4), 2.5, 20, 1.4F);
+                }
+                blast(ElementType.NONE, target.position(), 2.5, 26, 1.4F);
+            }
+            return t < 64;
+        }
+    }
+
+    /** Até 4 inimigos por perto (o alvo primeiro), para os ataques que miram em cada jogador. */
+    private List<LivingEntity> targets(double radius) {
+        List<LivingEntity> list = new ArrayList<>();
+        list.add(target);
+        for (LivingEntity e : enemiesWithin(radius)) {
+            if (list.size() >= 4) break;
+            if (e != target) list.add(e);
+        }
+        return list;
+    }
+
+    private void blast(ElementType e, Vec3 at, double radius, int delay, float damageMult) {
+        Hazards.add(new Hazards.Blast(level(), mob, e, at, radius, delay, baseDamage() * damageMult, potency()));
     }
 }

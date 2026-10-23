@@ -38,12 +38,14 @@ public enum MobAnim {
     BLINK,
     /** Invocação: sobe girando. */
     SUMMON,
-    /** Troca de fase do Soberano: cresce, gira e treme. */
+    /** Troca de fase do Monarca: cresce, gira e treme. */
     PHASE,
     /** Sopro elemental: inclina para frente e vibra. */
     BREATH,
     /** Fim da Fúria: corpo caído para a frente, ofegante. */
-    EXHAUSTED;
+    EXHAUSTED,
+    /** Agonia do Soberano a cada estágio: afunda, se contorce e treme. */
+    AGONY;
 
     private static final IntFunction<MobAnim> BY_ID =
             ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.ZERO);

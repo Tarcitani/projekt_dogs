@@ -6,12 +6,14 @@ import com.tarcitani.solomod.client.model.EliteModel;
 import com.tarcitani.solomod.client.model.GuardianModel;
 import com.tarcitani.solomod.client.model.MinionModel;
 import com.tarcitani.solomod.client.model.MobMeshes;
+import com.tarcitani.solomod.client.model.MonarchModel;
 import com.tarcitani.solomod.client.model.SovereignModel;
 import com.tarcitani.solomod.client.render.ThrownDaggerRenderer;
 import com.tarcitani.solomod.client.render.TierMobRenderer;
 import com.tarcitani.solomod.component.ModDataComponents;
 import com.tarcitani.solomod.core.WeaponClass;
 import com.tarcitani.solomod.entity.ModEntities;
+import com.tarcitani.solomod.entity.Sovereign;
 import com.tarcitani.solomod.component.WeaponData;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.item.ModItems;
@@ -69,12 +71,12 @@ public final class ClientSetup {
 
     // ------------------------------------------------------------------ criaturas e adaga
 
-    /** Camada de modelo de uma variante ("minion", "minion_fire", "sovereign_air"...). */
+    /** Camada de modelo de uma variante ("minion", "minion_fire", "monarch_air"...). */
     public static ModelLayerLocation layer(String variant) {
         return new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(SoloMod.MOD_ID, variant), "main");
     }
 
-    /** As 20 malhas: forma base + 4 elementos para cada uma das 4 criaturas. */
+    /** As 21 malhas: forma base + 4 elementos para cada uma das 4 criaturas, e o Soberano. */
     @SubscribeEvent
     public static void onRegisterLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         for (String variant : MobMeshes.VARIANTS) {
@@ -82,7 +84,7 @@ public final class ClientSetup {
         }
     }
 
-    /** Cada criatura: classe de animação, sombra e cor-assinatura do brilho (quando não tem elemento). */
+    /** Cada criatura: classe de animação, sombra e cor-assinatura do brilho (quando não tem elemento); o Soberano é gigante e sem variantes. */
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.MINION.get(),
@@ -91,8 +93,10 @@ public final class ClientSetup {
                 ctx -> new TierMobRenderer(ctx, "elite", EliteModel::new, 0.6F, 0x8CFFF0));
         event.registerEntityRenderer(ModEntities.GUARDIAN.get(),
                 ctx -> new TierMobRenderer(ctx, "guardian", GuardianModel::new, 0.8F, 0x9FF3FF));
+        event.registerEntityRenderer(ModEntities.MONARCH.get(),
+                ctx -> new TierMobRenderer(ctx, "monarch", MonarchModel::new, 1.6F, 0xFF8C28));
         event.registerEntityRenderer(ModEntities.SOVEREIGN.get(),
-                ctx -> new TierMobRenderer(ctx, "sovereign", SovereignModel::new, 1.6F, 0xFF8C28));
+                ctx -> TierMobRenderer.single(ctx, "sovereign", SovereignModel::new, 2.4F, Sovereign.RENDER_SCALE));
         event.registerEntityRenderer(ModEntities.THROWN_DAGGER.get(), ThrownDaggerRenderer::new);
     }
 

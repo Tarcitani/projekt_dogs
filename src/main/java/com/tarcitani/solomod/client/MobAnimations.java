@@ -33,7 +33,8 @@ import java.util.WeakHashMap;
  *   <li>Lacaio: corre curvado para a frente, com trote saltitante.</li>
  *   <li>Elite: balança os ombros de um lado para o outro (postura de duelo).</li>
  *   <li>Guardião: flutua acima do chão, subindo e descendo.</li>
- *   <li>Soberano: respira pesado (o corpo incha e desincha); mais rápido na fase 2, tremendo na fase 3.</li>
+ *   <li>Monarca e Soberano: respiram pesado (o corpo incha e desincha); mais rápido na fase 2, tremendo da
+ *       fase 3 em diante (o Soberano tem 6 estágios).</li>
  * </ul>
  *
  * <p><b>De ação</b>: as {@link MobAnim} enviadas pelo servidor a cada ataque, por cima da ociosa.
@@ -172,7 +173,7 @@ public final class MobAnimations {
                 float speed = s.phase == 1 ? 0.08F : s.phase == 2 ? 0.14F : 0.22F;
                 float breath = 1F + Mth.sin(age * speed) * (0.02F + 0.01F * s.phase);
                 pose.scale(breath, 1F + (breath - 1F) * 0.5F, breath);
-                if (s.phase == 3) shake(pose, age, 0.025F * size);
+                if (s.phase >= 3) shake(pose, age, 0.025F * size);
             }
         }
     }
@@ -239,6 +240,13 @@ public final class MobAnimations {
             case EXHAUSTED -> {
                 lean(pose, yaw, 22F * Math.min(1F, t * 5F) * Math.min(1F, (1F - t) * 5F));
                 pose.scale(1F, 1F - 0.08F * Mth.sin(age * 0.4F) * 0.5F - 0.05F, 1F);
+            }
+            case AGONY -> {
+                // Afunda (ajoelha), inclina para a frente e treme forte; entra e sai em 1/5 da animação.
+                float k = Mth.clamp(t * 5F, 0F, 1F) * Mth.clamp((1F - t) * 5F, 0F, 1F);
+                pose.translate(0, -0.18F * k * size, 0);
+                lean(pose, yaw, 10F * k);
+                shake(pose, age, 0.05F * k * size);
             }
             case NONE -> {}
         }

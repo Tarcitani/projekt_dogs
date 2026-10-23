@@ -18,7 +18,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * @param entityId entidade
  * @param tier     tier do mob (define a animação ociosa)
  * @param element  elemento do mob
- * @param phase    fase do Soberano (1..3); 1 para os demais
+ * @param phase    fase do Monarca (1..3) ou estágio do Soberano (1..6); 1 para os demais
  * @param rage     chefe em Fúria (aura vermelha)
  * @param anim     animação a tocar ({@link MobAnim#NONE} = só identidade)
  * @param duration duração da animação em ticks

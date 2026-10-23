@@ -91,14 +91,14 @@ flowchart LR
 
 | Arquivo | O que é |
 |---|---|
-| `ModAdvancements.java` | Concessão das conquistas via `awardBossDefeat(player, element)`: dá `defeat_sovereign_<elemento>` e o critério `sovereign_<elemento>` do desafio mestre `defeat_all_sovereigns`. Os critérios são `minecraft:impossible` (só o código concede). Chamado só por `SovereignBrain.onDeath`. |
+| `ModAdvancements.java` | Concessão das conquistas. `awardBossDefeat(player, element)` dá `defeat_monarch_<elemento>` e o critério `monarch_<elemento>` do desafio mestre `defeat_all_monarchs`; com os cinco, dá a secreta `broken_seal`. `awardSovereignDefeat(player)` dá a secreta `defeat_sovereign` (e o selo, se faltava). Os critérios são `minecraft:impossible` (só o código concede). Chamado por `MonarchBrain.onDeath` e `SovereignBrain.onDeath`. |
 
 ### `item/` — itens
 
 | Arquivo | O que é |
 |---|---|
 | `ModularWeaponItem.java` | Item base de todas as armas. Tooltip (verde/vermelho conforme o requisito), clique direito (habilidade de classe ou de tier), `create(...)` para fabricar uma pilha configurada. |
-| `ModItems.java` | Registra 1 item por `WeaponClass`, 1 ovo por criatura × elemento (20 ovos) e a aba criativa **Solo Mod** com todas as combinações. |
+| `ModItems.java` | Registra 1 item por `WeaponClass`, 1 ovo por criatura × elemento (20 ovos), o ovo do Soberano e a aba criativa **Solo Mod** com todas as combinações. |
 
 ### `event/` — regras do servidor
 
@@ -122,22 +122,24 @@ flowchart LR
 
 | Arquivo | O que é |
 |---|---|
-| `TierMob.java` | Criatura própria de cada tier (`extends Monster`). Guarda o elemento em `SynchedEntityData` (o cliente escolhe modelo e textura com ele). Sem perfil ao nascer → recebe um elemento aleatório. O Soberano tem a morte de desintegração (`DISSOLVE_TICKS=100`). **O combate não fica aqui**, fica no `TierBrain`. |
+| `TierMob.java` | Criatura própria de cada tier (`extends Monster`). Guarda o elemento em `SynchedEntityData` (o cliente escolhe modelo e textura com ele). Sem perfil ao nascer → recebe um elemento aleatório. O Monarca e o Soberano (tier BOSS) têm a morte de desintegração (`DISSOLVE_TICKS=100`). **O combate não fica aqui**, fica no `TierBrain`. |
+| `Sovereign.java` | O Soberano, chefe final (`extends TierMob`, tier BOSS, sempre sem elemento). Atributos base próprios (`BASE_HEALTH`, `BASE_DAMAGE`), `RENDER_SCALE`, sons e imunidade a fogo. O combate fica em `mob/SovereignBrain`. |
 | `ThrownDagger.java` | Adaga arremessada (`extends AbstractArrow`): voa girando, crava, volta como bumerangue quando o dono chama. |
-| `ModEntities.java` | Registra `minion`, `elite`, `guardian`, `sovereign` e `thrown_dagger`, além dos atributos. `forTier(tier)` devolve o tipo da criatura. |
+| `ModEntities.java` | Registra `minion`, `elite`, `guardian`, `monarch`, `sovereign` e `thrown_dagger`, além dos atributos. `forTier(tier)` devolve o tipo da criatura do tier (BOSS = Monarca). |
 
 ### `mob/` — IA e identidade dos mobs (servidor)
 
 | Arquivo | O que é |
 |---|---|
 | `TierIdentity.java` | Aplica ou remove a **identidade** de um tier em qualquer `LivingEntity`: grava o `MobProfile`, escala (só mobs vanilla; as criaturas já têm o tamanho do modelo), atributos, título colorido, brilho (só BOSS) e instala o brain. `apply(entity, tier, element)` é o jeito oficial de transformar um mob; `clear` desfaz tudo. A tabela de números por tier está no Javadoc. |
-| `TierBrain.java` | Classe abstrata (`Goal` de prioridade 0) que substitui a IA de combate vanilla enquanto há alvo. Sistema de **`Move`** (ataque com recarga, peso, `usable(dist)` e `tick(t)`), **Fúria** a 1/4 da vida (`addRageMove`), exaustão e invulnerabilidade em rugidos. `install(mob)` / `uninstall(mob)` / `of(entity)`. |
+| `TierBrain.java` | Classe abstrata (`Goal` de prioridade 0) que substitui a IA de combate vanilla enquanto há alvo. Sistema de **`Move`** (ataque com recarga, peso, `usable(dist)` e `tick(t)`), **Fúria** a 1/4 da vida (`addRageMove`), exaustão e invulnerabilidade em rugidos. Ganchos para chefes especiais: `rageThreshold`, `beginRage`, `endlessRage`, `interrupt`. `install(mob)` escolhe o brain pelo tier (BOSS: `SovereignBrain` se for a entidade `Sovereign`, senão `MonarchBrain`) / `uninstall(mob)` / `of(entity)`. |
 | `MinionBrain.java` | NORMAL: bando, grito de alerta, fuga, Bote. |
 | `EliteBrain.java` | OP: guarda lateral, aparar e contra-atacar, Investida, Golpe Triplo. |
 | `GuardianBrain.java` | SUB_BOSS: controle de distância, orbes, Repulsão, Salto, Translocar, Invocação + ataques de Fúria. |
-| `SovereignBrain.java` | BOSS: 3 fases, leitura do estilo do jogador (perto/longe), barra de chefe, todos os ataques do chefe + Fúria. Guarda quem causou dano e, na morte, concede as conquistas a esses jogadores. O maior arquivo de IA. |
+| `MonarchBrain.java` | BOSS: 3 fases, leitura do estilo do jogador (perto/longe), barra de chefe, todos os ataques do chefe + Fúria. Guarda quem causou dano e, na morte, concede as conquistas a esses jogadores. O maior arquivo de IA. |
+| `SovereignBrain.java` | O Soberano: 6 estágios de vida, agonia invulnerável com close (`CinematicPayload` `CLOSE_UP`) a cada estágio, um ataque novo por estágio (`StageMove`), Fúria sem fim no 6º, trava de vida por estágio em `onHurt`, cinemática final + créditos e conquista na morte. `skipToStage` para o `/modtest`. |
 | `Hazards.java` | Ataques que existem no mundo por alguns ticks sem ser entidade: orbes, áreas marcadas (meteoros), ondas de choque. Simulados no servidor e desenhados com partículas. Também tem helpers de dano em área (`enemiesIn`, `hit`, `push`) e sons. |
-| `MobAnim.java` | Enum das animações de ação dos mobs (`WINDUP, LUNGE, DASH, COMBO, CAST, LEAP, SLAM, ROAR...`). O servidor diz **qual** animação e por quanto tempo; o cliente desenha. |
+| `MobAnim.java` | Enum das animações de ação dos mobs (`WINDUP, LUNGE, DASH, COMBO, CAST, LEAP, SLAM, ROAR..., AGONY`). O servidor diz **qual** animação e por quanto tempo; o cliente desenha. |
 | `MobEvents.java` | Liga tudo ao ciclo de vida: reinstala o brain quando um mob salvo é carregado, tick, dano (Fúria, aparar, invulnerabilidade), morte, envia a identidade a quem começa a ver o mob, tick de `Hazards`. |
 
 ### `network/` — pacotes
@@ -150,7 +152,7 @@ Todos registrados em `ModNetwork.register` (protocolo `"1"`).
 | `HitFeedbackPayload` | S → C | número de dano flutuante (`kind`: 0 normal, 1 vantagem, 2 desvantagem, 3 habilidade, 4 crítico) |
 | `MobAnimPayload` | S → C | identidade do mob (tier, elemento, fase, fúria) + animação de ação |
 | `PlayerAnimPayload` | S → C | animação de habilidade de um jogador |
-| `CinematicPayload` | S → C | cinemática de morte do Soberano |
+| `CinematicPayload` | S → C | cinemática de chefe: `kind` (`DEFEAT` morte do Monarca, `CLOSE_UP` agonia do Soberano, `FINALE` morte do Soberano + créditos), cabeçalho e título |
 | `SpendPointsPayload` | C → S | botões +1/+5 da tela de Maestria (o servidor revalida) |
 | `TestActionPayload` | C → S | botões da aba Teste (exige OP); também tem `spawnTierMob` e `mark` |
 | `SpinAttackPayload` | C → S | clique de ataque da espada longa → giro 360° |
@@ -174,16 +176,18 @@ Todos registrados em `ModNetwork.register` (protocolo `"1"`).
 | `DamageNumbers.java` | Números de dano flutuantes. |
 | `MobAnimations.java` | Animações ociosas por tier + animações de ação recebidas do servidor. Guarda o estado (tier, elemento, fase, fúria) de cada mob no cliente. |
 | `PlayerAnimations.java` | Animações das habilidades no jogador (giro, estocada, mortal) e troca do ataque da espada longa por `SpinAttackPayload`. |
-| `BossCinematic.java` | Cinemática de morte do Soberano (faixas, câmera, letreiro). |
+| `BossCinematic.java` | Cinemáticas de chefe (faixas, câmera, zoom, letreiro). Close forte no rosto no `CLOSE_UP`; no fim do `FINALE` abre os créditos. |
+| `CreditsScreen.java` | Créditos do fim da versão de testes: texto rolando (`credits.solomod.*`), música de créditos, ESPAÇO acelera, ESC fecha. |
 
 ### `client/model/` e `client/render/`
 
 | Arquivo | O que é |
 |---|---|
 | `TierMobModel.java` | Base dos modelos (`HierarchicalModel`): anima as partes com nomes conhecidos (`body`, `head`, `arm_r`...), as decorativas por prefixo e a desintegração. |
-| `MinionModel` / `EliteModel` / `GuardianModel` / `SovereignModel` | Poses e animações de cada tier. Uma classe anima as 5 formas (base + 4 elementos) da criatura. |
-| `MobMeshes.java` | ⚠️ **Gerado** por `tools/gen_mob_art.py`. Malhas (cubos + UV) das 20 formas. Não edite à mão. |
-| `TierMobRenderer.java` | Troca de modelo e textura conforme o elemento. Camadas: base + brilho emissivo + aura de Fúria. |
+| `MinionModel` / `EliteModel` / `GuardianModel` / `MonarchModel` | Poses e animações de cada tier. Uma classe anima as 5 formas (base + 4 elementos) da criatura. |
+| `SovereignModel.java` | O Soberano: herda do `MonarchModel` (mesmos nomes de partes) e acrescenta a pose de agonia e o tremor da coroa. |
+| `MobMeshes.java` | ⚠️ **Gerado** por `tools/gen_mob_art.py`. Malhas (cubos + UV) das 20 formas e do Soberano. Não edite à mão. |
+| `TierMobRenderer.java` | Troca de modelo e textura conforme o elemento. Camadas: base + brilho emissivo + aura de Fúria. `single(...)` é para criatura sem variantes (o Soberano): malha única, escala maior e brilho que passa pelas cores dos Monarcas. |
 | `ThrownDaggerRenderer.java` | Desenha a adaga voando, girando ou cravada. |
 
 ---
@@ -201,7 +205,7 @@ Dados do servidor ficam em `src/main/resources/data/solomod/`:
 
 | Pasta | Conteúdo | Origem |
 |---|---|---|
-| `advancement/` | `root.json` (aba "Solo Mod"), `defeat_sovereign_<elemento>.json` (5) e `defeat_all_sovereigns.json`. Títulos e descrições em `advancements.solomod.*` no lang. | manual |
+| `advancement/` | `root.json` (aba "Solo Mod"), `defeat_monarch_<elemento>.json` (5), `defeat_all_monarchs.json` e as secretas (`"hidden": true`) `broken_seal.json` e `defeat_sovereign.json`. Títulos e descrições em `advancements.solomod.*` no lang. | manual |
 
 `src/main/templates/META-INF/neoforge.mods.toml` é o template de metadados: o Gradle substitui `${...}` com os valores de `gradle.properties`.
 
@@ -210,8 +214,8 @@ Dados do servidor ficam em `src/main/resources/data/solomod/`:
 | Script | Gera | Observação |
 |---|---|---|
 | `gen_mob_art.py` | `textures/entity/*.png` e `client/model/MobMeshes.java` | spec das 4 formas base; a mesma spec gera UV e textura, então os dois nunca saem de sincronia |
-| `mob_variants.py` | — (importado por `gen_mob_art.py`) | as 16 formas elementais |
-| `gen_weapon_models.py` | modelos 3D (rapieira/claymore), textura de peças, contorno fantasma da adaga, modelos dos ovos | ponto de entrada das armas |
+| `mob_variants.py` | — (importado por `gen_mob_art.py`) | as 16 formas elementais e o Soberano (`sovereign()`) |
+| `gen_weapon_models.py` | modelos 3D (rapieira/claymore), textura de peças, contorno fantasma da adaga, modelos dos ovos (incluindo o do Soberano) | ponto de entrada das armas |
 | `gen_weapon_elements.py` | — (importado por `gen_weapon_models.py`) | versões elementais das armas 2D e 3D |
 
 Rode da raiz: `python tools/gen_mob_art.py` e `python tools/gen_weapon_models.py`.
@@ -247,7 +251,8 @@ sequenceDiagram
 2. `apply` grava o `MobProfile`, aplica escala, atributos, título e brilho e chama `TierBrain.install(mob)`, que escolhe o brain pelo tier e adiciona os goals de alvo (todo mob do mod fica hostil ao jogador).
 3. Quando um mob salvo é carregado do mundo, `MobEvents.onJoin` reinstala o brain, porque os goals não são salvos, só o perfil.
 4. A cada ataque especial o brain envia `MobAnimPayload` → `client/MobAnimations` anima.
-5. Na morte, `PlayerEvents.onKill` dá XP ao jogador conforme o tier. Se for o Soberano, `SovereignBrain.onDeath` dispara a cinemática e `ModAdvancements.awardBossDefeat` para quem causou dano a ele.
+5. Na morte, `PlayerEvents.onKill` dá XP ao jogador conforme o tier. Se for o Monarca, `MonarchBrain.onDeath` dispara a cinemática e `ModAdvancements.awardBossDefeat` para quem causou dano a ele.
+6. O Soberano (`SovereignBrain`) é diferente: a cada 1/6 da vida para no limite, agoniza (`CinematicPayload` `CLOSE_UP`) e libera um ataque; no 6º estágio entra em Fúria sem fim. Na morte manda `CinematicPayload` `FINALE`, e o cliente abre `CreditsScreen` quando a cena acaba.
 
 ### Stats
 
