@@ -1,26 +1,89 @@
 # Solo Mod (MVP) — NeoForge 1.21.1 / Java 21
 
-Núcleo de **Maestria (FOR/AGI/INT/VIT)**, **armas modulares por Tier** e **combate elemental**.
+Núcleo de **Maestria (FOR/AGI/INT/VIT)**, **armas modulares por Tier**, **combate elemental** e **mobs por tier** com modelos, IA e ataques próprios.
 
-## Rodar
+Repositório: https://github.com/Tarcitani/projekt_dogs · Como colaborar: [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Primeiros passos (para quem vai colaborar)
+
+### Requisitos
+
+| Ferramenta | Versão | Para quê |
+|---|---|---|
+| JDK | **21** (ex.: Temurin 21) | compilar e rodar o mod — o Gradle baixa sozinho se faltar (foojay) |
+| Git | qualquer recente | versionamento |
+| IDE | IntelliJ IDEA ou VS Code (Extension Pack for Java) | edição e debug |
+| Python + Pillow | 3.10+ / `pip install pillow` | **opcional**: só para regerar texturas/modelos em `tools/` |
+
+Não precisa instalar Gradle nem Minecraft: o wrapper (`gradlew`) e o NeoForge baixam tudo na primeira execução (demora alguns minutos).
+
+### Clonar e rodar
 
 ```bash
-./gradlew runClient      # abre o Minecraft com o mod (precisa de JDK 21)
+git clone https://github.com/Tarcitani/projekt_dogs.git
+cd projekt_dogs
+./gradlew runClient      # abre o Minecraft com o mod (Windows: gradlew.bat runClient)
+./gradlew runServer      # servidor dedicado sem GUI
 ./gradlew build          # gera build/libs/solomod-0.1.0.jar
 ```
 
-Se o Gradle reclamar da versão do NeoForge, troque `neo_version` em `gradle.properties` por qualquer `21.1.x` atual.
+- **IntelliJ**: *File → Open* na pasta do projeto; ele importa o Gradle e cria as configurações *Client*/*Server*.
+- **VS Code**: abra a pasta; o plugin do NeoForge gera `.vscode/launch.json` na sincronização do Gradle (o arquivo tem caminhos da sua máquina, por isso **não** vai para o Git).
+- O mundo de teste e configs ficam em `run/` (ignorado pelo Git — cada um tem o seu).
+- Se o Gradle reclamar da versão do NeoForge, troque `neo_version` em `gradle.properties` por qualquer `21.1.x` atual.
 
-## Onde está cada entregável
+## Estrutura do código
 
-| # | Entregável | Arquivo(s) |
+Pacote base: `src/main/java/com/tarcitani/solomod/` (entrada: `SoloMod.java`, que registra tudo).
+
+| Pacote | Responsabilidade | Principais arquivos |
 |---|---|---|
-| 1 | Enums base | `core/ElementType`, `core/MobTier`, `core/StatType`, `core/WeaponClass` |
-| 2 | Record + registro do componente | `component/WeaponData`, `component/ModDataComponents` |
-| 3 | Attachment do jogador + registro + sync | `attachment/PlayerStatsAttachment`, `attachment/ModAttachments`, `network/*` |
-| 4 | Item base (tooltip + habilidade) | `item/ModularWeaponItem`, `item/ModItems`, `skill/WeaponSkill` |
-| 5 | Handler de combate | `event/CombatEvents`, `event/ElementalCombat`, `event/StatsLogic`, `event/PlayerEvents` |
-| + | Comandos de teste | `command/ModTestCommand` |
+| `core/` | Enums do domínio | `ElementType`, `MobTier`, `StatType`, `WeaponClass` |
+| `component/` | Dados da arma no ItemStack (Data Component) | `WeaponData`, `ModDataComponents` |
+| `attachment/` | Dados anexados a entidades | `PlayerStatsAttachment` (stats/XP/mana), `MobProfile` (tier/elemento do mob), `ModAttachments` |
+| `item/` | Item de arma modular, tooltip, aba criativa | `ModularWeaponItem`, `ModItems` |
+| `skill/` | Habilidades de tier e de classe + efeitos | `WeaponSkill`, `ClassAbility`, `SkillVfx`, `PlayerAnim` |
+| `event/` | Combate e lógica de stats | `CombatEvents`, `ElementalCombat`, `StatsLogic`, `PlayerEvents` |
+| `entity/` | Entidades próprias | `TierMob` (criaturas), `ThrownDagger` (adaga arremessada), `ModEntities` |
+| `mob/` | IA e identidade dos mobs por tier (servidor) | `TierBrain` + `MinionBrain`/`EliteBrain`/`GuardianBrain`/`SovereignBrain`, `TierIdentity`, `Hazards`, `MobEvents`, `MobAnim` |
+| `network/` | Pacotes cliente⇄servidor | `ModNetwork` (registro), `*Payload` |
+| `command/` | Comando de testes `/modtest` | `ModTestCommand` |
+| `client/` | Tudo que é só do cliente | `ClientSetup` (tecla K, renderers), `StatsScreen`, `SoloHud`, `DamageNumbers`, `MobAnimations`, `PlayerAnimations`, `BossCinematic` |
+| `client/model/` | Modelos das criaturas | `TierMobModel` + um por tier; `MobMeshes` é **gerado** por script |
+| `client/render/` | Renderers | `TierMobRenderer`, `ThrownDaggerRenderer` |
+
+Outros diretórios:
+
+- `src/main/resources/assets/solomod/` — `lang/` (`pt_br.json` e `en_us.json`), `models/item/`, `textures/entity/`, `textures/item/`.
+- `src/main/templates/META-INF/neoforge.mods.toml` — metadados do mod; as variáveis `${...}` vêm de `gradle.properties`.
+- `tools/` — scripts Python que **geram** arte e código (veja abaixo).
+
+> **Arquivos gerados**: `client/model/MobMeshes.java`, as texturas de `textures/entity/` e as texturas/modelos elementais das armas saem dos scripts de `tools/`. Não edite à mão: altere o script e rode de novo, senão a próxima geração apaga sua mudança.
+
+### Scripts de arte (`tools/`)
+
+Rode sempre da raiz do projeto:
+
+```bash
+python tools/gen_mob_art.py        # mobs: texturas base + brilho e client/model/MobMeshes.java (usa mob_variants.py)
+python tools/gen_weapon_models.py  # armas: modelos 3D (rapieira/claymore), versões elementais (usa gen_weapon_elements.py), ovos
+```
+
+## Comandos de teste (`/modtest`, exige OP nível 2)
+
+| Comando | Efeito |
+|---|---|
+| `/modtest stats` | mostra stats, XP, pontos e mana |
+| `/modtest set <for\|agi\|int\|vit> <valor>` | define um stat direto |
+| `/modtest spend <stat> <qtd>` | gasta pontos disponíveis (fluxo "real") |
+| `/modtest addxp <qtd>` | soma XP Global (1 ponto a cada 100) |
+| `/modtest points <qtd>` | define os pontos disponíveis |
+| `/modtest mana` | enche a mana |
+| `/modtest reset` | zera tudo |
+| `/modtest weapon <classe> <tier> [elemento] [requisito] [habilidade]` | cria a arma na mão principal |
+| `/modtest mob <alvos> <tier> <elemento>` | transforma mobs vanilla em mobs do mod |
+| `/modtest unmark <alvos>` | remove o perfil do mob |
+| `/modtest spawn <tier> <elemento>` | invoca a criatura própria do tier |
 
 ## Interface (camada visual de testes)
 

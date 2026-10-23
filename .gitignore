@@ -7,3 +7,5 @@ out/
 .idea/
 javac.*.args
 __pycache__/
+bin/
+.vscode/launch.json
