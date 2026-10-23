@@ -1,5 +1,6 @@
 package com.tarcitani.solomod.mob;
 
+import com.tarcitani.solomod.advancement.ModAdvancements;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.entity.TierMob;
@@ -149,6 +150,7 @@ final class SovereignBrain extends TierBrain {
         for (ServerPlayer player : level().players()) {
             if (player.distanceToSqr(mob) < 64 * 64) {
                 ModNetwork.sendCinematic(player, new CinematicPayload(mob.getId(), duration, title));
+                ModAdvancements.awardBossDefeat(player, element);
             }
         }
         sound(SoundEvents.WITHER_DEATH, 2.0F, 0.8F);
