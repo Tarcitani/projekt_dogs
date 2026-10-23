@@ -3,57 +3,40 @@ package com.tarcitani.solomod.advancement;
 import com.tarcitani.solomod.SoloMod;
 import com.tarcitani.solomod.core.ElementType;
 import net.minecraft.advancements.AdvancementHolder;
-import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Gerenciamento e concessão de conquistas (Advancements) do Solo Mod.
+ * Conquistas (Advancements) do Solo Mod, na aba própria "Solo Mod" (tecla L).
+ *
+ * <p>Os JSON ficam em {@code data/solomod/advancement/}. Todos os critérios, menos o da raiz, usam o
+ * gatilho {@code minecraft:impossible}: só este código os concede.
+ * <ul>
+ *   <li>{@code root}: concedida no primeiro tick (gatilho {@code minecraft:tick}) para a aba aparecer.</li>
+ *   <li>{@code defeat_sovereign_<elemento>}: uma por forma do Soberano, critério {@code defeated}.</li>
+ *   <li>{@code defeat_all_sovereigns}: desafio mestre com um critério {@code sovereign_<elemento>} por
+ *       forma; a tela mostra o progresso (0/5).</li>
+ * </ul>
+ *
+ * <p>Quem chama é {@code SovereignBrain.onDeath}, só para os jogadores que causaram dano ao chefe.
+ * Elemento novo em {@link ElementType} exige os JSON e as chaves de lang correspondentes.
  */
 public final class ModAdvancements {
     private ModAdvancements() {}
 
-    public static final ResourceLocation ROOT = id("root");
-    public static final ResourceLocation DEFEAT_NONE = id("defeat_sovereign_none");
-    public static final ResourceLocation DEFEAT_FIRE = id("defeat_sovereign_fire");
-    public static final ResourceLocation DEFEAT_WATER = id("defeat_sovereign_water");
-    public static final ResourceLocation DEFEAT_EARTH = id("defeat_sovereign_earth");
-    public static final ResourceLocation DEFEAT_AIR = id("defeat_sovereign_air");
     public static final ResourceLocation DEFEAT_ALL = id("defeat_all_sovereigns");
 
-    /** Concede a conquista correspondente ao Soberano derrotado. */
+    /** Concede a conquista do Soberano daquele elemento e o critério dele no desafio mestre. */
     public static void awardBossDefeat(ServerPlayer player, ElementType element) {
-        ResourceLocation advId = switch (element) {
-            case NONE -> DEFEAT_NONE;
-            case FIRE -> DEFEAT_FIRE;
-            case WATER -> DEFEAT_WATER;
-            case EARTH -> DEFEAT_EARTH;
-            case AIR -> DEFEAT_AIR;
-        };
-
-        // Concede a conquista específica daquele Soberano
-        grant(player, advId, "defeated");
-
-        // Progresso no desafio mestre de derrotar todos os cinco Soberanos
-        String masterCriterion = switch (element) {
-            case NONE -> "sovereign_none";
-            case FIRE -> "sovereign_fire";
-            case WATER -> "sovereign_water";
-            case EARTH -> "sovereign_earth";
-            case AIR -> "sovereign_air";
-        };
-        grant(player, DEFEAT_ALL, masterCriterion);
+        String name = element.getSerializedName();
+        grant(player, id("defeat_sovereign_" + name), "defeated");
+        grant(player, DEFEAT_ALL, "sovereign_" + name);
     }
 
+    /** {@code award} já ignora critério concluído, então conceder de novo não faz nada. */
     private static void grant(ServerPlayer player, ResourceLocation id, String criterion) {
-        if (player.server == null) return;
         AdvancementHolder holder = player.server.getAdvancements().get(id);
-        if (holder != null) {
-            AdvancementProgress progress = player.getAdvancements().getOrStartProgress(holder);
-            if (!progress.isDone()) {
-                player.getAdvancements().award(holder, criterion);
-            }
-        }
+        if (holder != null) player.getAdvancements().award(holder, criterion);
     }
 
     private static ResourceLocation id(String path) {

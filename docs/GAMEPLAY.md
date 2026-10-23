@@ -125,23 +125,7 @@ Quando a Fúria acaba, o chefe fica **exausto por 3 s** e recebe +25% de dano.
 
 ### 💀 Morte do Soberano
 
-O Soberano se **desintegra** por 5 s. Os jogadores por perto entram numa **cinemática**: faixas pretas, HUD escondido, câmera virando para o chefe e o letreiro "SOBERANO DERROTADO".
-
-### 🏆 Conquistas dos Soberanos
-
-O mod adiciona uma aba própria no **sistema de conquistas (Advancements)** do Minecraft (tecla **L**), com contexto narrativo e temático para a derrota de cada chefe final, refletindo sua natureza elemental:
-
-| Conquista | Chefe | Elemento | Natureza e contexto narrativo | Tipo / Recompensa |
-|---|---|---|---|---|
-| **A Queda da Coroa Pétrea** | Colosso Rei | Neutro | Monarca primordial de rocha pura e força bruta indestrutível que desafia todas as forças elementais. | Desafio · 150 XP |
-| **Cinzas do Vulcão** | Rei Vulcânico | Fogo | Soberano do magma em tronco-vulcão vivo que expele erupções e transforma terras em caldeiras ardentes. | Desafio · 150 XP |
-| **Calmaria no Abismo** | Leviatã Coroado | Água | Rei-kraken com pinças titânicas que comanda maremotos devastadores e os abismos oceânicos. | Desafio · 150 XP |
-| **Raízes Milenares Desfeitas** | Titã Ancestral | Terra | Árvore colossal com copa impenetrável e coração de âmbar cujas raízes sustentavam o peso do mundo. | Desafio · 150 XP |
-| **O Trono Despedaçado** | Imperador dos Céus | Ar | Senhor alado das tempestades que comanda vendavais cortantes e relâmpagos em seu trono celestial. | Desafio · 150 XP |
-| **Soberania Absoluta** | Todos os 5 Soberanos | Mestre | O ápice do guerreiro: derrotar todas as cinco formas dos Soberanos e alcançar a Maestria suprema sobre os elementos. | Desafio Mestre · 1000 XP |
-
-- **Concessão justa**: a conquista é concedida tanto para quem desfere o golpe final quanto para todos os jogadores presentes na arena durante a cinemática de queda do chefe.
-- **Progresso de desafio**: a conquista "Soberania Absoluta" rastreia o progresso (0 a 5) conforme cada Soberano diferente é derrotado.
+O Soberano se **desintegra** por 5 s. Os jogadores por perto entram numa **cinemática**: faixas pretas, HUD escondido, câmera virando para o chefe e o letreiro "SOBERANO DERROTADO". Quem causou dano a ele ganha a conquista da forma derrotada (ver [Conquistas dos Soberanos](#-conquistas-dos-soberanos)).
 
 ## 🐉 Criaturas próprias
 
@@ -183,6 +167,26 @@ Cada tier tem uma criatura com modelo próprio, e cada criatura tem uma forma **
 </details>
 
 Olhos, gemas, chamas e rachaduras ficam numa **camada emissiva** que pulsa na cor do elemento. As partes decorativas (chamas, nadadeiras, anéis, asas) se mexem sozinhas.
+
+## 🏆 Conquistas dos Soberanos
+
+O mod adiciona uma aba própria **Solo Mod** na tela de conquistas (Advancements) do Minecraft (tecla **L**), com uma conquista narrativa para a derrota de cada forma do Soberano:
+
+| Conquista | Chefe | Elemento | Natureza e contexto narrativo | Tipo / Recompensa |
+|---|---|---|---|---|
+| **A Queda da Coroa Pétrea** | Colosso Rei | Neutro | Monarca primordial de rocha pura e força bruta indestrutível que desafia todas as forças elementais. | Desafio · 150 XP |
+| **Cinzas do Vulcão** | Rei Vulcânico | Fogo | Soberano do magma em tronco-vulcão vivo que expele erupções e transforma terras em caldeiras ardentes. | Desafio · 150 XP |
+| **Calmaria no Abismo** | Leviatã Coroado | Água | Rei-kraken com pinças titânicas que comanda maremotos devastadores e os abismos oceânicos. | Desafio · 150 XP |
+| **Raízes Milenares Desfeitas** | Titã Ancestral | Terra | Árvore colossal com copa impenetrável e coração de âmbar cujas raízes sustentavam o peso do mundo. | Desafio · 150 XP |
+| **O Trono Despedaçado** | Imperador dos Céus | Ar | Senhor alado das tempestades que comanda vendavais cortantes e relâmpagos em seu trono celestial. | Desafio · 150 XP |
+| **Soberania Absoluta** | Todos os 5 Soberanos | Mestre | O ápice do guerreiro: derrotar todas as cinco formas dos Soberanos e alcançar a Maestria suprema sobre os elementos. | Desafio Mestre · 1000 XP |
+
+A recompensa é **XP do Minecraft** (a barra verde), não o XP Global da Maestria.
+
+- **Quem ganha**: todo jogador que causou dano ao Soberano durante a luta e está online quando ele morre. Quem só assistiu, espectadores e mortes sem jogador (lava, `/kill`) não ganham nada.
+- **Só a criatura Soberano conta**: um mob vanilla marcado como Soberano por `/modtest mob boss ...` não dá conquista.
+- **Progresso do desafio mestre**: "Soberania Absoluta" mostra o progresso (0/5) conforme cada forma diferente é derrotada.
+- A lista de quem lutou não é salva: se o chunk do chefe descarregar no meio da luta, ela recomeça.
 
 ## 🖥️ Interface
 

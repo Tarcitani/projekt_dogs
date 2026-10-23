@@ -91,7 +91,7 @@ flowchart LR
 
 | Arquivo | O que é |
 |---|---|
-| `ModAdvancements.java` | Identificadores de conquistas (`ResourceLocation`) e concessão via `awardBossDefeat(player, element)`. Concede os desafios individuais dos 5 Soberanos e pontua no desafio supremo (`defeat_all_sovereigns`). |
+| `ModAdvancements.java` | Concessão das conquistas via `awardBossDefeat(player, element)`: dá `defeat_sovereign_<elemento>` e o critério `sovereign_<elemento>` do desafio mestre `defeat_all_sovereigns`. Os critérios são `minecraft:impossible` (só o código concede). Chamado só por `SovereignBrain.onDeath`. |
 
 ### `item/` — itens
 
@@ -135,7 +135,7 @@ flowchart LR
 | `MinionBrain.java` | NORMAL: bando, grito de alerta, fuga, Bote. |
 | `EliteBrain.java` | OP: guarda lateral, aparar e contra-atacar, Investida, Golpe Triplo. |
 | `GuardianBrain.java` | SUB_BOSS: controle de distância, orbes, Repulsão, Salto, Translocar, Invocação + ataques de Fúria. |
-| `SovereignBrain.java` | BOSS: 3 fases, leitura do estilo do jogador (perto/longe), barra de chefe, todos os ataques do chefe + Fúria. O maior arquivo de IA. |
+| `SovereignBrain.java` | BOSS: 3 fases, leitura do estilo do jogador (perto/longe), barra de chefe, todos os ataques do chefe + Fúria. Guarda quem causou dano e, na morte, concede as conquistas a esses jogadores. O maior arquivo de IA. |
 | `Hazards.java` | Ataques que existem no mundo por alguns ticks sem ser entidade: orbes, áreas marcadas (meteoros), ondas de choque. Simulados no servidor e desenhados com partículas. Também tem helpers de dano em área (`enemiesIn`, `hit`, `push`) e sons. |
 | `MobAnim.java` | Enum das animações de ação dos mobs (`WINDUP, LUNGE, DASH, COMBO, CAST, LEAP, SLAM, ROAR...`). O servidor diz **qual** animação e por quanto tempo; o cliente desenha. |
 | `MobEvents.java` | Liga tudo ao ciclo de vida: reinstala o brain quando um mob salvo é carregado, tick, dano (Fúria, aparar, invulnerabilidade), morte, envia a identidade a quem começa a ver o mob, tick de `Hazards`. |
@@ -197,6 +197,12 @@ Todos registrados em `ModNetwork.register` (protocolo `"1"`).
 | `textures/item/` | sprites das armas, `*_overlay` (parte tingida), variantes `_fire/_water/_earth/_air`, `weapon_parts*` (textura dos modelos 3D) | gerada por `tools/gen_weapon_models.py` / `gen_weapon_elements.py` |
 | `textures/entity/` | `<mob>[_<elemento>].png` + `<mob>[_<elemento>]_glow.png` (emissiva) | gerada por `tools/gen_mob_art.py` |
 
+Dados do servidor ficam em `src/main/resources/data/solomod/`:
+
+| Pasta | Conteúdo | Origem |
+|---|---|---|
+| `advancement/` | `root.json` (aba "Solo Mod"), `defeat_sovereign_<elemento>.json` (5) e `defeat_all_sovereigns.json`. Títulos e descrições em `advancements.solomod.*` no lang. | manual |
+
 `src/main/templates/META-INF/neoforge.mods.toml` é o template de metadados: o Gradle substitui `${...}` com os valores de `gradle.properties`.
 
 ## Scripts (`tools/`) — Python 3 + Pillow
@@ -241,7 +247,7 @@ sequenceDiagram
 2. `apply` grava o `MobProfile`, aplica escala, atributos, título e brilho e chama `TierBrain.install(mob)`, que escolhe o brain pelo tier e adiciona os goals de alvo (todo mob do mod fica hostil ao jogador).
 3. Quando um mob salvo é carregado do mundo, `MobEvents.onJoin` reinstala o brain, porque os goals não são salvos, só o perfil.
 4. A cada ataque especial o brain envia `MobAnimPayload` → `client/MobAnimations` anima.
-5. Na morte, `PlayerEvents.onKill` dá XP ao jogador conforme o tier.
+5. Na morte, `PlayerEvents.onKill` dá XP ao jogador conforme o tier. Se for o Soberano, `SovereignBrain.onDeath` dispara a cinemática e `ModAdvancements.awardBossDefeat` para quem causou dano a ele.
 
 ### Stats
 

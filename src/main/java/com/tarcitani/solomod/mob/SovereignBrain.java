@@ -22,6 +22,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Soberano (BOSS): gigante, lento e implacável. Luta em três fases e se adapta ao jogador.
@@ -45,10 +46,17 @@ import java.util.Set;
  *   <li>Sopro Elemental: varre um cone à frente com o elemento.</li>
  *   <li>Convocar Lacaios: ergue os braços e chama 3 Diabretes do seu elemento.</li>
  * </ul>
+ *
+ * <p><b>Morte</b>: cinemática para todos a até 64 blocos. A conquista do Soberano
+ * ({@link ModAdvancements#awardBossDefeat}) vai só para quem causou dano a ele e ainda está online, e só
+ * se ele for a criatura Soberano ({@link TierMob}); mob vanilla marcado como BOSS não conta. A lista de
+ * participantes não é salva: se o chunk descarregar no meio da luta, ela recomeça vazia.
  */
 final class SovereignBrain extends TierBrain {
     private final ServerBossEvent bar;
     private final PhaseShift phaseShift = new PhaseShift();
+    /** Jogadores que causaram dano nesta luta (UUID, para sobreviver a relog). */
+    private final Set<UUID> fighters = new HashSet<>();
     private int phase = 1;
     private int meleePressure;
     private int rangedPressure;
@@ -111,6 +119,7 @@ final class SovereignBrain extends TierBrain {
     @Override
     public void onHurt(DamageSource source, float amount) {
         if (!(source.getEntity() instanceof Player player)) return;
+        fighters.add(player.getUUID());
         boolean ranged = source.getDirectEntity() != player || player.distanceTo(mob) > 5 + mob.getBbWidth() / 2;
         if (ranged) rangedPressure += 2;
         else meleePressure += 1;
@@ -150,7 +159,13 @@ final class SovereignBrain extends TierBrain {
         for (ServerPlayer player : level().players()) {
             if (player.distanceToSqr(mob) < 64 * 64) {
                 ModNetwork.sendCinematic(player, new CinematicPayload(mob.getId(), duration, title));
-                ModAdvancements.awardBossDefeat(player, element);
+            }
+        }
+        // Conquista: só quem lutou (o golpe final passa por onHurt antes da morte).
+        if (mob instanceof TierMob creature && creature.tier() == MobTier.BOSS) {
+            for (UUID id : fighters) {
+                ServerPlayer player = level().getServer().getPlayerList().getPlayer(id);
+                if (player != null) ModAdvancements.awardBossDefeat(player, element);
             }
         }
         sound(SoundEvents.WITHER_DEATH, 2.0F, 0.8F);

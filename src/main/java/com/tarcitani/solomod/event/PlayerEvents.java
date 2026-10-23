@@ -1,10 +1,8 @@
 package com.tarcitani.solomod.event;
 
-import com.tarcitani.solomod.advancement.ModAdvancements;
 import com.tarcitani.solomod.attachment.MobProfile;
 import com.tarcitani.solomod.attachment.ModAttachments;
 import com.tarcitani.solomod.attachment.PlayerStatsAttachment;
-import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.core.StatType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -36,9 +34,6 @@ public final class PlayerEvents {
         if (gainedPoints > 0) {
             player.sendSystemMessage(Component.translatable("message.solomod.points_gain",
                     gainedPoints, stats.getPontosDisponiveis()).withStyle(ChatFormatting.GOLD));
-        }
-        if (profile.tier() == MobTier.BOSS) {
-            ModAdvancements.awardBossDefeat(player, profile.element());
         }
         StatsLogic.onStatsChanged(player);
     }
