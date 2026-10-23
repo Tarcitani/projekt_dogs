@@ -69,6 +69,10 @@ import java.util.function.Predicate;
  * Quando acaba, fica exausto por 3 s (recebe +25% de dano) e volta aos ataques normais. Subclasses podem
  * mudar o gatilho ({@link #rageThreshold}), começar a Fúria por conta própria ({@link #beginRage}) e torná-la
  * sem fim ({@link #endlessRage}), como o Soberano.
+ * Stun deixa o chefe agachado se recuperando (5 s para bolas devolvidas), mas nunca entra durante
+ * a Fúria ou transições invulneráveis. Toda entrada em Fúria emite um grito, repetido a cada 5 s.
+ * Monarcas, Soberano e Guardiões que matam um jogador pausam para rir por 4 s; a comemoração
+ * aguarda o fim de uma transição invulnerável e é simulada mesmo sem alvo vivo.
  *
  * <p>Fora de combate os goals vanilla (vagar, olhar ao redor) continuam funcionando.
  */
@@ -144,6 +148,43 @@ public abstract class TierBrain extends Goal {
     private int moveTick;
     private int thinkDelay;
     private int pathDelay;
+    private long stunnedUntil;
+    private long laughingUntil;
+    private Vec3 defeatedAt;
+    private boolean victoryPending;
+
+    public final boolean isStunned() { return now() < stunnedUntil; }
+
+    /** Sincroniza a duração restante para quem começa a enxergar o chefe durante a recuperação. */
+    public final int remainingStunTicks() { return (int) Math.max(0, stunnedUntil - now()); }
+
+    public final int remainingLaughTicks() { return (int) Math.max(0, laughingUntil - now()); }
+
+    protected final boolean isCombatPaused() { return isStunned() || remainingLaughTicks() > 0; }
+
+    /** Janela de punição da bola devolvida, com a mesma imunidade a stun de todos os chefes. */
+    public final boolean stunFromFireball(int ticks) {
+        return stun(ticks);
+    }
+
+    /** Stun compartilhado (inclusive colisão de investida): Fúria e transições nunca são interrompidas. */
+    protected final boolean stun(int ticks) {
+        if (isRaging() || invulnerable || !mob.isAlive() || remainingLaughTicks() > 0) return false;
+        interrupt();
+        stunnedUntil = now() + ticks;
+        mob.getNavigation().stop();
+        mob.setDeltaMovement(0, Math.min(0, mob.getDeltaMovement().y), 0);
+        anim(MobAnim.KNOCKED_DOWN, ticks);
+        sound(SoundEvents.RAVAGER_STUNNED, 2F, 0.6F);
+        return true;
+    }
+
+    /** Só agenda: a morte pode acontecer dentro de Move.tick, que não pode ser interrompido por reentrância. */
+    public final void onPlayerDefeated(Player player) {
+        if ((tier != MobTier.BOSS && tier != MobTier.SUB_BOSS) || !mob.isAlive()) return;
+        defeatedAt = player.position();
+        victoryPending = true;
+    }
 
     protected TierBrain(PathfinderMob mob, MobTier tier, ElementType element) {
         this.mob = mob;
@@ -245,13 +286,45 @@ public abstract class TierBrain extends Goal {
 
     /** Chamado pelo MobEvents a cada tick do mob vivo: contagem e visual da Fúria + {@link #passiveTick}. */
     public final void baseTick() {
-        if (exhaustedTicks > 0) exhaustedTicks--;
-        if (rageTicks > 0) {
-            if (!endlessRage()) rageTicks--;
-            rageVisuals();
-            if (rageTicks == 0) endRage();
+        if (victoryPending && !invulnerable) {
+            victoryPending = false;
+            interrupt();
+            stunnedUntil = 0;
+            laughingUntil = now() + TierIdentity.BOSS_LAUGH_TICKS;
+            anim(MobAnim.LAUGH, TierIdentity.BOSS_LAUGH_TICKS);
+            laughSound();
         }
+        if (remainingLaughTicks() > 0 && remainingLaughTicks() < TierIdentity.BOSS_LAUGH_TICKS && mob.tickCount % 18 == 0) {
+            laughSound();
+        }
+        if (isCombatPaused()) {
+            mob.getNavigation().stop();
+            mob.setSpeed(0);
+            mob.setZza(0);
+            mob.setXxa(0);
+            mob.setJumping(false);
+            mob.setDeltaMovement(0, Math.min(0, mob.getDeltaMovement().y), 0);
+            if (remainingLaughTicks() > 0 && defeatedAt != null) face(flatDirTo(defeatedAt));
+            if (isStunned() && mob.tickCount % 10 == 0) particles(ParticleTypes.CRIT, mob.getEyePosition(), 8, 0.5, 0.05);
+            // A risada não é stun: a Fúria continua contando e mantém seus efeitos/gritos.
+            if (!isStunned() && rageTicks > 0) tickRage();
+            passiveTick();
+            return;
+        }
+        if (exhaustedTicks > 0) exhaustedTicks--;
+        if (rageTicks > 0) tickRage();
         passiveTick();
+    }
+
+    private void tickRage() {
+        if (!endlessRage()) rageTicks--;
+        rageVisuals();
+        if (mob.tickCount % TierIdentity.RAGE_CRY_INTERVAL == 0) rageCry();
+        if (rageTicks == 0) endRage();
+    }
+
+    private void laughSound() {
+        sound(SoundEvents.WITCH_CELEBRATE, 2.2F, mob instanceof Sovereign ? 0.45F : 0.65F);
     }
 
     /** Antes do dano entrar. Devolve true para cancelar o golpe (aparar, invulnerabilidade). */
@@ -273,12 +346,12 @@ public abstract class TierBrain extends Goal {
 
     @Override
     public boolean canUse() {
-        return isValidTarget(mob.getTarget());
+        return isCombatPaused() || isValidTarget(mob.getTarget());
     }
 
     @Override
     public boolean canContinueToUse() {
-        return current != null || isValidTarget(mob.getTarget());
+        return isCombatPaused() || current != null || isValidTarget(mob.getTarget());
     }
 
     @Override
@@ -304,6 +377,7 @@ public abstract class TierBrain extends Goal {
 
     @Override
     public void tick() {
+        if (isCombatPaused()) return;
         LivingEntity t = mob.getTarget();
         if (isValidTarget(t)) target = t;
         if (meleeCooldown > 0) meleeCooldown--;
@@ -317,7 +391,8 @@ public abstract class TierBrain extends Goal {
             return;
         }
         if (current != null) {
-            if (!current.tick(moveTick++)) finishMove();
+            Move running = current;
+            if (!running.tick(moveTick++) && current == running) finishMove();
             return;
         }
 
@@ -522,13 +597,15 @@ public abstract class TierBrain extends Goal {
     }
 
     /**
-     * Entra em Fúria agora, sem o rugido padrão (quem chama faz a própria entrada). Os ataques de Fúria ficam
+     * Entra em Fúria agora, com grito mas sem a pausa do rugido padrão (quem chama faz a própria entrada). Os ataques ficam
      * prontos em até 1 s.
      */
     protected void beginRage() {
+        stunnedUntil = 0;
         rageUsed = true;
         rageTicks = RAGE_TICKS;
         onRageStart();
+        rageCry();
         for (Move m : rageMoves) m.readyAt = now() + random.nextInt(20);
     }
 
@@ -537,7 +614,13 @@ public abstract class TierBrain extends Goal {
         onRageEnd();
         sound(SoundEvents.RAVAGER_STUNNED, 1.5F, 0.6F);
         particles(ParticleTypes.LARGE_SMOKE, center(), 20, 0.6, 0.02);
-        if (mob.isAlive()) force(new Exhausted());
+        if (mob.isAlive() && remainingLaughTicks() == 0) force(new Exhausted());
+    }
+
+    /** Compartilhado com o despertar final do Soberano, que não usa RageStart. */
+    private void rageCry() {
+        sound(SoundEvents.WARDEN_ROAR, 3F, mob instanceof Sovereign ? 0.5F : 0.7F);
+        sound(SoundEvents.RAVAGER_ROAR, 2F, 0.55F);
     }
 
     /** Rugido da Fúria: 30 ticks invulnerável, onda que arremessa e reforços. */
@@ -547,12 +630,12 @@ public abstract class TierBrain extends Goal {
         @Override
         protected void begin() {
             rageUsed = true;
+            stunnedUntil = 0;
             invulnerable = true;
             rageTicks = RAGE_TICKS + 30;
             onRageStart();
             anim(MobAnim.ROAR, 30);
-            sound(SoundEvents.WARDEN_ROAR, 2.5F, 0.7F);
-            sound(SoundEvents.RAVAGER_ROAR, 2.0F, 0.5F);
+            rageCry();
             Component warning = Component.translatable("message.solomod.rage", mob.getDisplayName())
                     .withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
             for (ServerPlayer player : level().players()) {

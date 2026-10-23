@@ -10,6 +10,7 @@ import net.minecraft.util.Mth;
  * de cima para baixo; preparação = braços acima da cabeça; impacto = esmaga à frente; investida =
  * ombros para a frente; conjurar/rugir = braços abertos e mandíbula escancarada. Na fase 3 os cristais
  * das costas tremem.
+ * Recuperação agachada e risada de vitória são aplicadas pela base TierMobModel, também no Soberano.
  */
 public class MonarchModel extends TierMobModel {
     private final ModelPart chest, head, jaw, armR, armL, forearmR, forearmL, legR, legL, shinR, shinL, cape;

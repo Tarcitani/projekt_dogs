@@ -124,9 +124,21 @@ Com 1/4 da vida, o chefe ruge (invulnerável), arremessa quem está perto e cham
 
 Quando a Fúria acaba, o chefe fica **exausto por 3 s** e recebe +25% de dano.
 
+**Regras de todos os chefes (Guardiões, Monarcas e Soberano)**: durante a Fúria, nenhum stun pode ser aplicado (inclui bola devolvida e colisão da investida). Eles emitem um **grito** ao entrar na Fúria e repetem o grito a cada 5 s. Fora dela, o stun usa uma pose **agachada, de cabeça baixa e ofegante**, como recuperação, também usada na exaustão.
+
+Quando um chefe mata um jogador, para por **4 s para rir**, jogando a cabeça para trás, abrindo a mandíbula e sacudindo os ombros, olhando para o local da derrota. Há som de risada; funciona mesmo sem outro alvo vivo. Se estiver numa transição invulnerável, termina a transição antes de rir. A risada não pausa o relógio da Fúria. Dano direto, projéteis e mortes atribuídas ao chefe por queimadura/ambiente também contam; o magma da investida registra o dono durante a sessão (até os últimos 4096 blocos por dimensão).
+
 ### 💀 Morte do Monarca
 
 O Monarca se **desintegra** por 5 s. Os jogadores por perto entram numa **cinemática**: faixas pretas, HUD escondido, câmera virando para o chefe e o letreiro "MONARCA DERROTADO". Quem causou dano a ele ganha a conquista da forma derrotada (ver [Conquistas](#-conquistas)).
+
+### 🔥 Poder característico do Rei Vulcânico
+
+Desde a **fase 1**, o Monarca do Fogo lança **Bolas de Fogo Reais**: prepara por 1 s e dispara 1/2/3 bolas conforme a fase, com 0,9 s entre disparos, a alvos entre 6 e 32 blocos com linha de visão. O ataque continua disponível na Fúria. O modelo 3D próprio tem **2,4 blocos de diâmetro**, núcleo incandescente, crosta vulcânica vazada, anéis de plasma e fragmentos orbitais; não usa a bola de fogo do Ghast nem o item fire charge. Elas voam em linha reta, sem acelerar, a **7 blocos/s** (0,35 bloco/tick), com espiral de chamas, fumaça e faíscas. Explodem ao tocar um alvo ou bloco, sem destruir o terreno; desaparecem após 10 s ou se o conjurador morrer/sair do mundo.
+
+O jogador pode **rebater com um ataque direto**, inclusive de mão vazia ou espada longa: mire na bola e golpeie. Ela passa a seguir a direção da mira a **9 blocos/s**. Se acertar o conjurador fora da Fúria, causa o dano da bola atribuído ao jogador e o deixa **agachado se recuperando por 5 s (100 ticks)**, sem andar, atacar ou causar dano pela aura. Uma nova bola devolvida renova esse tempo. Durante a Fúria, a bola ainda causa dano, mas **não causa stun**. Ataques já lançados continuam no mundo. Rugidos e agonia invulneráveis bloqueiam o contra-ataque. Trocas de fase/estágio aguardam o fim da recuperação, preservando os limites de vida do Soberano.
+
+**Investida de Fogo**: nas investidas normais e nas cinco investidas da Fúria, partes do piso natural exposto (terra, pedra, areia ou cascalho) viram **blocos reais e permanentes de magma**, com partículas de lava. A conversão ocorre num raio de 2 blocos, por amostragem de 28% a cada 2 ticks; preserva blocos processados e recipientes e respeita `mobGriefing=false`. Materiais naturais colocados pelo jogador também podem ser convertidos. Na investida normal, bater em parede causa 2 s de recuperação agachada fora da Fúria; na Fúria continua ricocheteando.
 
 ## 🐉 Criaturas próprias
 
@@ -173,20 +185,20 @@ Olhos, gemas, chamas e rachaduras ficam numa **camada emissiva** que pulsa na co
 
 **História**: há eras, os cinco Monarcas se uniram para derrotar o Soberano. Ele voltou com o poder de todos eles e é o chefe final desta versão de testes. No futuro ele vai morar numa dimensão própria; por enquanto nasce pelo **ovo** da aba Solo Mod ou por `/modtest sovereign [estágio]`.
 
-**Corpo**: gigante (cerca de 7 blocos), com um pedaço de cada Monarca: braço de pedra e chifres do Colosso Rei, perna de magma e vulcão no ombro do Rei Vulcânico, pinça e barba de tentáculos do Leviatã Coroado, perna de raízes e copa do Titã Ancestral, asas e auréola do Imperador dos Céus. A coroa tem uma ponta de cada Monarca, cinco fragmentos orbitam o corpo e o brilho passa pelas cores dos cinco. Imune a fogo. Vida 700, dano 11 por golpe.
+**Corpo**: modelo **cinco vezes maior que o anterior** (escala de renderização 1,4 → 7,0), com um pedaço de cada Monarca: braço de pedra e chifres do Colosso Rei, perna de magma e vulcão no ombro do Rei Vulcânico, pinça e barba de tentáculos do Leviatã Coroado, perna de raízes e copa do Titã Ancestral, asas e auréola do Imperador dos Céus. A coroa tem uma ponta de cada Monarca, cinco fragmentos orbitam o corpo e o brilho passa pelas cores dos cinco. A caixa física de combate é independente; o enquadramento cinemático e o volume de visibilidade acompanham o modelo ampliado. Imune a fogo. Vida 700, dano 11 por golpe.
 
 **Estágios**: a barra de chefe tem 6 marcas. Cada vez que o jogador termina uma, o Soberano **agoniza** por 4 s: fica invulnerável e parado, ajoelha se contorcendo, e todos por perto ganham um **close cinemático** no rosto dele com a fala do estágio. No fim da agonia ele explode numa onda que empurra todos e desperta o poder de mais um Monarca, que vira um ataque novo. Nenhum golpe pula estágio: a vida para no limite da faixa, mesmo num golpe fatal (só `/kill` ignora).
 
 | Estágio | Vida | Desperta | Ataque novo |
 |---|---|---|---|
 | 1 | 100–83% | — | **Punho do Colosso**: ergue o punho e esmaga; onda de choque no chão (duas a partir do estágio 4) — pule |
-| 2 | 83–67% | Rei Vulcânico | **Erupção**: círculos de fogo sob cada jogador (o primeiro onde ele vai estar) e um anel deles em volta do Soberano |
+| 2 | 83–67% | Rei Vulcânico | **Bolas de Fogo Reais**: três projéteis lentos e rebatíveis, com 1 s de preparação e 0,9 s entre disparos; devolver ao Soberano o deixa agachado por 5 s |
 | 3 | 67–50% | Leviatã Coroado | **Maremoto**: marca uma faixa reta no chão e lança uma onda que arrasta quem estiver nela |
 | 4 | 50–33% | Titã Ancestral | **Raízes Ancestrais**: duas levas de raízes sob cada jogador (a segunda onde ele estiver) |
 | 5 | 33–17% | Imperador dos Céus | **Tempestade**: puxa todos para perto e chama raios sobre cada jogador por 3 s |
 | 6 | 17–0% | todos | **Convergência**: três rajadas de orbes dos cinco elementos e uma estrela de explosões · **FÚRIA até morrer** |
 
-Os ataques se acumulam (no estágio 5 ele usa os cinco). No estágio 6 a barra fica roxa, a tela escurece e ele entra em **Fúria sem fim**: +35% de dano, −35% de dano recebido, ataques mais frequentes.
+Os ataques se acumulam, **exceto as Bolas de Fogo Reais, que só existem nos estágios 2 (Fogo) e 6 (final)**. Ao sair do estágio 2, as bolas ainda em voo são removidas; não aparecem nos estágios 1, 3, 4 ou 5. No estágio 6 a barra fica roxa, a tela escurece e ele entra em **Fúria sem fim**: +35% de dano, −35% de dano recebido, ataques mais frequentes, gritos e imunidade a stun. Bolas devolvidas continuam causando dano, mas não o atordoam nessa etapa.
 
 **Fim**: o Soberano se desintegra, quem estava perto ou lutou vê a cinemática "O SOBERANO CAIU" e, em seguida, os **créditos** (música de créditos do Minecraft; ESPAÇO acelera, ESC sai e volta ao mundo).
 
@@ -206,6 +218,8 @@ O mod adiciona uma aba própria **Solo Mod** na tela de conquistas (Advancements
 | **Soberania Absoluta** *(secreta)* | Soberano | Todos | Derrotar o Soberano, que tomou para si o poder dos cinco Monarcas. Também revela o Selo Partido, se faltava. | Desafio · 2000 XP |
 
 A recompensa é **XP do Minecraft** (a barra verde), não o XP Global da Maestria.
+
+O ícone de **Cinzas do Vulcão** é a cabeça do Rei Vulcânico em pixel art 16×16: carvão, olhos de brasa e coroa de chamas (`solomod:monarch_fire_head`), gerada por `tools/gen_boss_icons.ps1`.
 
 - **Quem ganha**: todo jogador que causou dano ao chefe durante a luta e está online quando ele morre. Quem só assistiu, espectadores e mortes sem jogador (lava, `/kill`) não ganham nada.
 - **Só a criatura conta**: um mob vanilla marcado como Monarca por `/modtest mob boss ...` não dá conquista.

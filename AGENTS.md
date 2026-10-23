@@ -36,7 +36,7 @@ src/main/java/com/tarcitani/solomod/
 ├── item/                 ModularWeaponItem, ModItems (itens, ovos, aba criativa)
 ├── event/                CombatEvents (dano), ElementalCombat, StatsLogic (balanceamento), PlayerEvents
 ├── skill/                WeaponSkill (habilidades de tier), ClassAbility (de classe), SkillVfx, PlayerAnim
-├── entity/               TierMob (criaturas), Sovereign (chefe final), ThrownDagger, ModEntities
+├── entity/               TierMob (criaturas), Sovereign (chefe final), ThrownDagger, RoyalFireball, ModEntities
 ├── mob/                  TierIdentity, TierBrain + 4 Brains + SovereignBrain, Hazards, MobAnim, MobEvents
 ├── network/              ModNetwork + *Payload
 ├── command/              ModTestCommand (/modtest)
@@ -55,6 +55,8 @@ tools/                    scripts Python que GERAM arte e código
 ./gradlew compileJava    # checagem rápida de compilação
 python tools/gen_mob_art.py        # regera texturas de mobs + MobMeshes.java
 python tools/gen_weapon_models.py  # regera modelos/texturas das armas e ovos
+powershell -File tools/gen_boss_icons.ps1 # ícone pixel art da cabeça do Rei Vulcânico (Windows)
+powershell -File tools/gen_royal_fireball.ps1 # texturas originais da bola de fogo 3D (Windows)
 ```
 
 No Windows use `gradlew.bat`. Não há testes automatizados: valide com `./gradlew build` e, quando possível, peça ao usuário para testar no jogo com `/modtest`.
@@ -118,6 +120,9 @@ No Windows use `gradlew.bat`. Não há testes automatizados: valide com `./gradl
 - **Brains não são salvos**: só o `MobProfile` persiste. `MobEvents.onJoin` reinstala o brain quando o mob é carregado.
 - **Ter `MobProfile` = ser mob do mod**: dá XP, é alvo dos Hazards como "aliado" (não leva dano deles) e fica hostil ao jogador. Teste com `hasData(ModAttachments.MOB_PROFILE)`.
 - **Ataque da espada longa** é cancelado no cliente e vira `SpinAttackPayload`; o giro é validado no servidor (`ClassAbility.spinAttack`).
+- **Bolas de Fogo Reais** têm modelo 3D próprio (`RoyalFireballRenderer`, texturas de `tools/gen_royal_fireball.ps1`), não usam fire charge/Ghast. A espada longa permite golpe direto ao mirá-las. Devolvê-las ao conjurador causa dano e tenta `TierBrain.stunFromFireball(100)`: Fúria e transições bloqueiam stun. No Soberano só existem nos estágios 2/6. O ícone de Cinzas do Vulcão é gerado por `tools/gen_boss_icons.ps1`.
+- **Chefes (BOSS e SUB_BOSS)**: `KNOCKED_DOWN` preserva o ordinal, mas agora é recuperação agachada (nunca deitada). `LAUGH` foi acrescentado ao fim do enum; `MobEvents.onDeath` agenda a risada do chefe vencedor por 80 ticks, mesmo sem alvo. Fúria tem grito compartilhado de entrada e a cada 100 ticks; nenhuma aplicação de stun passa por ela.
+- **Investidas do Rei Vulcânico** convertem partes do piso natural exposto em magma permanente via `Hazards.magmaTrail`, respeitando `mobGriefing`; a autoria do magma para risadas é só da sessão atual. **Soberano**: modelo 5× maior (`RENDER_SCALE=7`), com caixa física independente, foco cinemático e culling ajustados.
 - **Monarca e Soberano não morrem na hora**: desintegram por `TierMob.DISSOLVE_TICKS` (100) e disparam `CinematicPayload`.
 - **Soberano ≠ Monarca.** No código, `monarch` são os 5 chefes elementais (tier BOSS, `MonarchBrain`) e `sovereign` é o chefe final (entidade `Sovereign`, também tier BOSS, `SovereignBrain`). `TierBrain.install` escolhe pelo tipo da entidade.
 - **O Soberano não pula estágio**: `SovereignBrain.onHurt` devolve a vida ao limite do estágio, inclusive em golpe fatal. Só dano com a tag `bypasses_invulnerability` (`/kill`, void) passa direto.

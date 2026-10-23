@@ -2,6 +2,7 @@ package com.tarcitani.solomod.entity;
 
 import com.tarcitani.solomod.SoloMod;
 import com.tarcitani.solomod.core.MobTier;
+import com.tarcitani.solomod.mob.TierIdentity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -10,7 +11,7 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** Entidades do mod: uma criatura por tier, o Soberano (chefe final) e a adaga arremessada. */
+/** Entidades do mod: criaturas, Soberano, adaga arremessada e bola de fogo real rebatível. */
 public final class ModEntities {
     private ModEntities() {}
 
@@ -39,6 +40,11 @@ public final class ModEntities {
                         (type, level) -> new TierMob(type, level, tier), MobCategory.MONSTER)
                 .sized(width, height).clientTrackingRange(tier == MobTier.BOSS ? 16 : 10).build(name));
     }
+
+    public static final DeferredHolder<EntityType<?>, EntityType<RoyalFireball>> ROYAL_FIREBALL =
+            ENTITY_TYPES.register("royal_fireball", () -> EntityType.Builder.<RoyalFireball>of(RoyalFireball::new, MobCategory.MISC)
+                    .sized(TierIdentity.ROYAL_FIREBALL_SIZE, TierIdentity.ROYAL_FIREBALL_SIZE)
+                    .fireImmune().clientTrackingRange(12).updateInterval(1).build("royal_fireball"));
 
     public static EntityType<TierMob> forTier(MobTier tier) {
         return switch (tier) {

@@ -21,6 +21,8 @@ import net.minecraft.world.level.Level;
  *
  * <p>Os atributos daqui são a BASE; {@code TierIdentity} soma o multiplicador do tier BOSS por cima
  * (vida 14x, dano 2.8x, +12 de armadura).
+ * O modelo usa escala 7 (cinco vezes a escala visual anterior de 1,4); a caixa física de combate
+ * continua separada. A caixa de visibilidade engloba o modelo inteiro para evitar cortes da câmera.
  */
 public class Sovereign extends TierMob {
     /** Vida base: 50 x 14 (BOSS) = 700. */
@@ -28,7 +30,12 @@ public class Sovereign extends TierMob {
     /** Dano base: 4 x 2.8 (BOSS) = 11.2 por golpe. */
     public static final double BASE_DAMAGE = 4;
     /** O modelo é desenhado nesta escala (a caixa de colisão já é a do gigante). */
-    public static final float RENDER_SCALE = 1.4F;
+    public static final float RENDER_SCALE = 7.0F;
+
+    @Override
+    public net.minecraft.world.phys.AABB getBoundingBoxForCulling() {
+        return getBoundingBox().inflate(18, 32, 18);
+    }
 
     public Sovereign(EntityType<? extends TierMob> type, Level level) {
         super(type, level, MobTier.BOSS);

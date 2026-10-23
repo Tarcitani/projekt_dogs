@@ -38,7 +38,8 @@ import java.util.Map;
  *   <li>Estocada: corpo inclinado e esticado para a frente.</li>
  *   <li>Salto do machado: mortal para a frente; no impacto o corpo achata e a câmera treme.</li>
  * </ul>
- * Também troca o ataque da espada longa pelo giro (o clique vira {@link SpinAttackPayload}).
+ * Também troca o ataque da espada longa pelo giro (o clique vira {@link SpinAttackPayload}), salvo
+ * ao mirar uma bola de fogo real, que recebe o golpe direto para poder ser rebatida.
  */
 @EventBusSubscriber(modid = SoloMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class PlayerAnimations {
@@ -88,6 +89,8 @@ public final class PlayerAnimations {
                 || ModularWeaponItem.getData(held).weaponClass() != WeaponClass.LONGSWORD) return;
         // Mirando um bloco o clique continua quebrando blocos normalmente.
         if (mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK) return;
+        if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit
+                && hit.getEntity() instanceof com.tarcitani.solomod.entity.RoyalFireball) return;
 
         event.setCanceled(true);
         event.setSwingHand(false);

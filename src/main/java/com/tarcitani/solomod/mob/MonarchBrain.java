@@ -5,6 +5,7 @@ import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.entity.ModEntities;
 import com.tarcitani.solomod.entity.TierMob;
+import com.tarcitani.solomod.entity.RoyalFireball;
 import com.tarcitani.solomod.network.CinematicPayload;
 import com.tarcitani.solomod.network.ModNetwork;
 import com.tarcitani.solomod.skill.SkillVfx;
@@ -40,6 +41,10 @@ import java.util.UUID;
  * atrai Vórtice e Chuva Elemental; quem cola atrai Golpe Sísmico e Sopro.
  *
  * <p><b>Ataques</b>:
+ * O Rei Vulcânico usa Bolas de Fogo Reais desde a fase 1 (também na Fúria): projéteis lentos rebatíveis.
+ * Fora da Fúria, devolver ao chefe o deixa agachado se recuperando por 5 s. A aura de dano e as
+ * trocas de fase ficam suspensas na recuperação e na risada após matar um jogador.
+ * Investidas de Fogo convertem partes do piso natural em magma (respeitando mobGriefing).
  * <ul>
  *   <li>Golpe Sísmico: ergue os braços e esmaga; onda de choque no chão — pule para esquivar.</li>
  *   <li>Chuva Elemental: marca círculos no chão (mais por fase) que explodem após um tempo.</li>
@@ -76,6 +81,11 @@ final class MonarchBrain extends TierBrain {
         addRageMove(new GiantMeteor());
         addRageMove(new EndlessCharge());
         addRageMove(new EruptionRing());
+        if (element == ElementType.FIRE) {
+            Move fireballs = new RoyalVolley();
+            addMove(fireballs);
+            addRageMove(fireballs);
+        }
     }
 
     @Override public int phase() { return phase; }
@@ -89,6 +99,7 @@ final class MonarchBrain extends TierBrain {
 
     @Override
     public void tick() {
+        if (isCombatPaused()) return;
         int wanted = phaseFor(mob.getHealth() / mob.getMaxHealth());
         if (wanted > phase && !isRunning(phaseShift)) {
             phaseShift.next = wanted;
@@ -129,6 +140,10 @@ final class MonarchBrain extends TierBrain {
 
     @Override
     public void passiveTick() {
+        if (isCombatPaused()) {
+            updateBossBar(bar, 48);
+            return;
+        }
         // A leitura do jogador "esquece" aos poucos: metade a cada 5 s.
         if (mob.tickCount % 100 == 0) {
             meleePressure /= 2;
@@ -182,6 +197,29 @@ final class MonarchBrain extends TierBrain {
     }
 
     // ------------------------------------------------------------------ ataques
+
+    /** Poder característico do fogo: prepara por 1 s e dispara 1/2/3 bolas lentas, espaçadas por 0,9 s. */
+    private final class RoyalVolley extends Move {
+        RoyalVolley() { super(100, 12); }
+
+        @Override protected boolean usable(double dist) {
+            return dist > TierIdentity.ROYAL_FIREBALL_MIN_RANGE && dist < 32 && mob.getSensing().hasLineOfSight(target);
+        }
+
+        @Override protected void begin() {
+            anim(MobAnim.BREATH, 24 + (phase - 1) * 18);
+            sound(SoundEvents.GHAST_WARN, 2F, 0.65F);
+        }
+
+        @Override protected boolean tick(int t) {
+            face(flatDirTo(target.position()));
+            particles(ParticleTypes.FLAME, mob.getEyePosition(), 8, 0.45, 0.04);
+            if (t >= 20 && (t - 20) % 18 == 0 && (t - 20) / 18 < phase) {
+                RoyalFireball.launch(level(), mob, target, baseDamage() * TierIdentity.ROYAL_FIREBALL_DAMAGE_MULTIPLIER);
+            }
+            return t < 24 + (phase - 1) * 18;
+        }
+    }
 
     /** Troca de fase: rugido invulnerável, onda que arremessa, reforços ou fúria. */
     private final class PhaseShift extends Move {
@@ -311,7 +349,6 @@ final class MonarchBrain extends TierBrain {
         private static final int AIM = 12, RUN = 14, REST = 6, CYCLE = AIM + RUN + REST;
         private final Set<Integer> hit = new HashSet<>();
         private Vec3 dir;
-        private int stunnedUntil = -1;
 
         Charge() { super(160, 4); }
 
@@ -321,16 +358,7 @@ final class MonarchBrain extends TierBrain {
         }
 
         @Override
-        protected void begin() {
-            stunnedUntil = -1;
-        }
-
-        @Override
         protected boolean tick(int t) {
-            if (stunnedUntil >= 0) {
-                if (t % 4 == 0) particles(ParticleTypes.CRIT, mob.getEyePosition().add(0, 0.5, 0), 4, 0.4, 0);
-                return t < stunnedUntil;
-            }
             int index = t / CYCLE, local = t % CYCLE;
             if (index >= phase) return false;
             if (local == 0) {
@@ -354,6 +382,7 @@ final class MonarchBrain extends TierBrain {
                 }
                 face(dir);
                 mob.setDeltaMovement(dir.x * 1.3, mob.getDeltaMovement().y, dir.z * 1.3);
+                if (element == ElementType.FIRE) Hazards.magmaTrail(level(), mob);
                 particles(ParticleTypes.CLOUD, mob.position().add(0, 0.2, 0), 3, 0.5, 0.02);
                 for (LivingEntity e : Hazards.enemiesIn(level(), mob, mob.getBoundingBox().inflate(0.6))) {
                     if (hit.add(e.getId())) {
@@ -363,11 +392,9 @@ final class MonarchBrain extends TierBrain {
                     }
                 }
                 if (mob.horizontalCollision) {
-                    stunnedUntil = t + 40;
-                    anim(MobAnim.SLAM, 10);
-                    sound(SoundEvents.RAVAGER_STUNNED, 2.0F, 0.7F);
                     sound(SoundEvents.ANVIL_LAND, 1.0F, 0.5F);
                     particles(ParticleTypes.EXPLOSION, center(), 2, 0.5, 0);
+                    if (stun(40)) return false;
                 }
                 return true;
             }
@@ -598,6 +625,7 @@ final class MonarchBrain extends TierBrain {
             }
             face(dir);
             mob.setDeltaMovement(dir.x * 1.5, mob.getDeltaMovement().y, dir.z * 1.5);
+            if (element == ElementType.FIRE) Hazards.magmaTrail(level(), mob);
             particles(ParticleTypes.FLAME, mob.position().add(0, 0.3, 0), 4, 0.6, 0.02);
             for (LivingEntity e : Hazards.enemiesIn(level(), mob, mob.getBoundingBox().inflate(0.6))) {
                 if (hit.add(e.getId())) {

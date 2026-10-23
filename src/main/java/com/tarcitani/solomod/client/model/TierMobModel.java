@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.tarcitani.solomod.client.MobAnimations;
 import com.tarcitani.solomod.entity.TierMob;
+import com.tarcitani.solomod.mob.MobAnim;
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.util.Mth;
@@ -11,6 +12,7 @@ import net.minecraft.util.Mth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Base dos modelos das criaturas. Cada subclasse posa os membros em {@link #animate} a partir da caminhada,
@@ -21,11 +23,14 @@ import java.util.Map;
  *
  * <p>Também cuida da desintegração do Colosso: cada pedaço do modelo voa numa direção própria, sobe e gira,
  * enquanto o corpo todo fica transparente.
+ * Poses comuns de chefes são aplicadas após a animação de cada tier: recuperação agachada e risada
+ * com mandíbula, ombros e tronco sacudindo (inclui Guardiões e Soberano).
  */
 public abstract class TierMobModel extends HierarchicalModel<TierMob> {
     private final ModelPart root;
     private final List<ModelPart> fragments;
     private final List<Map.Entry<String, ModelPart>> decor = new ArrayList<>();
+    private final Map<String, ModelPart> namedParts = new HashMap<>();
     private float alpha = 1.0F;
 
     protected TierMobModel(ModelPart root) {
@@ -44,7 +49,8 @@ public abstract class TierMobModel extends HierarchicalModel<TierMob> {
      * pode mexer à vontade sem efeito nenhum.
      */
     protected ModelPart part(String name) {
-        return getAnyDescendantWithName(name).orElseGet(() -> new ModelPart(List.of(), Map.of()));
+        return namedParts.computeIfAbsent(name, key -> getAnyDescendantWithName(key)
+                .orElseGet(() -> new ModelPart(List.of(), Map.of())));
     }
 
     /** Partes decorativas da variante (chamas, nadadeiras, anéis...), animadas pelo prefixo do nome. */
@@ -93,8 +99,9 @@ public abstract class TierMobModel extends HierarchicalModel<TierMob> {
     public final void setupAnim(TierMob entity, float limbSwing, float limbAmount, float age, float headYaw, float headPitch) {
         root.getAllParts().forEach(ModelPart::resetPose);
         float partial = age - entity.tickCount;
-        animate(entity, limbSwing, limbAmount, age, headYaw * Mth.DEG_TO_RAD, headPitch * Mth.DEG_TO_RAD,
-                MobAnimations.action(entity, partial));
+        MobAnimations.Action action = MobAnimations.action(entity, partial);
+        animate(entity, limbSwing, limbAmount, age, headYaw * Mth.DEG_TO_RAD, headPitch * Mth.DEG_TO_RAD, action);
+        bossPose(action, age);
         // Em fúria, as decorações (chamas, anéis...) aceleram.
         animateDecor(MobAnimations.isRaging(entity) ? age * 2.2F : age);
         float dissolve = entity.dissolveProgress(partial);
@@ -108,6 +115,37 @@ public abstract class TierMobModel extends HierarchicalModel<TierMob> {
      */
     protected abstract void animate(TierMob entity, float limbSwing, float limbAmount, float age, float yaw, float pitch,
                                     MobAnimations.Action action);
+
+    private void bossPose(MobAnimations.Action action, float age) {
+        float k = Math.min(1F, action.t() * 10F) * Math.min(1F, (1F - action.t()) * 10F);
+        if (action.is(MobAnim.KNOCKED_DOWN) || action.is(MobAnim.EXHAUSTED)) {
+            float breath = Mth.sin(age * 0.22F) * 0.045F;
+            part("body").y += 6F * k;
+            part("body").xRot = (0.12F + breath) * k;
+            part("chest").xRot = (0.3F + breath) * k;
+            part("head").xRot = 0.35F * k;
+            part("jaw").xRot = 0.16F * k;
+            part("leg_r").xRot = part("leg_l").xRot = -0.9F * k;
+            part("leg_r").y += 4.7F * k;
+            part("leg_l").y += 4.7F * k;
+            part("shin_r").xRot = part("shin_l").xRot = 1.45F * k;
+            part("arm_r").xRot = part("arm_l").xRot = -0.7F * k;
+            part("forearm_r").xRot = part("forearm_l").xRot = -0.55F * k;
+            part("hand_r").y += 4F * k;
+            part("hand_l").y += 4F * k;
+        } else if (action.is(MobAnim.LAUGH)) {
+            float laugh = Mth.sin(age * 0.9F);
+            part("chest").xRot = (-0.15F + laugh * 0.07F) * k;
+            part("body").xRot = laugh * 0.04F * k;
+            part("head").xRot = (-0.55F + laugh * 0.1F) * k;
+            part("jaw").xRot = (0.5F + Math.abs(laugh) * 0.4F) * k;
+            part("arm_r").xRot = -0.8F * k;
+            part("forearm_r").xRot = -1.1F * k;
+            part("arm_l").zRot = -0.55F * k;
+            part("hand_r").y -= (3F + laugh) * k;
+            part("hand_l").y -= (3F - laugh) * k;
+        }
+    }
 
     private void dissolve(float p) {
         float e = p * p;

@@ -125,7 +125,8 @@ flowchart LR
 | `TierMob.java` | Criatura própria de cada tier (`extends Monster`). Guarda o elemento em `SynchedEntityData` (o cliente escolhe modelo e textura com ele). Sem perfil ao nascer → recebe um elemento aleatório. O Monarca e o Soberano (tier BOSS) têm a morte de desintegração (`DISSOLVE_TICKS=100`). **O combate não fica aqui**, fica no `TierBrain`. |
 | `Sovereign.java` | O Soberano, chefe final (`extends TierMob`, tier BOSS, sempre sem elemento). Atributos base próprios (`BASE_HEALTH`, `BASE_DAMAGE`), `RENDER_SCALE`, sons e imunidade a fogo. O combate fica em `mob/SovereignBrain`. |
 | `ThrownDagger.java` | Adaga arremessada (`extends AbstractArrow`): voa girando, crava, volta como bumerangue quando o dono chama. |
-| `ModEntities.java` | Registra `minion`, `elite`, `guardian`, `monarch`, `sovereign` e `thrown_dagger`, além dos atributos. `forTier(tier)` devolve o tipo da criatura do tier (BOSS = Monarca). |
+| `RoyalFireball.java` | Entidade `royal_fireball` (`Projectile`): bola de 2,4 blocos, lenta e rebatível. Colisão volumétrica e reflexão no servidor; devolvida causa dano mágico do jogador e tenta `TierBrain.stunFromFireball(100)` (bloqueado na Fúria). NBT guarda conjurador, reflexão, dano e idade. Modelo próprio em `RoyalFireballRenderer`, sem item vanilla. Bolas do Soberano são removidas fora dos estágios 2/6. |
+| `ModEntities.java` | Registra `minion`, `elite`, `guardian`, `monarch`, `sovereign`, `thrown_dagger` e `royal_fireball`, além dos atributos. `forTier(tier)` devolve o tipo da criatura do tier (BOSS = Monarca). |
 
 ### `mob/` — IA e identidade dos mobs (servidor)
 
@@ -189,6 +190,7 @@ Todos registrados em `ModNetwork.register` (protocolo `"1"`).
 | `MobMeshes.java` | ⚠️ **Gerado** por `tools/gen_mob_art.py`. Malhas (cubos + UV) das 20 formas e do Soberano. Não edite à mão. |
 | `TierMobRenderer.java` | Troca de modelo e textura conforme o elemento. Camadas: base + brilho emissivo + aura de Fúria. `single(...)` é para criatura sem variantes (o Soberano): malha única, escala maior e brilho que passa pelas cores dos Monarcas. |
 | `ThrownDaggerRenderer.java` | Desenha a adaga voando, girando ou cravada. |
+| `RoyalFireballRenderer.java` | Malha procedural exclusiva: núcleo facetado, crosta vazada, dois anéis de plasma e seis fragmentos orbitais, com luz máxima e texturas próprias. |
 
 ---
 
@@ -215,10 +217,24 @@ Dados do servidor ficam em `src/main/resources/data/solomod/`:
 |---|---|---|
 | `gen_mob_art.py` | `textures/entity/*.png` e `client/model/MobMeshes.java` | spec das 4 formas base; a mesma spec gera UV e textura, então os dois nunca saem de sincronia |
 | `mob_variants.py` | — (importado por `gen_mob_art.py`) | as 16 formas elementais e o Soberano (`sovereign()`) |
+| `gen_boss_icons.ps1` | `textures/item/monarch_fire_head.png` | Cabeça do Rei Vulcânico em pixel art 16×16 RGBA para o item-ícone de Cinzas do Vulcão; usa System.Drawing no Windows, sem dependências Python. |
+| `gen_royal_fireball.ps1` | `textures/entity/royal_fireball.png` e `royal_fireball_core.png` | Texturas originais de crosta vazada e núcleo de magma (64×32 RGBA), determinísticas, para a malha procedural; não reutilizam arte do Ghast. |
 | `gen_weapon_models.py` | modelos 3D (rapieira/claymore), textura de peças, contorno fantasma da adaga, modelos dos ovos (incluindo o do Soberano) | ponto de entrada das armas |
 | `gen_weapon_elements.py` | — (importado por `gen_weapon_models.py`) | versões elementais das armas 2D e 3D |
 
 Rode da raiz: `python tools/gen_mob_art.py` e `python tools/gen_weapon_models.py`.
+
+Ícone do Rei Vulcânico: `powershell -File tools/gen_boss_icons.ps1`. `ModItems.MONARCH_FIRE_HEAD` registra o item visual usado por `defeat_monarch_fire.json`, com modelo `item/generated`.
+
+Velocidade de ida/volta, diâmetro, alcance mínimo, duração da recuperação, vida do projétil e multiplicador de dano estão nas constantes `TierIdentity.ROYAL_FIREBALL_*`. `MobEvents.onStartTracking` envia pose e duração restante da recuperação ou risada para novos observadores. Gere as texturas do projétil com `powershell -File tools/gen_royal_fireball.ps1`.
+
+**Bolas de fogo e recuperação:** `MonarchBrain.RoyalVolley` só é registrado para Fogo e existe nas fases 1–3 e na Fúria. `SovereignBrain.RoyalVolley` só é utilizável nos estágios 2 e 6. `TierBrain.stun` centraliza a imunidade na Fúria e nas transições invulneráveis, interrompe o ataque e suspende movimento por 100 ticks; os cérebros adiam transições e a aura ofensiva nesse intervalo. A bola devolvida ainda causa dano durante a Fúria. `MobAnim.KNOCKED_DOWN` mantém o ordinal e agora significa recuperação agachada; `MobAnimations` aplica a postura geral, e `TierMobModel` dobra pernas, baixa a cabeça e posa os braços de todos os chefes. A colisão da investida normal usa o mesmo stun (40 ticks). `PlayerAnimations` permite golpe direto da espada longa ao mirar `RoyalFireball`.
+
+**Gritos e risada:** `TierBrain` emite um grito tanto em `RageStart` como em `beginRage` (usado pelo Soberano), repetindo a cada `TierIdentity.RAGE_CRY_INTERVAL`. `MobEvents.onDeath` identifica o chefe que matou um jogador pelo dano, crédito de combate ou dono do magma. `onPlayerDefeated` agenda a risada; `baseTick` só interrompe o ataque após sair de transições invulneráveis, evitando reentrância no `Move.tick`. A risada `LAUGH` dura `TierIdentity.BOSS_LAUGH_TICKS`, roda sem alvo e não pausa a Fúria. Som compartilhado e movimentos de cabeça, mandíbula, braços e tronco estão em `MobAnimations`/`TierMobModel`. Vale para BOSS e SUB_BOSS, incluindo Soberano.
+
+**Magma da investida:** `MonarchBrain.Charge` e `EndlessCharge` chamam `Hazards.magmaTrail` apenas no Fogo. O servidor consulta `canEntityGrief`, substitui trechos expostos de blocos naturais por magma permanente e não toca blocos com dados. Atribuição em memória por dimensão (até 4096 posições, limpa ao parar o servidor) permite rir quando um jogador morre no rastro. Raio e chance ficam em `TierIdentity.MAGMA_TRAIL_*`.
+
+**Escala do Soberano:** `Sovereign.RENDER_SCALE=7` é cinco vezes o modelo anterior (1,4); a caixa física permanece independente. `getBoundingBoxForCulling` amplia a região visível e `BossCinematic.focusOn` ajusta o foco ao novo tamanho.
 
 ---
 

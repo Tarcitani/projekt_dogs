@@ -2,7 +2,7 @@
   "parent": "solomod:root",
   "display": {
     "icon": {
-      "id": "solomod:monarch_fire_spawn_egg"
+      "id": "solomod:monarch_fire_head"
     },
     "title": {
       "translate": "advancements.solomod.defeat_monarch_fire.title"

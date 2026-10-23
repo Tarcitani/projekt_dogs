@@ -38,6 +38,7 @@ import java.util.WeakHashMap;
  * </ul>
  *
  * <p><b>De ação</b>: as {@link MobAnim} enviadas pelo servidor a cada ataque, por cima da ociosa.
+ * {@code KNOCKED_DOWN} mantém o chefe agachado se recuperando; {@code LAUGH} o faz rir após vencer.
  */
 @EventBusSubscriber(modid = SoloMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class MobAnimations {
@@ -237,9 +238,11 @@ public final class MobAnimations {
                 lean(pose, yaw, 18F);
                 shake(pose, age, 0.015F * size);
             }
-            case EXHAUSTED -> {
-                lean(pose, yaw, 22F * Math.min(1F, t * 5F) * Math.min(1F, (1F - t) * 5F));
-                pose.scale(1F, 1F - 0.08F * Mth.sin(age * 0.4F) * 0.5F - 0.05F, 1F);
+            case EXHAUSTED, KNOCKED_DOWN -> {
+                float k = Math.min(1F, t * 10F) * Math.min(1F, (1F - t) * 10F);
+                // O corpo permanece em pé, comprimido sobre as pernas dobradas.
+                pose.scale(1F, 1F - 0.12F * k, 1F);
+                lean(pose, yaw, 8F * k);
             }
             case AGONY -> {
                 // Afunda (ajoelha), inclina para a frente e treme forte; entra e sai em 1/5 da animação.
@@ -247,6 +250,11 @@ public final class MobAnimations {
                 pose.translate(0, -0.18F * k * size, 0);
                 lean(pose, yaw, 10F * k);
                 shake(pose, age, 0.05F * k * size);
+            }
+            case LAUGH -> {
+                float k = Math.min(1F, t * 8F) * Math.min(1F, (1F - t) * 8F);
+                lean(pose, yaw, (-6F + Mth.sin(age * 0.9F) * 2F) * k);
+                pose.translate(0, Math.abs(Mth.sin(age * 0.9F)) * 0.035F * size * k, 0);
             }
             case NONE -> {}
         }

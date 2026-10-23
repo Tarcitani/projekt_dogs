@@ -34,9 +34,23 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
  *
  * <p>Os modificadores são permanentes (salvos com o mob); a IA ({@link TierBrain}) não é salva e é
  * reinstalada sempre que o mob entra no mundo (ver {@link MobEvents}).
+ * Também centraliza o balanceamento das Bolas de Fogo Reais compartilhadas pelo Rei Vulcânico e Soberano.
  */
 public final class TierIdentity {
     private TierIdentity() {}
+
+    public static final double ROYAL_FIREBALL_SPEED = 0.35;
+    public static final double ROYAL_FIREBALL_RETURN_SPEED = 0.45;
+    public static final int ROYAL_FIREBALL_STUN_TICKS = 100;
+    public static final int ROYAL_FIREBALL_LIFE = 200;
+    public static final float ROYAL_FIREBALL_DAMAGE_MULTIPLIER = 1.3F;
+    /** Diâmetro físico do núcleo de magma (a coroa de chamas ultrapassa um pouco essa medida). */
+    public static final float ROYAL_FIREBALL_SIZE = 2.4F;
+    public static final double ROYAL_FIREBALL_MIN_RANGE = 6;
+    public static final int BOSS_LAUGH_TICKS = 80;
+    public static final int RAGE_CRY_INTERVAL = 100;
+    public static final int MAGMA_TRAIL_RADIUS = 2;
+    public static final float MAGMA_TRAIL_CHANCE = 0.28F;
 
     /** Valores por tier. {@code scale}, {@code health}, {@code damage} e {@code speed} são multiplicadores. */
     public record Stats(String symbol, double scale, double health, double damage, double armor,

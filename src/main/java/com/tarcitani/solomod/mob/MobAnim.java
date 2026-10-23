@@ -42,10 +42,14 @@ public enum MobAnim {
     PHASE,
     /** Sopro elemental: inclina para frente e vibra. */
     BREATH,
-    /** Fim da Fúria: corpo caído para a frente, ofegante. */
+    /** Fim da Fúria: agachado e ofegante, recuperando o fôlego. */
     EXHAUSTED,
     /** Agonia do Soberano a cada estágio: afunda, se contorce e treme. */
-    AGONY;
+    AGONY,
+    /** Stun: agachado e ofegante, recuperando o fôlego (nome preservado por compatibilidade). */
+    KNOCKED_DOWN,
+    /** Chefe venceu um jogador: joga a cabeça para trás e ri, zombando dele. */
+    LAUGH;
 
     private static final IntFunction<MobAnim> BY_ID =
             ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.ZERO);

@@ -9,6 +9,7 @@ import com.tarcitani.solomod.client.model.MobMeshes;
 import com.tarcitani.solomod.client.model.MonarchModel;
 import com.tarcitani.solomod.client.model.SovereignModel;
 import com.tarcitani.solomod.client.render.ThrownDaggerRenderer;
+import com.tarcitani.solomod.client.render.RoyalFireballRenderer;
 import com.tarcitani.solomod.client.render.TierMobRenderer;
 import com.tarcitani.solomod.component.ModDataComponents;
 import com.tarcitani.solomod.core.WeaponClass;
@@ -98,6 +99,7 @@ public final class ClientSetup {
         event.registerEntityRenderer(ModEntities.SOVEREIGN.get(),
                 ctx -> TierMobRenderer.single(ctx, "sovereign", SovereignModel::new, 2.4F, Sovereign.RENDER_SCALE));
         event.registerEntityRenderer(ModEntities.THROWN_DAGGER.get(), ThrownDaggerRenderer::new);
+        event.registerEntityRenderer(ModEntities.ROYAL_FIREBALL.get(), RoyalFireballRenderer::new);
     }
 
     /**

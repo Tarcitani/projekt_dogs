@@ -4,6 +4,7 @@ import com.tarcitani.solomod.advancement.ModAdvancements;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.entity.TierMob;
+import com.tarcitani.solomod.entity.RoyalFireball;
 import com.tarcitani.solomod.network.CinematicPayload;
 import com.tarcitani.solomod.network.ModNetwork;
 import com.tarcitani.solomod.skill.SkillVfx;
@@ -44,19 +45,21 @@ import java.util.UUID;
  * <table>
  *   <tr><th>Estágio</th><th>Vida</th><th>Poder despertado</th><th>Ataque liberado</th></tr>
  *   <tr><td>1</td><td>100–83%</td><td>Colosso Rei</td><td>Punho do Colosso</td></tr>
- *   <tr><td>2</td><td>83–67%</td><td>Rei Vulcânico</td><td>Erupção</td></tr>
+ *   <tr><td>2</td><td>83–67%</td><td>Rei Vulcânico</td><td>Bolas de Fogo Reais rebatíveis</td></tr>
  *   <tr><td>3</td><td>67–50%</td><td>Leviatã Coroado</td><td>Maremoto</td></tr>
  *   <tr><td>4</td><td>50–33%</td><td>Titã Ancestral</td><td>Raízes Ancestrais</td></tr>
  *   <tr><td>5</td><td>33–17%</td><td>Imperador dos Céus</td><td>Tempestade</td></tr>
  *   <tr><td>6</td><td>17–0%</td><td>todos</td><td>Convergência + FÚRIA sem fim</td></tr>
  * </table>
- * Os ataques se acumulam: no estágio 5 ele usa os cinco. No 6 entra em Fúria até morrer (+35% de dano,
+ * Os ataques se acumulam, exceto as bolas de fogo (somente estágios 2 e 6). No 6 entra em Fúria até morrer (+35% de dano,
  * -35% de dano recebido, recargas e pausas menores) e ganha a Convergência.
  *
  * <p><b>Ataques</b> (todos telegrafados):
  * <ul>
  *   <li>Punho do Colosso: ergue o punho e esmaga; ondas de choque no chão (duas a partir do estágio 4) — pule.</li>
- *   <li>Erupção: marca círculos de fogo sob os jogadores e um anel de círculos em volta de si.</li>
+ *   <li>Bolas de Fogo Reais (somente estágios 2 e 6): rajada lenta rebatível; fora da Fúria,
+ *       acertar o Soberano com ela o deixa agachado se recuperando por 5 s.
+ *       A agonia é invulnerável e não pode ser interrompida; limites de estágio continuam valendo.</li>
  *   <li>Maremoto: mostra a faixa no chão e lança uma onda reta que arrasta quem estiver nela.</li>
  *   <li>Raízes Ancestrais: duas levas de raízes brotam sob cada jogador (a segunda onde ele estiver).</li>
  *   <li>Tempestade: puxa todos para perto e chama raios sobre cada jogador por 3 s.</li>
@@ -87,7 +90,7 @@ public final class SovereignBrain extends TierBrain {
         super(mob, MobTier.BOSS, ElementType.NONE);
         bar = new ServerBossEvent(mob.getDisplayName(), barColor(1), BossEvent.BossBarOverlay.NOTCHED_6);
         // Os mesmos ataques valem na Fúria (já liberados), mais a Convergência.
-        for (Move move : List.of(new ColossusFist(), new Eruption(), new TidalWave(), new AncientRoots(), new SkyStorm())) {
+        for (Move move : List.of(new ColossusFist(), new RoyalVolley(), new TidalWave(), new AncientRoots(), new SkyStorm())) {
             addMove(move);
             addRageMove(move);
         }
@@ -133,6 +136,7 @@ public final class SovereignBrain extends TierBrain {
 
     @Override
     public void tick() {
+        if (isCombatPaused()) return;
         // Agonizando: não ataca nem anda (a agonia em si roda no passiveTick, com ou sem alvo).
         if (agonyTicks > 0) {
             mob.getNavigation().stop();
@@ -143,6 +147,10 @@ public final class SovereignBrain extends TierBrain {
 
     @Override
     public void passiveTick() {
+        if (isCombatPaused()) {
+            updateBossBar(bar, 64);
+            return;
+        }
         if (agonyTicks > 0) {
             tickAgony();
         } else if (stage < STAGES && mob.getHealth() <= stageFloor(stage) + 0.01F) {
@@ -219,7 +227,6 @@ public final class SovereignBrain extends TierBrain {
     private void awaken() {
         beginRage();
         anim(MobAnim.ROAR, 30);
-        sound(SoundEvents.WARDEN_ROAR, 3.0F, 0.6F);
         sound(SoundEvents.WITHER_SPAWN, 2.0F, 0.7F);
         Component warning = Component.translatable("message.solomod.rage", mob.getDisplayName())
                 .withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
@@ -346,41 +353,31 @@ public final class SovereignBrain extends TierBrain {
         }
     }
 
-    /** Erupção (Rei Vulcânico): círculos de fogo sob cada jogador e um anel deles em volta do Soberano. */
-    private final class Eruption extends StageMove {
-        Eruption() { super(2, 140, 4); }
+    /** Poder do Rei Vulcânico: três bolas lentas, rebatíveis, com 1 s de preparação e 0,9 s entre tiros. */
+    private final class RoyalVolley extends StageMove {
+        RoyalVolley() { super(2, 140, 6); }
+
+        @Override protected boolean inRange(double dist) {
+            return (stage == 2 || stage == STAGES) && dist > TierIdentity.ROYAL_FIREBALL_MIN_RANGE
+                    && dist < 32 && mob.getSensing().hasLineOfSight(target);
+        }
 
         @Override
         protected void begin() {
-            anim(MobAnim.CAST, 30);
-            sound(SoundEvents.EVOKER_PREPARE_ATTACK, 2.0F, 0.5F);
+            anim(MobAnim.BREATH, 60);
+            sound(SoundEvents.GHAST_WARN, 2.0F, 0.5F);
         }
 
         @Override
         protected boolean tick(int t) {
-            particles(ParticleTypes.FLAME, mob.getEyePosition().add(0, 1.5, 0), 4, 0.6, 0.05);
-            if (t == 12) {
-                int i = 0;
-                for (LivingEntity v : targets(28)) {
-                    // O primeiro círculo cai onde o jogador vai estar; os outros, em volta.
-                    Vec3 ahead = v.position().add(v.getDeltaMovement().multiply(1, 0, 1).scale(20));
-                    blast(ElementType.FIRE, ahead, 2.8, 28 + i * 4, 1.3F);
-                    for (int k = 0; k < 2; k++) {
-                        blast(ElementType.FIRE, v.position().add((random.nextDouble() - 0.5) * 9, 0, (random.nextDouble() - 0.5) * 9),
-                                2.5, 34 + i * 4 + k * 5, 1.2F);
-                    }
-                    i++;
-                }
-                sound(Hazards.castSound(ElementType.FIRE), 2.0F, 0.6F);
+            // Um projétil já lançado também é removido se a luta sair do estágio de fogo.
+            if (stage != 2 && stage != STAGES) return false;
+            face(flatDirTo(target.position()));
+            particles(ParticleTypes.FLAME, mob.getEyePosition(), 10, 0.6, 0.05);
+            if (t == 20 || t == 38 || t == 56) {
+                RoyalFireball.launch(level(), mob, target, baseDamage() * TierIdentity.ROYAL_FIREBALL_DAMAGE_MULTIPLIER);
             }
-            if (t == 24) {
-                for (int k = 0; k < 6; k++) {
-                    double a = Math.PI * 2 * k / 6;
-                    blast(ElementType.FIRE, mob.position().add(Math.cos(a) * 6, 0, Math.sin(a) * 6), 2.5, 30, 1.2F);
-                }
-                sound(SoundEvents.FIRECHARGE_USE, 2.0F, 0.5F);
-            }
-            return t < 30;
+            return t < 60;
         }
     }
 

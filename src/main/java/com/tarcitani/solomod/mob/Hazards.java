@@ -7,14 +7,18 @@ import com.tarcitani.solomod.skill.SkillVfx;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
@@ -23,17 +27,25 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.WeakHashMap;
+import java.util.UUID;
 
 /**
  * Ataques que vivem no mundo por alguns ticks, independentes do mob que os criou:
  * orbes elementais, áreas marcadas no chão (meteoros) e ondas de choque.
  *
  * <p>São simulados no servidor e desenhados com partículas: não precisam de entidade, modelo nem renderer.
+ * O rastro da investida de Fogo também converte piso natural exposto em magma permanente; respeita
+ * mobGriefing, preserva blocos com dados e registra o conjurador para a risada após mortes no magma.
  */
 public final class Hazards {
     private Hazards() {}
 
     private static final List<Hazard> ACTIVE = new ArrayList<>();
+    private static final Map<ServerLevel, Map<BlockPos, UUID>> MAGMA_OWNERS = new WeakHashMap<>();
+    private static final int MAX_TRACKED_MAGMA = 4096;
 
     /** Um perigo ativo. {@code tick} devolve false quando terminou. */
     public interface Hazard {
@@ -56,6 +68,41 @@ public final class Hazards {
 
     public static void clear() {
         ACTIVE.clear();
+        MAGMA_OWNERS.clear();
+    }
+
+    /** Trechos de materiais naturais viram magma, preservando recipientes, blocos processados e indestrutíveis. */
+    public static void magmaTrail(ServerLevel level, LivingEntity owner) {
+        if (owner.tickCount % 2 != 0 || !net.neoforged.neoforge.event.EventHooks.canEntityGrief(level, owner)) return;
+        int radius = TierIdentity.MAGMA_TRAIL_RADIUS;
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                if (x * x + z * z > radius * radius || owner.getRandom().nextFloat() > TierIdentity.MAGMA_TRAIL_CHANCE) continue;
+                BlockPos floor = owner.blockPosition().offset(x, -1, z);
+                if (!level.hasChunkAt(floor)) continue;
+                BlockState state = level.getBlockState(floor);
+                boolean natural = state.is(BlockTags.DIRT) || state.is(BlockTags.BASE_STONE_OVERWORLD)
+                        || state.is(BlockTags.BASE_STONE_NETHER) || state.is(BlockTags.SAND) || state.is(Blocks.GRAVEL);
+                if (!natural || state.hasBlockEntity() || !state.isSolidRender(level, floor)
+                        || !level.getBlockState(floor.above()).isAir() || state.getDestroySpeed(level, floor) < 0) continue;
+                if (!level.setBlock(floor, Blocks.MAGMA_BLOCK.defaultBlockState(), 3)) continue;
+                Map<BlockPos, UUID> owners = MAGMA_OWNERS.computeIfAbsent(level, key -> new LinkedHashMap<>());
+                owners.put(floor.immutable(), owner.getUUID());
+                if (owners.size() > MAX_TRACKED_MAGMA) owners.remove(owners.keySet().iterator().next());
+                level.sendParticles(ParticleTypes.LAVA, floor.getX() + 0.5, floor.getY() + 1.1, floor.getZ() + 0.5,
+                        2, 0.25, 0.05, 0.25, 0);
+            }
+        }
+    }
+
+    /** Autor do bloco de magma que matou o jogador, se criado por uma investida nesta sessão. */
+    public static Entity magmaOwnerAt(LivingEntity victim) {
+        if (!(victim.level() instanceof ServerLevel level)) return null;
+        Map<BlockPos, UUID> owners = MAGMA_OWNERS.get(level);
+        BlockPos floor = victim.getOnPos();
+        if (owners == null || !level.getBlockState(floor).is(Blocks.MAGMA_BLOCK)) return null;
+        UUID id = owners.get(floor);
+        return id == null ? null : level.getEntity(id);
     }
 
     // ------------------------------------------------------------------ regras comuns

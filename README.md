@@ -58,6 +58,8 @@ Quatro atributos (**FOR · AGI · INT · VIT**) que mudam dano, velocidade, mana
 ### 👹 Monstros por Tier
 **Lacaio → Elite → Guardião → Monarca**, cada um com IA própria, ataques telegrafados e **Fúria** a 25% de vida. **20 criaturas** com modelo e textura exclusivos por elemento.
 
+O **Rei Vulcânico** lança bolas de fogo lentas com modelo 3D próprio de magma (2,4 blocos de diâmetro) desde a fase 1: rebata com um ataque mirando nele para deixá-lo **agachado se recuperando por 5 segundos**, fora da Fúria. Suas investidas deixam trechos do chão natural em magma (`mobGriefing`). O Soberano usa bolas de fogo **apenas nos estágios 2 e 6** e tem modelo **5× maior**. Todos os chefes gritam na Fúria, ficam imunes a stun durante ela e riem por 4 s ao derrotar um jogador. A conquista **Cinzas do Vulcão** usa a cabeça do Rei em pixel art como ícone.
+
 </td>
 </tr>
 <tr>

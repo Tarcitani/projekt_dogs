@@ -28,12 +28,14 @@ import java.util.function.Supplier;
 
 /**
  * Itens do mod: uma arma por classe (solomod:greatsword, solomod:dagger...), um ovo por criatura e elemento,
- * o ovo do Soberano e a aba própria do mod no inventário criativo.
+ * o ovo do Soberano, o ícone pixel art da cabeça do Rei Vulcânico e a aba própria do mod no inventário criativo.
  */
 public final class ModItems {
     private ModItems() {}
 
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(SoloMod.MOD_ID);
+    /** Item visual da conquista Cinzas do Vulcão; arte gerada por tools/gen_boss_icons.ps1. */
+    public static final DeferredItem<Item> MONARCH_FIRE_HEAD = ITEMS.registerSimpleItem("monarch_fire_head");
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, SoloMod.MOD_ID);
 
     public static final Map<WeaponClass, DeferredItem<ModularWeaponItem>> WEAPONS = new EnumMap<>(WeaponClass.class);

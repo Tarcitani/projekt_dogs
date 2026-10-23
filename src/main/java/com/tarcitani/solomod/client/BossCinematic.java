@@ -1,6 +1,7 @@
 package com.tarcitani.solomod.client;
 
 import com.tarcitani.solomod.SoloMod;
+import com.tarcitani.solomod.entity.Sovereign;
 import com.tarcitani.solomod.network.CinematicPayload;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -30,6 +31,7 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
  *   <li>{@code FINALE}: quando a cena acaba, abre os {@link CreditsScreen créditos}.</li>
  * </ul>
  * O jogador continua podendo andar; só a câmera é guiada (a mira real não muda).
+ * O foco do Soberano acompanha a escala visual ampliada, não apenas a caixa física.
  */
 @EventBusSubscriber(modid = SoloMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class BossCinematic {
@@ -58,7 +60,8 @@ public final class BossCinematic {
 
     /** No close, o rosto; nas mortes, o meio do corpo (que se desfaz de cima para baixo). */
     private static Vec3 focusOn(Entity boss) {
-        return boss.position().add(0, boss.getBbHeight() * (kind == CinematicPayload.Kind.CLOSE_UP ? 0.85 : 0.6), 0);
+        double visualScale = boss instanceof Sovereign ? Sovereign.RENDER_SCALE / 1.4 : 1;
+        return boss.position().add(0, boss.getBbHeight() * visualScale * (kind == CinematicPayload.Kind.CLOSE_UP ? 0.85 : 0.6), 0);
     }
 
     private static boolean closeUp() {
