@@ -1,0 +1,33 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "solomod:item/axe",
+    "layer1": "solomod:item/axe_overlay"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "solomod:element": 1
+      },
+      "model": "solomod:item/axe_water"
+    },
+    {
+      "predicate": {
+        "solomod:element": 2
+      },
+      "model": "solomod:item/axe_earth"
+    },
+    {
+      "predicate": {
+        "solomod:element": 3
+      },
+      "model": "solomod:item/axe_fire"
+    },
+    {
+      "predicate": {
+        "solomod:element": 4
+      },
+      "model": "solomod:item/axe_air"
+    }
+  ]
+}

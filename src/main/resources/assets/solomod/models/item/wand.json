@@ -1,0 +1,33 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "solomod:item/wand",
+    "layer1": "solomod:item/wand_overlay"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "solomod:element": 1
+      },
+      "model": "solomod:item/wand_water"
+    },
+    {
+      "predicate": {
+        "solomod:element": 2
+      },
+      "model": "solomod:item/wand_earth"
+    },
+    {
+      "predicate": {
+        "solomod:element": 3
+      },
+      "model": "solomod:item/wand_fire"
+    },
+    {
+      "predicate": {
+        "solomod:element": 4
+      },
+      "model": "solomod:item/wand_air"
+    }
+  ]
+}

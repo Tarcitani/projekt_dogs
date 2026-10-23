@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/handheld",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "layer0": "solomod:item/dagger_thrown"
+  }
+}

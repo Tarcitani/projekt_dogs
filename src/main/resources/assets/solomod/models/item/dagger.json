@@ -1,0 +1,39 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "solomod:item/dagger",
+    "layer1": "solomod:item/dagger_overlay"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "solomod:element": 1
+      },
+      "model": "solomod:item/dagger_water"
+    },
+    {
+      "predicate": {
+        "solomod:element": 2
+      },
+      "model": "solomod:item/dagger_earth"
+    },
+    {
+      "predicate": {
+        "solomod:element": 3
+      },
+      "model": "solomod:item/dagger_fire"
+    },
+    {
+      "predicate": {
+        "solomod:element": 4
+      },
+      "model": "solomod:item/dagger_air"
+    },
+    {
+      "predicate": {
+        "solomod:thrown": 1
+      },
+      "model": "solomod:item/dagger_thrown"
+    }
+  ]
+}

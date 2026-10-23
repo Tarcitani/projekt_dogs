@@ -1,0 +1,33 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "solomod:item/kunai",
+    "layer1": "solomod:item/kunai_overlay"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "solomod:element": 1
+      },
+      "model": "solomod:item/kunai_water"
+    },
+    {
+      "predicate": {
+        "solomod:element": 2
+      },
+      "model": "solomod:item/kunai_earth"
+    },
+    {
+      "predicate": {
+        "solomod:element": 3
+      },
+      "model": "solomod:item/kunai_fire"
+    },
+    {
+      "predicate": {
+        "solomod:element": 4
+      },
+      "model": "solomod:item/kunai_air"
+    }
+  ]
+}

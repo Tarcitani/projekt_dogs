@@ -1,0 +1,33 @@
+package com.tarcitani.solomod.client;
+
+import com.tarcitani.solomod.SoloMod;
+import net.minecraft.client.Minecraft;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+
+/** Eventos de jogo só de cliente: tecla da tela, tick dos números de dano e renderização no mundo. */
+@EventBusSubscriber(modid = SoloMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+public final class ClientGameEvents {
+    private ClientGameEvents() {}
+
+    @SubscribeEvent
+    public static void onClientTick(ClientTickEvent.Post event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        while (ClientSetup.OPEN_STATS.consumeClick()) {
+            if (mc.screen == null) mc.setScreen(new StatsScreen());
+        }
+        DamageNumbers.tick();
+        SoloHud.tick();
+    }
+
+    @SubscribeEvent
+    public static void onRenderLevel(RenderLevelStageEvent event) {
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+            DamageNumbers.render(event.getPoseStack(), event.getCamera());
+        }
+    }
+}
