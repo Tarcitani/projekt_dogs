@@ -135,5 +135,19 @@
   "item.solomod.sovereign_air_spawn_egg": "Emperor of the Skies Spawn Egg",
   "itemGroup.solomod": "Solo Mod",
   "message.solomod.rage": "⚠ %s is ENRAGED!",
-  "message.solomod.rage_bar": " ⚠ RAGE %ss"
+  "message.solomod.rage_bar": " ⚠ RAGE %ss",
+  "advancements.solomod.root.title": "Solo Mod",
+  "advancements.solomod.root.description": "Awaken Mastery, forge elemental weapons, and challenge the Sovereigns of this world.",
+  "advancements.solomod.defeat_sovereign_none.title": "Fall of the Stone Crown",
+  "advancements.solomod.defeat_sovereign_none.description": "Topple the Colossus King, an primordial stone monarch whose raw might defies all elemental forces.",
+  "advancements.solomod.defeat_sovereign_fire.title": "Ashes of the Volcano",
+  "advancements.solomod.defeat_sovereign_fire.description": "Extinguish the blazing fury of the Volcanic King, the magma sovereign who turns continents into searing cauldrons.",
+  "advancements.solomod.defeat_sovereign_water.title": "Calm in the Abyss",
+  "advancements.solomod.defeat_sovereign_water.description": "Subjugue the Crowned Leviathan, the kraken king of oceanic trenches whose tidal waves swallow whole empires.",
+  "advancements.solomod.defeat_sovereign_earth.title": "Ancient Roots Severed",
+  "advancements.solomod.defeat_sovereign_earth.description": "Shatter the amber heart of the Ancient Titan, the colossal tree whose ancient roots bore the weight of the world.",
+  "advancements.solomod.defeat_sovereign_air.title": "The Shattered Throne",
+  "advancements.solomod.defeat_sovereign_air.description": "Cut through the gales and dethrone the Emperor of the Skies, storm lord reigning over unreachable heights.",
+  "advancements.solomod.defeat_all_sovereigns.title": "Absolute Sovereignty",
+  "advancements.solomod.defeat_all_sovereigns.description": "Defeat all five manifestations of the Sovereigns and achieve supreme Mastery over all elements."
 }

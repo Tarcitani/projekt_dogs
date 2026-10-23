@@ -8,6 +8,7 @@ Referência completa do que o Solo Mod faz dentro do jogo. Para saber **onde** c
 - [Armas](#️-armas)
 - [Mobs por tier](#-mobs-por-tier)
 - [Criaturas próprias](#-criaturas-próprias)
+- [Conquistas dos Soberanos](#-conquistas-dos-soberanos)
 - [Interface](#️-interface)
 - [Roteiros de teste](#-roteiros-de-teste)
 
@@ -125,6 +126,22 @@ Quando a Fúria acaba, o chefe fica **exausto por 3 s** e recebe +25% de dano.
 ### 💀 Morte do Soberano
 
 O Soberano se **desintegra** por 5 s. Os jogadores por perto entram numa **cinemática**: faixas pretas, HUD escondido, câmera virando para o chefe e o letreiro "SOBERANO DERROTADO".
+
+### 🏆 Conquistas dos Soberanos
+
+O mod adiciona uma aba própria no **sistema de conquistas (Advancements)** do Minecraft (tecla **L**), com contexto narrativo e temático para a derrota de cada chefe final, refletindo sua natureza elemental:
+
+| Conquista | Chefe | Elemento | Natureza e contexto narrativo | Tipo / Recompensa |
+|---|---|---|---|---|
+| **A Queda da Coroa Pétrea** | Colosso Rei | Neutro | Monarca primordial de rocha pura e força bruta indestrutível que desafia todas as forças elementais. | Desafio · 150 XP |
+| **Cinzas do Vulcão** | Rei Vulcânico | Fogo | Soberano do magma em tronco-vulcão vivo que expele erupções e transforma terras em caldeiras ardentes. | Desafio · 150 XP |
+| **Calmaria no Abismo** | Leviatã Coroado | Água | Rei-kraken com pinças titânicas que comanda maremotos devastadores e os abismos oceânicos. | Desafio · 150 XP |
+| **Raízes Milenares Desfeitas** | Titã Ancestral | Terra | Árvore colossal com copa impenetrável e coração de âmbar cujas raízes sustentavam o peso do mundo. | Desafio · 150 XP |
+| **O Trono Despedaçado** | Imperador dos Céus | Ar | Senhor alado das tempestades que comanda vendavais cortantes e relâmpagos em seu trono celestial. | Desafio · 150 XP |
+| **Soberania Absoluta** | Todos os 5 Soberanos | Mestre | O ápice do guerreiro: derrotar todas as cinco formas dos Soberanos e alcançar a Maestria suprema sobre os elementos. | Desafio Mestre · 1000 XP |
+
+- **Concessão justa**: a conquista é concedida tanto para quem desfere o golpe final quanto para todos os jogadores presentes na arena durante a cinemática de queda do chefe.
+- **Progresso de desafio**: a conquista "Soberania Absoluta" rastreia o progresso (0 a 5) conforme cada Soberano diferente é derrotado.
 
 ## 🐉 Criaturas próprias
 

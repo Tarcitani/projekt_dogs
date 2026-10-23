@@ -1,0 +1,29 @@
+{
+  "parent": "solomod:root",
+  "display": {
+    "icon": {
+      "id": "solomod:sovereign_air_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.solomod.defeat_sovereign_air.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.defeat_sovereign_air.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "defeated": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["defeated"]
+  ],
+  "rewards": {
+    "experience": 150
+  }
+}

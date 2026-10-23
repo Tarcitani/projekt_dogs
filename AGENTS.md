@@ -32,6 +32,7 @@ src/main/java/com/tarcitani/solomod/
 ├── core/                 enums: ElementType, MobTier, StatType, WeaponClass
 ├── component/            WeaponData (record no ItemStack) + registro
 ├── attachment/           PlayerStatsAttachment (jogador), MobProfile (mob) + registro
+├── advancement/          ModAdvancements (conquistas dos chefes e desafio mestre)
 ├── item/                 ModularWeaponItem, ModItems (itens, ovos, aba criativa)
 ├── event/                CombatEvents (dano), ElementalCombat, StatsLogic (balanceamento), PlayerEvents
 ├── skill/                WeaponSkill (habilidades de tier), ClassAbility (de classe), SkillVfx, PlayerAnim

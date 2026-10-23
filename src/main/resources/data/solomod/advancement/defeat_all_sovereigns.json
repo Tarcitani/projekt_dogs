@@ -1,0 +1,45 @@
+{
+  "parent": "solomod:root",
+  "display": {
+    "icon": {
+      "id": "solomod:greatsword"
+    },
+    "title": {
+      "translate": "advancements.solomod.defeat_all_sovereigns.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.defeat_all_sovereigns.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "sovereign_none": {
+      "trigger": "minecraft:impossible"
+    },
+    "sovereign_fire": {
+      "trigger": "minecraft:impossible"
+    },
+    "sovereign_water": {
+      "trigger": "minecraft:impossible"
+    },
+    "sovereign_earth": {
+      "trigger": "minecraft:impossible"
+    },
+    "sovereign_air": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["sovereign_none"],
+    ["sovereign_fire"],
+    ["sovereign_water"],
+    ["sovereign_earth"],
+    ["sovereign_air"]
+  ],
+  "rewards": {
+    "experience": 1000
+  }
+}

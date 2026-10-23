@@ -135,5 +135,19 @@
   "item.solomod.sovereign_air_spawn_egg": "Ovo de Imperador dos Céus",
   "itemGroup.solomod": "Solo Mod",
   "message.solomod.rage": "⚠ %s entrou em FÚRIA!",
-  "message.solomod.rage_bar": " ⚠ FÚRIA %ss"
+  "message.solomod.rage_bar": " ⚠ FÚRIA %ss",
+  "advancements.solomod.root.title": "Solo Mod",
+  "advancements.solomod.root.description": "Desperte a Maestria, forje armas elementais e desafie os Soberanos deste mundo.",
+  "advancements.solomod.defeat_sovereign_none.title": "A Queda da Coroa Pétrea",
+  "advancements.solomod.defeat_sovereign_none.description": "Derrube o Colosso Rei, monarca pétreo primordial cujo poder bruto desafia todas as forças elementais.",
+  "advancements.solomod.defeat_sovereign_fire.title": "Cinzas do Vulcão",
+  "advancements.solomod.defeat_sovereign_fire.description": "Extinga a fúria ardente do Rei Vulcânico, o soberano do magma que transforma continentes em caldeiras incandescentes.",
+  "advancements.solomod.defeat_sovereign_water.title": "Calmaria no Abismo",
+  "advancements.solomod.defeat_sovereign_water.description": "Subjugue o Leviatã Coroado, o rei-kraken das fossas oceânicas cujos maremotos engolem impérios inteiros.",
+  "advancements.solomod.defeat_sovereign_earth.title": "Raízes Milenares Desfeitas",
+  "advancements.solomod.defeat_sovereign_earth.description": "Fenda o coração de âmbar do Titã Ancestral, a árvore colossal cujas raízes sustentavam o peso do mundo.",
+  "advancements.solomod.defeat_sovereign_air.title": "O Trono Despedaçado",
+  "advancements.solomod.defeat_sovereign_air.description": "Corte os vendavais e destrone o Imperador dos Céus, senhor das tempestades que reina nas alturas inalcançáveis.",
+  "advancements.solomod.defeat_all_sovereigns.title": "Soberania Absoluta",
+  "advancements.solomod.defeat_all_sovereigns.description": "Derrote todas as cinco manifestações dos Soberanos e alcance a Maestria suprema sobre todos os elementos."
 }

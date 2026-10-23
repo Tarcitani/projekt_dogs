@@ -61,8 +61,8 @@ Quatro atributos (**FOR · AGI · INT · VIT**) que mudam dano, velocidade, mana
 <tr>
 <td valign="top">
 
-### 🎬 Espetáculo
-Números de dano flutuantes, partículas por habilidade, animações do jogador e dos mobs, brilho emissivo e uma **cinemática** quando o Soberano cai.
+### 🎬 Espetáculo e Conquistas
+Números de dano flutuantes, partículas por habilidade, animações, brilho emissivo, **cinemática** na queda do Soberano e aba de **Conquistas do Minecraft** com desafios narrativos para cada chefe final.
 
 </td>
 <td valign="top">

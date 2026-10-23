@@ -87,6 +87,12 @@ flowchart LR
 | `MobProfile.java` | Record `(tier, element)` que marca um mob como "do mod". |
 | `ModAttachments.java` | Registro de `PLAYER_STATS` (salvo com a entidade e copiado na morte; o sync com o cliente é **manual** via `SyncStatsPayload`) e `MOB_PROFILE` (só existe em mobs marcados: teste com `hasData`). |
 
+### `advancement/` — conquistas
+
+| Arquivo | O que é |
+|---|---|
+| `ModAdvancements.java` | Identificadores de conquistas (`ResourceLocation`) e concessão via `awardBossDefeat(player, element)`. Concede os desafios individuais dos 5 Soberanos e pontua no desafio supremo (`defeat_all_sovereigns`). |
+
 ### `item/` — itens
 
 | Arquivo | O que é |

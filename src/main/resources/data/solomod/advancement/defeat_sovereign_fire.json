@@ -1,0 +1,29 @@
+{
+  "parent": "solomod:root",
+  "display": {
+    "icon": {
+      "id": "solomod:sovereign_fire_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.solomod.defeat_sovereign_fire.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.defeat_sovereign_fire.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "defeated": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["defeated"]
+  ],
+  "rewards": {
+    "experience": 150
+  }
+}
