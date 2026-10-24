@@ -36,6 +36,11 @@ public final class ModEntities {
             ENTITY_TYPES.register("thrown_dagger", () -> EntityType.Builder.<ThrownDagger>of(ThrownDagger::new, MobCategory.MISC)
                     .sized(0.4F, 0.4F).clientTrackingRange(8).updateInterval(1).build("thrown_dagger"));
 
+    /** Adaga Relâmpago (protótipo): como a adaga arremessada, mas o dono pode se teletransportar até ela. */
+    public static final DeferredHolder<EntityType<?>, EntityType<LightningDagger>> LIGHTNING_DAGGER =
+            ENTITY_TYPES.register("lightning_dagger", () -> EntityType.Builder.<LightningDagger>of(LightningDagger::new, MobCategory.MISC)
+                    .sized(0.4F, 0.4F).clientTrackingRange(8).updateInterval(1).build("lightning_dagger"));
+
     private static DeferredHolder<EntityType<?>, EntityType<TierMob>> mob(String name, MobTier tier, float width, float height) {
         return ENTITY_TYPES.register(name, () -> EntityType.Builder.<TierMob>of(
                         (type, level) -> new TierMob(type, level, tier), MobCategory.MONSTER)

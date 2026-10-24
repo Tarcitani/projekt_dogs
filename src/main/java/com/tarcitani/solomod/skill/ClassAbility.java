@@ -184,7 +184,7 @@ public final class ClassAbility {
     }
 
     /** A adaga chegou de volta: tira o estado "fantasma" da pilha certa do inventário. */
-    public static void daggerCaught(Player player, ThrownDagger dagger) {
+    public static void daggerCaught(Player player, Entity dagger) {
         for (ItemStack stack : player.getInventory().items) {
             if (dagger.getUUID().equals(stack.get(ModDataComponents.THROWN_DAGGER.get()))) {
                 stack.remove(ModDataComponents.THROWN_DAGGER.get());

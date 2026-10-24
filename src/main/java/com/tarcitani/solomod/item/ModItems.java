@@ -39,6 +39,9 @@ public final class ModItems {
     /** Ícones da conquista do Soberano: "???" antes de derrotá-lo e a cabeça dele depois. Só aparecem nas conquistas. */
     public static final DeferredItem<Item> UNKNOWN_BOSS = ITEMS.registerSimpleItem("unknown_boss");
     public static final DeferredItem<Item> SOVEREIGN_HEAD = ITEMS.registerSimpleItem("sovereign_head");
+    /** Protótipo de adaga de tier chefe e tema raio: teletransporta o dono até ela. Ver LightningDaggerItem. */
+    public static final DeferredItem<LightningDaggerItem> LIGHTNING_DAGGER =
+            ITEMS.register("lightning_dagger", () -> new LightningDaggerItem(new Item.Properties()));
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, SoloMod.MOD_ID);
 
     public static final Map<WeaponClass, DeferredItem<ModularWeaponItem>> WEAPONS = new EnumMap<>(WeaponClass.class);
@@ -105,6 +108,7 @@ public final class ModItems {
                     EGGS.get(tier).values().forEach(egg -> output.accept(new ItemStack(egg.get())));
                 }
                 output.accept(new ItemStack(SOVEREIGN_EGG.get()));
+                output.accept(new ItemStack(LIGHTNING_DAGGER.get()));
             })
             .build());
 

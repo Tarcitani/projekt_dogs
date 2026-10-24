@@ -184,5 +184,12 @@
   "item.solomod.unknown_boss": "???",
   "item.solomod.sovereign_head": "Sovereign's Head",
   "advancements.solomod.sovereign_unknown.title": "???",
-  "advancements.solomod.sovereign_unknown.description": "Something is awakening..."
+  "advancements.solomod.sovereign_unknown.description": "Something is awakening...",
+  "item.solomod.lightning_dagger": "Lightning Dagger",
+  "entity.solomod.lightning_dagger": "Thrown Lightning Dagger",
+  "tooltip.solomod.lightning_dagger.prototype": "Prototype · lightning theme",
+  "tooltip.solomod.lightning_dagger.throw": "Right click: throw the dagger",
+  "tooltip.solomod.lightning_dagger.blink": "Right click while it is flying or stuck: teleport to it",
+  "tooltip.solomod.lightning_dagger.return": "Once stuck, it returns on its own after 1 s",
+  "message.solomod.no_room": "No room to teleport to the dagger"
 }

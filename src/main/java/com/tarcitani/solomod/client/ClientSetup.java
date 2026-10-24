@@ -101,6 +101,7 @@ public final class ClientSetup {
         event.registerEntityRenderer(ModEntities.SOVEREIGN.get(),
                 ctx -> TierMobRenderer.single(ctx, "sovereign", SovereignModel::new, 2.4F, Sovereign.RENDER_SCALE));
         event.registerEntityRenderer(ModEntities.THROWN_DAGGER.get(), ThrownDaggerRenderer::new);
+        event.registerEntityRenderer(ModEntities.LIGHTNING_DAGGER.get(), ThrownDaggerRenderer::new);
         event.registerEntityRenderer(ModEntities.ROYAL_FIREBALL.get(), RoyalFireballRenderer::new);
         event.registerEntityRenderer(ModEntities.SOVEREIGN_TORNADO.get(), SovereignTornadoRenderer::new);
         event.registerEntityRenderer(ModEntities.WATER_ORB.get(), WaterOrbRenderer::new);
@@ -123,6 +124,9 @@ public final class ClientSetup {
                         (stack, level, entity, seed) -> ModularWeaponItem.getData(stack).elementType().ordinal());
             }
             ItemProperties.register(ModItems.get(WeaponClass.DAGGER),
+                    ResourceLocation.fromNamespaceAndPath(SoloMod.MOD_ID, "thrown"),
+                    (stack, level, entity, seed) -> stack.has(ModDataComponents.THROWN_DAGGER.get()) ? 1.0F : 0.0F);
+            ItemProperties.register(ModItems.LIGHTNING_DAGGER.get(),
                     ResourceLocation.fromNamespaceAndPath(SoloMod.MOD_ID, "thrown"),
                     (stack, level, entity, seed) -> stack.has(ModDataComponents.THROWN_DAGGER.get()) ? 1.0F : 0.0F);
         });

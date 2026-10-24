@@ -184,5 +184,12 @@
   "item.solomod.unknown_boss": "???",
   "item.solomod.sovereign_head": "Cabeça do Soberano",
   "advancements.solomod.sovereign_unknown.title": "???",
-  "advancements.solomod.sovereign_unknown.description": "Algo está acordando..."
+  "advancements.solomod.sovereign_unknown.description": "Algo está acordando...",
+  "item.solomod.lightning_dagger": "Adaga Relâmpago",
+  "entity.solomod.lightning_dagger": "Adaga Relâmpago Arremessada",
+  "tooltip.solomod.lightning_dagger.prototype": "Protótipo · tema raio",
+  "tooltip.solomod.lightning_dagger.throw": "Clique direito: arremessa a adaga",
+  "tooltip.solomod.lightning_dagger.blink": "Clique direito com ela no ar ou cravada: teletransporta até ela",
+  "tooltip.solomod.lightning_dagger.return": "Cravada, volta sozinha depois de 1 s",
+  "message.solomod.no_room": "Sem espaço para se teletransportar até a adaga"
 }

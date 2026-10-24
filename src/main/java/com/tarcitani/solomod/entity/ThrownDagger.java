@@ -42,7 +42,7 @@ public class ThrownDagger extends AbstractArrow {
     private static final EntityDataAccessor<Boolean> RETURNING =
             SynchedEntityData.defineId(ThrownDagger.class, EntityDataSerializers.BOOLEAN);
 
-    private boolean dealtDamage;
+    protected boolean dealtDamage;
     private final Set<Integer> returnHits = new HashSet<>();
 
     public ThrownDagger(EntityType<? extends ThrownDagger> type, Level level) {
@@ -52,6 +52,13 @@ public class ThrownDagger extends AbstractArrow {
 
     public ThrownDagger(Level level, LivingEntity owner, ItemStack weapon) {
         super(ModEntities.THROWN_DAGGER.get(), owner, level, weapon.copyWithCount(1), null);
+        pickup = Pickup.DISALLOWED;
+        entityData.set(STACK, weapon.copyWithCount(1));
+    }
+
+    /** Para variantes (ex.: a Adaga Relâmpago): mesmo comportamento, outro tipo de entidade. */
+    protected ThrownDagger(EntityType<? extends ThrownDagger> type, Level level, LivingEntity owner, ItemStack weapon) {
+        super(type, owner, level, weapon.copyWithCount(1), null);
         pickup = Pickup.DISALLOWED;
         entityData.set(STACK, weapon.copyWithCount(1));
     }
@@ -153,7 +160,7 @@ public class ThrownDagger extends AbstractArrow {
     }
 
     /** Dano da adaga com as mesmas regras do corpo a corpo (tier, maestria, elemento). */
-    private void strike(Player player, LivingEntity target, float mult) {
+    protected void strike(Player player, LivingEntity target, float mult) {
         WeaponData data = ModularWeaponItem.getData(stack());
         float raw = (data.weaponClass().baseDamage() + 1.0F) * mult;
         float damage = CombatEvents.weaponDamage(player, data, target, raw, true);

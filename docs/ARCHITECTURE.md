@@ -127,6 +127,7 @@ flowchart LR
 | `SovereignTornado.java` | Tornado 3D do Soberano (`extends Entity`, sem colisão, não salvo): persegue um jogador a 0,13 bloco/tick, dura 11 s e lança quem encosta no pé (~11 blocos: o dano é da queda). Lógica só no servidor. Substituiu o antigo tornado de partículas. |
 | `WaterOrb.java` | Esfera de água 3D do Soberano (`extends Entity`, não salva) em três modos: `ORBIT` (gira nele), `HOMING` (persegue o jogador e explode em respingo; um golpe direto a estoura) e `WAVE` (só visual: a crista do Maremoto). |
 | `ThrownDagger.java` | Adaga arremessada (`extends AbstractArrow`): voa girando, crava, volta como bumerangue quando o dono chama. |
+| `LightningDagger.java` / `item/LightningDaggerItem.java` | **Protótipo** Adaga Relâmpago (tier chefe, tema raio; item `lightning_dagger`, fora do sistema de armas modulares). Clique direito arremessa; com ela no ar ou cravada, clique de novo teletransporta o dono até ela (`teleportOwner`, procura um ponto livre recuando contra o voo) e ela volta ao inventário. Cravada ou após acertar um mob fica 1 s parada e volta sozinha (animação de volta da `ThrownDagger`); sem acertar nada volta após 5 s. Dano fixo `DAMAGE` (não passa pela maestria/elemento). |
 | `RoyalFireball.java` | Entidade `royal_fireball` (`Projectile`): bola de 2,4 blocos, lenta e rebatível. Colisão volumétrica e reflexão no servidor; devolvida causa dano mágico do jogador e tenta `TierBrain.stunFromFireball(100)` (bloqueado na Fúria). NBT guarda conjurador, reflexão, dano e idade. Modelo próprio em `RoyalFireballRenderer` (cubos no estilo do Minecraft, sem item vanilla). `launchGenki` é a genki-dama do Soberano: nasce acima das mãos, desce sobre o jogador e explode em área (`blastRadius`). Devolvida ao Soberano, só o atordoa (imune a fogo). As bolas do Soberano são removidas fora do estágio 2. |
 | `ModEntities.java` | Registra `minion`, `elite`, `guardian`, `monarch`, `sovereign`, `thrown_dagger` e `royal_fireball`, além dos atributos. `forTier(tier)` devolve o tipo da criatura do tier (BOSS = Monarca). |
 
@@ -194,7 +195,7 @@ Todos registrados em `ModNetwork.register` (protocolo `"1"`).
 | `MobMeshes.java` | ⚠️ **Gerado** por `tools/gen_mob_art.py`. Malhas (cubos + UV) das 20 formas e do Soberano. Não edite à mão. |
 | `SovereignTornadoRenderer` / `WaterOrbRenderer` / `EffectMesh` | Renderers procedurais dos efeitos 3D do Soberano **no estilo do Minecraft (só cubos e barras retas, nada redondo)**: o tornado é uma pilha de 14 anéis quadrados girando em degraus; a esfera de água é um cubo dentro de cubo dentro de cubo com cubinhos em órbita. `EffectMesh` tem `cube`, `box` e `squareRing`. Texturas 16x16 de `tools/gen_sovereign_effects.py`. |
 | `TierMobRenderer.java` | Troca de modelo e textura conforme o elemento. Camadas: base + brilho emissivo + aura de Fúria. `single(...)` é para criatura sem variantes (o Soberano): malha única, escala maior e **sem a camada de brilho** (só a aura de Fúria). |
-| `ThrownDaggerRenderer.java` | Desenha a adaga voando, girando ou cravada. |
+| `ThrownDaggerRenderer.java` | Desenha a adaga voando, girando ou cravada (também serve à Adaga Relâmpago). |
 | `RoyalFireballRenderer.java` | Malha procedural exclusiva: núcleo facetado, crosta vazada, dois anéis de plasma e seis fragmentos orbitais, com luz máxima e texturas próprias. |
 
 ---
@@ -223,6 +224,7 @@ Dados do servidor ficam em `src/main/resources/data/solomod/`:
 | `gen_mob_art.py` | `textures/entity/*.png` e `client/model/MobMeshes.java` | spec das 4 formas base; a mesma spec gera UV e textura, então os dois nunca saem de sincronia |
 | `mob_variants.py` | — (importado por `gen_mob_art.py`) | as 16 formas elementais e o Soberano (`sovereign()`) |
 | `gen_boss_icons.ps1` | `textures/item/monarch_fire_head.png` | Cabeça do Rei Vulcânico em pixel art 16×16 RGBA para o item-ícone de Cinzas do Vulcão; usa System.Drawing no Windows, sem dependências Python. |
+| `gen_lightning_dagger.py` | `textures/item/lightning_dagger.png` e `lightning_dagger_thrown.png` | sprites 16x16 da Adaga Relâmpago e o contorno fantasma da mão |
 | `gen_royal_fireball.ps1` | `textures/entity/royal_fireball.png` e `royal_fireball_core.png` | Texturas originais 16×16 de pixels grandes (crosta de basalto com lava e núcleo de magma), determinísticas, para a malha de cubos; não reutilizam arte do Ghast. |
 | `gen_weapon_models.py` | modelos 3D (rapieira/claymore), textura de peças, contorno fantasma da adaga, modelos dos ovos (incluindo o do Soberano) | ponto de entrada das armas |
 | `gen_weapon_elements.py` | — (importado por `gen_weapon_models.py`) | versões elementais das armas 2D e 3D |

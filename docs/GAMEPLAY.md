@@ -95,6 +95,8 @@ Exigem Maestria + INT mínima + mana. A potência escala com o tier (habilidade 
 | Espada longa | **Giro da Claymore**: todo golpe vira um giro de 360° que acerta todos em volta |
 | Machado | **Salto Esmagador**: salta, mergulha e explode o chão num CRÍTICO em área, com a câmera tremendo |
 
+**Adaga Relâmpago (protótipo)**: item `solomod:lightning_dagger` (aba criativa do mod), tier chefe e tema raio. Clique direito arremessa; com a adaga **no ar ou cravada**, clique direito de novo **teletransporta você até ela** e ela volta para o inventário. Ao tocar o chão (ou um mob) fica cravada 1 s e volta sozinha, ferindo quem estiver no caminho; sem acertar nada volta após 5 s. Se não houver espaço livre onde ela cravou, você não teleporta e ela só volta. Dano fixo de 14 (protótipo; o raio ainda não é um elemento do mod).
+
 ### Visual das armas
 
 - Texturas em pixel art. Cada arma tem **textura própria por elemento**: Fogo (lâmina em brasa), Água (ondas e gotas), Terra (pedra, musgo e cristais) e Ar (prata, penas e vento).
