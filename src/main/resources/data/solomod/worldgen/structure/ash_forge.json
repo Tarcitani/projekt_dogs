@@ -1,0 +1,8 @@
+{
+  "type": "solomod:sanctuary",
+  "sanctuary": "ash_forge",
+  "biomes": "#solomod:has_structure/ash_forge",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {}
+}

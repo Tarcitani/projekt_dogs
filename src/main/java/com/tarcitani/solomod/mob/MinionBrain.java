@@ -1,5 +1,6 @@
 package com.tarcitani.solomod.mob;
 
+import com.tarcitani.solomod.entity.passive.PassiveEchoTriggers;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
 import net.minecraft.sounds.SoundEvents;
@@ -113,6 +114,12 @@ final class MinionBrain extends TierBrain {
                 return true;
             }
             if (t == 8) {
+                // Pulso de Afastamento do Batedor Espectral: derruba o Lacaio antes do salto.
+                if (PassiveEchoTriggers.lungeStarted(mob, target)) {
+                    mob.setDeltaMovement(Vec3.ZERO);
+                    stun(8 * 20);
+                    return false;
+                }
                 Vec3 dir = flatDirTo(target.position());
                 mob.setDeltaMovement(dir.x * 0.75, 0.38, dir.z * 0.75);
                 mob.hasImpulse = true;

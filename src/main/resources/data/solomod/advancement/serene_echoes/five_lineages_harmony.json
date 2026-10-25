@@ -1,0 +1,55 @@
+{
+  "parent": "solomod:serene_echoes/soul_tuning_fork",
+  "display": {
+    "icon": {
+      "id": "minecraft:beacon"
+    },
+    "title": {
+      "translate": "advancements.solomod.five_lineages_harmony.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.five_lineages_harmony.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "none": {
+      "trigger": "minecraft:impossible"
+    },
+    "fire": {
+      "trigger": "minecraft:impossible"
+    },
+    "water": {
+      "trigger": "minecraft:impossible"
+    },
+    "earth": {
+      "trigger": "minecraft:impossible"
+    },
+    "air": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "none"
+    ],
+    [
+      "fire"
+    ],
+    [
+      "water"
+    ],
+    [
+      "earth"
+    ],
+    [
+      "air"
+    ]
+  ],
+  "rewards": {
+    "experience": 100
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "parent": "solomod:echo_song/broken_guard",
+  "display": {
+    "icon": {
+      "id": "minecraft:redstone_torch"
+    },
+    "title": {
+      "translate": "advancements.solomod.red_whisper.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.red_whisper.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 50
+  }
+}

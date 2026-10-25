@@ -1,0 +1,61 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:recovery_compass"
+    },
+    "title": {
+      "translate": "advancements.solomod.lie_of_five_thrones.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.lie_of_five_thrones.description"
+    },
+    "background": "minecraft:textures/block/polished_blackstone_bricks.png",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "cinzagrim": {
+      "trigger": "minecraft:impossible"
+    },
+    "archivist": {
+      "trigger": "minecraft:impossible"
+    },
+    "weeper": {
+      "trigger": "minecraft:impossible"
+    },
+    "root_mother": {
+      "trigger": "minecraft:impossible"
+    },
+    "herald": {
+      "trigger": "minecraft:impossible"
+    },
+    "echo_hunter": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "cinzagrim"
+    ],
+    [
+      "archivist"
+    ],
+    [
+      "weeper"
+    ],
+    [
+      "root_mother"
+    ],
+    [
+      "herald"
+    ],
+    [
+      "echo_hunter"
+    ]
+  ],
+  "rewards": {
+    "experience": 400
+  }
+}

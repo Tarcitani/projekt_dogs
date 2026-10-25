@@ -1,0 +1,31 @@
+{
+  "parent": "solomod:serene_echoes/soul_tuning_fork",
+  "display": {
+    "icon": {
+      "id": "minecraft:ender_pearl"
+    },
+    "title": {
+      "translate": "advancements.solomod.frame_jump.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.frame_jump.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 100
+  }
+}

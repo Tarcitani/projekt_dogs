@@ -3,11 +3,15 @@ package com.tarcitani.solomod.entity;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.mob.Hazards;
+import com.tarcitani.solomod.mob.SovereignStageDialogueManager;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -16,6 +20,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * O Soberano: chefe final da versão de testes. Há eras os cinco Monarcas se uniram para derrotá-lo; ele
@@ -61,6 +67,38 @@ public class Sovereign extends TierMob {
         return getBoundingBox().inflate(18, 32, 18);
     }
 
+    /** Centro do Anfiteatro onde foi chamado (null se veio de ovo ou comando). Salvo no NBT. */
+    @Nullable
+    private BlockPos home;
+
+    /** Chamado no Anfiteatro: se cair no vazio do End, volta para cá em vez de morrer (a morte daria as conquistas). */
+    public void setHome(BlockPos home) {
+        this.home = home;
+    }
+
+    @Override
+    protected void onBelowWorld() {
+        if (home == null) {
+            super.onBelowWorld();
+            return;
+        }
+        teleportTo(home.getX() + 0.5, home.getY(), home.getZ() + 0.5);
+        setDeltaMovement(Vec3.ZERO);
+        resetFallDistance();
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        if (home != null) tag.put("SoloHome", NbtUtils.writeBlockPos(home));
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        home = NbtUtils.readBlockPos(tag, "SoloHome").orElse(null);
+    }
+
     public Sovereign(EntityType<? extends TierMob> type, Level level) {
         super(type, level, MobTier.BOSS);
         this.xpReward = 200;
@@ -92,6 +130,8 @@ public class Sovereign extends TierMob {
             Hazards.farParticles(server, ParticleTypes.ELECTRIC_SPARK, getX(), y, getZ(), 6, w, 1.5, w, 0.35);
             Hazards.farParticles(server, ParticleTypes.REVERSE_PORTAL, getX(), y, getZ(), 6, w, 1.5, w, 0.2);
         }
+        // Separação de canais (ciano/vermelho) da Dissonância Absoluta.
+        SovereignStageDialogueManager.glitchTick(server, this, ticks);
         if (ticks % 3 == 0) {
             // Bipe de 8 bits com altura aleatória: o "áudio picotado" de um programa travando.
             server.playSound(null, getX(), getY() + 10, getZ(), SoundEvents.NOTE_BLOCK_BIT.value(), SoundSource.HOSTILE,

@@ -1,0 +1,8 @@
+{
+  "type": "solomod:colossal",
+  "colossus": "static_tempest_pantheon",
+  "biomes": "#solomod:has_structure/static_tempest_pantheon",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {}
+}

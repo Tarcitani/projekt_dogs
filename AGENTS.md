@@ -19,6 +19,7 @@ Mod id: `solomod` · Pacote: `com.tarcitani.solomod` · Idioma do jogo, dos come
 |---|---|
 | O que cada arquivo faz, fluxos, pacotes de rede | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Regras de jogo, números, ataques dos mobs | [docs/GAMEPLAY.md](docs/GAMEPLAY.md) |
+| História, nomes e as regras do cânone para mob/chefe/estrutura novos | [docs/LORE.md](docs/LORE.md) |
 | Fluxo de Git, branches, convenções | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Visão geral e setup | [README.md](README.md) |
 
@@ -32,17 +33,21 @@ src/main/java/com/tarcitani/solomod/
 ├── core/                 enums: ElementType, MobTier, StatType, WeaponClass
 ├── component/            WeaponData (record no ItemStack) + registro
 ├── attachment/           PlayerStatsAttachment (jogador), MobProfile (mob) + registro
-├── advancement/          ModAdvancements (conquistas dos Monarcas, do Soberano e as secretas)
+├── advancement/          ModAdvancements (27 conquistas em 3 abas, ganchos de concessão)
 ├── item/                 ModularWeaponItem, ModItems (itens, ovos, aba criativa)
 ├── event/                CombatEvents (dano), ElementalCombat, StatsLogic (balanceamento), PlayerEvents
 ├── skill/                WeaponSkill (habilidades de tier), ClassAbility (de classe), SkillVfx, PlayerAnim
-├── entity/               TierMob (criaturas), Sovereign (chefe final), ThrownDagger, RoyalFireball, ModEntities
+├── entity/               TierMob (criaturas), Sovereign (chefe final), ThrownDagger, RoyalFireball, ModEntities,
+│                         passive/ (Fauna Pacífica: PassiveEchoEntity, 15 formas, PassiveEchoTriggers),
+│                         sanctuary/ (Santuários de Eco: 6 chefes, 18 capangas e suas bases)
+├── worldgen/             Santuários (SanctuaryKind/Structure/Piece), tronos e arena (Colossal*), StructureAmbientHandler
+├── era/                  EraSevenState (pós-jogo: flag do Soberano derrotado, salva no mundo)
 ├── mob/                  TierIdentity, TierBrain + 4 Brains + SovereignBrain, Hazards, MobAnim, MobEvents
 ├── network/              ModNetwork + *Payload
 ├── command/              ModTestCommand (/modtest)
 └── client/               SÓ CLIENTE: tela, HUD, animações, cinemática, model/, render/
 src/main/resources/assets/solomod/   lang/, models/item/, textures/{item,entity}/
-src/main/resources/data/solomod/     advancement/ (JSON das conquistas)
+src/main/resources/data/solomod/     advancement/<aba>/ (JSON gerados por tools/gen_advancements.py), worldgen/, loot_table/
 src/main/templates/META-INF/neoforge.mods.toml   metadados (variáveis de gradle.properties)
 tools/                    scripts Python que GERAM arte e código
 ```
@@ -137,7 +142,7 @@ No Windows use `gradlew.bat`. Não há testes automatizados: valide com `./gradl
 - **Regra dos poderes do Soberano**: estágios 1 a 5 usam só os poderes do próprio elemento (`StageMove.ownStage`); só o 6 libera todos (um por vez) mais o raio. Poder novo precisa declarar o estágio a que pertence.
 - **A morte do Soberano é glitch, não cinzas**: o sorteio visual vem do número do quadro (`TierMobModel.glitchFrame`); mantenha determinístico ou o corpo e as camadas de cor tremem fora de sincronia.
 - **Terremoto de blocos**: `Hazards.QuakeBlocks` usa `FallingBlockEntity` (o bloco volta ao pousar), só em terra/pedra/areia/cascalho expostos e com `mobGriefing`. Tremor de câmera: `ModNetwork.sendShake` (`ShakePayload`).
-- **Ícones de conquista são itens**: `monarch_<elemento>_head` para os cinco Monarcas, `unknown_boss` ("???") e `sovereign_head` (`ModItems`, `tools/gen_boss_icons.py`, que reutiliza `tools/gen_sovereign_icons.py`). `sovereign_unknown` é oculta e concedida/revogada pelo código (`ModAdvancements`).
+- **Ícones de conquista são itens**: `monarch_<elemento>_head` para os cinco Monarcas, `unknown_boss` ("???") e `sovereign_head` (`ModItems`, `tools/gen_boss_icons.py`, que reutiliza `tools/gen_sovereign_icons.py`). As conquistas são geradas por `tools/gen_advancements.py` e concedidas por ganchos em `ModAdvancements`: conquista nova = linha no gerador + gancho + textos nos dois idiomas.
 - **Poderes dos Monarcas**: `MonarchBrain` acrescenta os poderes correspondentes do Soberano (fogo: genki-dama; água: maremoto e esferas; terra: raízes, pisão e pulão; ar: tornados), também na Fúria. O neutro usa o Golpe Sísmico com empurrão. Balanceamento em `TierIdentity.MonarchPowers`. `MonarchModel` compartilha poses com `SovereignModel`; as restrições de estágio de `WaterOrb`/`SovereignTornado` só valem para o Soberano.
 - **Partículas altas ou distantes** (mais de 32 blocos): use `Hazards.farParticles`, senão só quem está colado vê.
 - **O Soberano não pula estágio**: `SovereignBrain.onHurt` devolve a vida ao limite do estágio, inclusive em golpe fatal. Só dano com a tag `bypasses_invulnerability` (`/kill`, void) passa direto.
@@ -150,3 +155,4 @@ No Windows use `gradlew.bat`. Não há testes automatizados: valide com `./gradl
 - **Contorno dos chefes**: não ligar `setGlowingTag` em BOSS/SUB_BOSS. `TierIdentity.apply` deixa desligado e `MobEvents.onJoin` limpa flags salvas antes da mudança. Detalhes emissivos e aura de Fúria continuam independentes.
 
 - **Somente armas Normal**: `WeaponData` normaliza tier, elemento, requisito e skill legados no construtor; codecs e ordinais ficam compatíveis com saves. Não usar MobTier/ElementType para gerar variantes de armas. `/modtest weapon <classe>` e GIVE_WEAPON geram só as quatro normais. Na tela Teste, tier/elemento são exclusivamente dos mobs. Preservar integralmente lógica, atributos, ovos e assets de BOSS/SUB_BOSS. Habilidades avançadas vêm de `SkillTree.activeSkill`, não do componente do item.
+- **Fauna Pacífica (`entity/passive/`)**: os 15 mobs herdam de `PassiveEchoEntity`. Gatilhos novos entram em `PassiveEchoTriggers` e são chamados dos cérebros, nunca reimplementados ali. Só o companheiro **ativo** do jogador reage (`activeOf`). Todo empurrão passa por `PassiveEchoTriggers.dampenPush` via `Hazards.push`; se um efeito novo mexer em empurrão, use esse caminho. Estado de gatilho é do servidor, zerado em `clear()` e não salvo.

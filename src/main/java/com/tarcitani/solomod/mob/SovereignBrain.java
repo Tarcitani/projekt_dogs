@@ -1,5 +1,9 @@
 package com.tarcitani.solomod.mob;
 
+import com.tarcitani.solomod.era.EraSevenState;
+import com.tarcitani.solomod.item.ModItems;
+import net.minecraft.world.item.ItemStack;
+import com.tarcitani.solomod.entity.passive.PassiveEchoTriggers;
 import com.tarcitani.solomod.advancement.ModAdvancements;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
@@ -162,6 +166,8 @@ public final class SovereignBrain extends TierBrain {
     /** Quem estava correndo no último tick (o alvo da Corrida Frenética). */
     private LivingEntity runnerRef;
     private ChestBeam beam;
+    /** A intro já tocou nesta luta (o cérebro é recriado ao recarregar o chunk: aí ela pode tocar de novo). */
+    private boolean introduced;
 
     SovereignBrain(PathfinderMob mob) {
         super(mob, MobTier.BOSS, ElementType.NONE);
@@ -185,6 +191,16 @@ public final class SovereignBrain extends TierBrain {
         stage = stageFromHealth();
         bar.setColor(barColor(stage));
         if (stage == STAGES) resumeRage();
+    }
+
+    /** Primeiro alvo da luta, ainda no estágio 1: a intro e a fala do Punho do Colosso. */
+    @Override
+    protected void onEngage() {
+        if (introduced || stage != 1) return;
+        introduced = true;
+        Set<ServerPlayer> audience = audience();
+        SovereignStageDialogueManager.intro(audience);
+        for (ServerPlayer player : audience) ModAdvancements.onSovereignSeen(player);
     }
 
     /** Teste ({@code /modtest sovereign <estágio>}): pula direto para o estágio, sem as cinemáticas do caminho. */
@@ -297,6 +313,7 @@ public final class SovereignBrain extends TierBrain {
     public void onHurt(DamageSource source, float amount) {
         if (source.getEntity() instanceof Player player) {
             fighters.add(player.getUUID());
+            if (player instanceof ServerPlayer serverPlayer) ModAdvancements.onSovereignSeen(serverPlayer);
             // Lê como lutam: golpe de longe (flecha, magia, bola) ou de perto.
             boolean ranged = source.getDirectEntity() != player || player.distanceTo(mob) > 8 + mob.getBbWidth() / 2;
             if (ranged) rangedPressure += 2;
@@ -319,9 +336,9 @@ public final class SovereignBrain extends TierBrain {
         bar.setName(bossBarName());
         sound(SoundEvents.WITHER_HURT, 3.0F, 0.4F);
         sound(SoundEvents.ENDER_DRAGON_GROWL, 2.5F, 0.5F);
-        String power = stage == STAGES ? "all" : AWAKENED[stage - 1].getSerializedName();
+        // A fala de transição de quem SAI do estágio anterior (ver SovereignStageDialogueManager).
         CinematicPayload closeUp = new CinematicPayload(mob.getId(), AGONY_TICKS, CinematicPayload.Kind.CLOSE_UP,
-                Component.translatable("cinematic.solomod.agony"), Component.translatable("cinematic.solomod.awaken." + power));
+                Component.translatable("cinematic.solomod.agony"), SovereignStageDialogueManager.transitionLine(stage - 1));
         for (ServerPlayer player : audience()) ModNetwork.sendCinematic(player, closeUp);
     }
 
@@ -331,6 +348,7 @@ public final class SovereignBrain extends TierBrain {
         mob.getNavigation().stop();
         mob.setDeltaMovement(0, Math.min(0, mob.getDeltaMovement().y), 0);
         ElementType power = stage == STAGES ? ALL[(t / 6) % ALL.length] : AWAKENED[stage - 1];
+        if (stage == STAGES) SovereignStageDialogueManager.furyLeakTick(level(), mob, t);
 
         double r = Math.max(0.8, 9.0 * (1 - t / 60.0));
         if (t < 60 && t % 2 == 0) {
@@ -354,6 +372,7 @@ public final class SovereignBrain extends TierBrain {
 
     private void endAgony() {
         invulnerable = false;
+        SovereignStageDialogueManager.stageStart(stage, audience());
         if (stage == STAGES && !isRaging()) awaken();
         else anim(MobAnim.NONE, 0);
     }
@@ -513,16 +532,22 @@ public final class SovereignBrain extends TierBrain {
     @Override
     protected void onVictoryLaugh() {
         CinematicPayload laugh = new CinematicPayload(mob.getId(), TierIdentity.BOSS_LAUGH_TICKS, CinematicPayload.Kind.LAUGH,
-                Component.translatable("cinematic.solomod.laugh"), Component.translatable("cinematic.solomod.laugh.line"));
+                Component.translatable("cinematic.solomod.laugh"), SovereignStageDialogueManager.laughLine(mob.getRandom()));
         for (ServerPlayer player : audience()) ModNetwork.sendCinematic(player, laugh);
     }
 
     @Override
     public void onDeath() {
         int duration = TierMob.DISSOLVE_TICKS + 40;
-        CinematicPayload finale = new CinematicPayload(mob.getId(), duration, CinematicPayload.Kind.FINALE,
-                Component.translatable("cinematic.solomod.sovereign_defeated"), mob.getDisplayName());
-        for (ServerPlayer player : audience()) ModNetwork.sendCinematic(player, finale);
+        Component header = Component.translatable("cinematic.solomod.sovereign_defeated");
+        CinematicPayload finale = new CinematicPayload(mob.getId(), duration, CinematicPayload.Kind.FINALE, header,
+                SovereignStageDialogueManager.line("death.1"));
+        Set<ServerPlayer> audience = audience();
+        for (ServerPlayer player : audience) ModNetwork.sendCinematic(player, finale);
+        SovereignStageDialogueManager.death(mob, duration, header, audience);
+        // Era VII: o mundo lembra que o Soberano caiu (Cicatriz no Céu, reverência do Caçador) e sobra um fragmento.
+        EraSevenState.setSovereignDefeated(level().getServer(), true);
+        mob.spawnAtLocation(new ItemStack(ModItems.DISSONANCE_SHARD.get()));
         // Conquista: só quem lutou (o golpe final passa por onHurt antes da morte).
         for (UUID id : fighters) {
             ServerPlayer player = level().getServer().getPlayerList().getPlayer(id);
@@ -819,6 +844,7 @@ public final class SovereignBrain extends TierBrain {
                 return true;
             }
             if (t == WINDUP) {
+                PassiveEchoTriggers.quakeStarted(mob, mob.position());
                 sound(SoundEvents.MACE_SMASH_GROUND_HEAVY, 3.0F, 0.4F);
                 sound(SoundEvents.GENERIC_EXPLODE.value(), 2.5F, 0.4F);
                 particles(ParticleTypes.EXPLOSION, mob.position(), 8, 4.0, 0);
@@ -921,6 +947,8 @@ public final class SovereignBrain extends TierBrain {
             Vec3 origin = chestOrigin();
             if (t >= CHARGE + SWITCH && (t - CHARGE) % SWITCH == 0 && crowd > 1) markFocus(pickFocus(false));
             LivingEntity f = focus();
+            // Mariposa da Fenda: no estágio 6, o Raio do Peito leva o jogador focado para trás do Soberano.
+            if (t == CHARGE && phase() == STAGES) PassiveEchoTriggers.chestBeamFired(mob, f);
             if (t < CHARGE) {
                 aim = f.position();
             } else {
@@ -938,6 +966,7 @@ public final class SovereignBrain extends TierBrain {
             if (t == CHARGE) {
                 fired = true;
                 sound(SoundEvents.WARDEN_SONIC_BOOM, 3.0F, 0.7F);
+                SovereignStageDialogueManager.beamFired(audience());
             }
             Vec3 dir = aim.add(0, 0.9, 0).subtract(origin).normalize();
             BlockHitResult wall = level().clip(new ClipContext(origin, origin.add(dir.scale(64)),
@@ -971,7 +1000,10 @@ public final class SovereignBrain extends TierBrain {
         /** Só ajoelha se o raio chegou a disparar (um raio cancelado na carga não cansa). */
         @Override
         protected void end() {
-            if (fired) kneel(KNEEL_TICKS);
+            if (fired) {
+                kneel(KNEEL_TICKS);
+                SovereignStageDialogueManager.beamExhausted(audience());
+            }
         }
     }
 

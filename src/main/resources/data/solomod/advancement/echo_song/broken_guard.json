@@ -1,0 +1,28 @@
+{
+  "parent": "solomod:echo_song/taste_of_violence",
+  "display": {
+    "icon": {
+      "id": "minecraft:shield"
+    },
+    "title": {
+      "translate": "advancements.solomod.broken_guard.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.broken_guard.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ]
+}

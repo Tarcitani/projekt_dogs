@@ -6,6 +6,7 @@ import com.tarcitani.solomod.attachment.ModAttachments;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.entity.Sovereign;
+import com.tarcitani.solomod.entity.passive.PassiveEchoEntity;
 import com.tarcitani.solomod.entity.TierMob;
 import com.tarcitani.solomod.network.MobAnimPayload;
 import com.tarcitani.solomod.network.ModNetwork;
@@ -112,6 +113,8 @@ public final class TierIdentity {
 
     /** Transforma o mob em "mob do mod" com a identidade completa do tier. */
     public static void apply(LivingEntity living, MobTier tier, ElementType element) {
+        // Regra de isolamento: a Fauna Pacífica nunca recebe perfil hostil de tier ou elemento.
+        if (PassiveEchoEntity.isPassiveEcho(living)) return;
         living.setData(ModAttachments.MOB_PROFILE, new MobProfile(tier, element));
         Stats s = stats(tier);
 

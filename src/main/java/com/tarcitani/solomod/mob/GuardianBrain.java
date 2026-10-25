@@ -1,5 +1,6 @@
 package com.tarcitani.solomod.mob;
 
+import com.tarcitani.solomod.entity.passive.PassiveEchoTriggers;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.skill.SkillVfx;
@@ -124,6 +125,7 @@ final class GuardianBrain extends TierBrain {
         @Override
         protected boolean tick(int t) {
             mob.getLookControl().setLookAt(target, 30, 30);
+            if (t == 16) PassiveEchoTriggers.volleyAimed(mob, target);
             if (t < 16) {
                 SkillVfx.ring(level(), center(), 0.4 + t * 0.05, elementParticle(), 6);
             } else if (t == 16 || t == 22 || t == 28) {
@@ -153,6 +155,7 @@ final class GuardianBrain extends TierBrain {
 
         @Override
         protected void begin() {
+            PassiveEchoTriggers.guardianRepulse(mob);
             anim(MobAnim.WINDUP, 10);
             sound(SoundEvents.GUARDIAN_ATTACK, 1.0F, 1.6F);
         }
@@ -242,6 +245,7 @@ final class GuardianBrain extends TierBrain {
 
         @Override
         protected void begin() {
+            PassiveEchoTriggers.blinkPrepared(mob, target);
             anim(MobAnim.BLINK, 12);
             sound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 0.7F);
             particles(ParticleTypes.PORTAL, center(), 40, 0.5, 0.5);

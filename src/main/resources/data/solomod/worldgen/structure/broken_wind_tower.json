@@ -1,0 +1,8 @@
+{
+  "type": "solomod:sanctuary",
+  "sanctuary": "broken_wind_tower",
+  "biomes": "#solomod:has_structure/broken_wind_tower",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {}
+}

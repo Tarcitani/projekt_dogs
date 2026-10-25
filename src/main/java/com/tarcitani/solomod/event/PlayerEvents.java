@@ -1,5 +1,8 @@
 package com.tarcitani.solomod.event;
 
+import com.tarcitani.solomod.era.EraSevenState;
+import com.tarcitani.solomod.advancement.ModAdvancements;
+import com.tarcitani.solomod.mob.TierBrain;
 import com.tarcitani.solomod.attachment.MobProfile;
 import com.tarcitani.solomod.attachment.ModAttachments;
 import com.tarcitani.solomod.attachment.PlayerStatsAttachment;
@@ -36,6 +39,8 @@ public final class PlayerEvents {
                     gainedPoints, stats.getPontosDisponiveis()).withStyle(ChatFormatting.GOLD));
         }
         StatsLogic.onStatsChanged(player);
+        TierBrain brain = TierBrain.of(victim);
+        ModAdvancements.onTierKill(player, profile.tier(), brain != null && brain.isRaging());
     }
 
     /**
@@ -60,7 +65,10 @@ public final class PlayerEvents {
 
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) StatsLogic.onStatsChanged(player);
+        if (event.getEntity() instanceof ServerPlayer player) {
+            StatsLogic.onStatsChanged(player);
+            EraSevenState.syncTo(player);
+        }
     }
 
     /** Ao renascer o jogador é uma entidade nova: reaplica atributos e enche a vida com a VIT. */

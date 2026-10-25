@@ -1,6 +1,7 @@
 package com.tarcitani.solomod.entity;
 
 import com.tarcitani.solomod.core.ElementType;
+import com.tarcitani.solomod.entity.passive.PassiveEchoTriggers;
 import com.tarcitani.solomod.mob.Hazards;
 import com.tarcitani.solomod.mob.SovereignBrain;
 import com.tarcitani.solomod.mob.TierBrain;
@@ -85,6 +86,7 @@ public final class WaterOrb extends Entity {
         orb.waveLife = life;
         orb.setPos(pos);
         level.addFreshEntity(orb);
+        PassiveEchoTriggers.waveLaunched(level, pos);
     }
 
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {}
@@ -142,6 +144,11 @@ public final class WaterOrb extends Entity {
     }
 
     private void homing(ServerLevel server, LivingEntity boss) {
+        // Intercepção Marinha da Rêmora: o jato estoura a esfera perto do jogador.
+        if (PassiveEchoTriggers.interceptChaser(server, position())) {
+            pop(server, ParticleTypes.BUBBLE_POP, 20);
+            return;
+        }
         Entity chased = target == null ? null : server.getEntity(target);
         if (age > HOMING_LIFE || !(chased instanceof LivingEntity victim) || !Hazards.isEnemy(boss, victim)) {
             pop(server, ParticleTypes.BUBBLE_POP, 20);

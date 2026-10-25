@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "solomod:shattered_seal_amphitheater",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 40,
+    "separation": 16,
+    "salt": 931277401
+  }
+}

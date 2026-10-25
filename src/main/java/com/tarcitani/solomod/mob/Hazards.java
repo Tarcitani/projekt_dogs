@@ -2,6 +2,9 @@ package com.tarcitani.solomod.mob;
 
 import com.tarcitani.solomod.attachment.ModAttachments;
 import com.tarcitani.solomod.core.ElementType;
+import com.tarcitani.solomod.entity.passive.PassiveEchoTriggers;
+import com.tarcitani.solomod.entity.passive.PassiveEchoEntity;
+import com.tarcitani.solomod.entity.sanctuary.SanctuaryMob;
 import com.tarcitani.solomod.event.ElementalCombat;
 import com.tarcitani.solomod.skill.SkillVfx;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -112,6 +115,10 @@ public final class Hazards {
     /** Quem pode ser atingido: vivos, fora do criativo/espectador e que não sejam outros mobs do mod. */
     public static boolean isEnemy(LivingEntity owner, LivingEntity e) {
         if (e == owner || !e.isAlive() || e.hasData(ModAttachments.MOB_PROFILE)) return false;
+        // Fauna Pacífica (tag #solomod:passive_echo) nunca é alvo nem vítima dos monstros do mod.
+        if (PassiveEchoEntity.isPassiveEcho(e)) return false;
+        // Chefe e capangas dos Santuários de Eco são aliados entre si.
+        if (SanctuaryMob.isSanctuary(e)) return false;
         return !(e instanceof Player p) || (!p.isCreative() && !p.isSpectator());
     }
 
@@ -134,6 +141,8 @@ public final class Hazards {
 
     /** Empurrão que também chega ao cliente quando o alvo é um jogador. */
     public static void push(Entity e, Vec3 velocity) {
+        // Bolha de Ancoragem da Tartaruga: o empurrão de um Maremoto perde força sobre o jogador.
+        velocity = PassiveEchoTriggers.dampenPush(e, velocity);
         e.push(velocity.x, velocity.y, velocity.z);
         e.hurtMarked = true;
     }
@@ -221,6 +230,20 @@ public final class Hazards {
 
                 AABB box = new AABB(pos, pos).inflate(0.45);
                 List<LivingEntity> hits = enemiesIn(level, owner, box);
+                ServerPlayer deflector = element == ElementType.FIRE ? PassiveEchoTriggers.solarMirror(level, pos) : null;
+                if (deflector != null && owner instanceof LivingEntity shooter) {
+                    // Espelho Solar do Escaravelho: o projétil volta ao conjurador como golpe direto e o atordoa.
+                    hit(deflector, shooter, damage, element, potency, true);
+                    TierBrain shooterBrain = TierBrain.of(shooter);
+                    if (shooterBrain != null) shooterBrain.stunFromFireball(TierIdentity.ROYAL_FIREBALL_STUN_TICKS);
+                    level.sendParticles(ParticleTypes.CRIT, pos.x, pos.y, pos.z, 8, 0.2, 0.2, 0.2, 0.05);
+                    return false;
+                }
+                if (!hits.isEmpty() && PassiveEchoTriggers.absorb(hits)) {
+                    // Escudo da Égide do Autômato Relíquia: o orbe se desfaz sem causar dano.
+                    level.sendParticles(ParticleTypes.CRIT, pos.x, pos.y, pos.z, 8, 0.2, 0.2, 0.2, 0.05);
+                    return false;
+                }
                 if (!hits.isEmpty() || !level.noCollision(box)) {
                     for (LivingEntity e : hits) hit(owner, e, damage, element, potency, true);
                     level.sendParticles(ParticleTypes.EXPLOSION, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);

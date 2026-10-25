@@ -1,0 +1,28 @@
+{
+  "parent": "solomod:echo_song/born_in_silence",
+  "display": {
+    "icon": {
+      "id": "minecraft:redstone"
+    },
+    "title": {
+      "translate": "advancements.solomod.taste_of_violence.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.taste_of_violence.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ]
+}

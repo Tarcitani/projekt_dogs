@@ -1,5 +1,6 @@
 package com.tarcitani.solomod.mob;
 
+import com.tarcitani.solomod.entity.passive.PassiveEchoTriggers;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.skill.SkillVfx;
@@ -73,6 +74,7 @@ final class EliteBrain extends TierBrain {
 
         nextParryAt = now() + 80;
         riposteIn = 6;
+        PassiveEchoTriggers.counterPrepared(mob, attacker);
         anim(MobAnim.DODGE, 10);
         sound(SoundEvents.SHIELD_BLOCK, 1.0F, 1.3F);
         sound(SoundEvents.ANVIL_LAND, 0.3F, 2.0F);
@@ -106,6 +108,7 @@ final class EliteBrain extends TierBrain {
         @Override
         protected void begin() {
             hit.clear();
+            PassiveEchoTriggers.dashTelegraphed(mob, target);
             anim(MobAnim.WINDUP, AIM);
             sound(SoundEvents.PIGLIN_BRUTE_ANGRY, 1.0F, 1.3F);
         }
@@ -131,6 +134,7 @@ final class EliteBrain extends TierBrain {
             for (LivingEntity e : Hazards.enemiesIn(level(), mob, mob.getBoundingBox().inflate(0.5))) {
                 if (hit.add(e.getId())) {
                     strike(e, baseDamage() * 1.6F, true);
+                    if (element == ElementType.EARTH) PassiveEchoTriggers.heavyBlow(e);
                     Hazards.push(e, dir.scale(1.0).add(0, 0.3, 0));
                     sound(SoundEvents.PLAYER_ATTACK_STRONG, 1.0F, 0.9F);
                 }
@@ -166,7 +170,10 @@ final class EliteBrain extends TierBrain {
                 particles(ParticleTypes.SWEEP_ATTACK, front, 1, 0, 0);
                 double reach = 2.6 * mob.getScale();
                 for (LivingEntity e : enemiesWithin(reach)) {
-                    if (dir.dot(flatDirTo(e.position())) > 0.35) strike(e, baseDamage() * 0.75F, n == 2);
+                    if (dir.dot(flatDirTo(e.position())) > 0.35) {
+                        strike(e, baseDamage() * 0.75F, n == 2);
+                        if (element == ElementType.EARTH) PassiveEchoTriggers.heavyBlow(e);
+                    }
                 }
             }
             return t < 26;

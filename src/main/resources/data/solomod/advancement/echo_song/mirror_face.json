@@ -1,0 +1,28 @@
+{
+  "parent": "solomod:echo_song/shattered_seal",
+  "display": {
+    "icon": {
+      "id": "solomod:unknown_boss"
+    },
+    "title": {
+      "translate": "advancements.solomod.mirror_face.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.mirror_face.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ]
+}

@@ -3,6 +3,7 @@ package com.tarcitani.solomod;
 import com.mojang.logging.LogUtils;
 import com.tarcitani.solomod.attachment.ModAttachments;
 import com.tarcitani.solomod.command.ModTestCommand;
+import com.tarcitani.solomod.entity.passive.PassiveEchoEvents;
 import com.tarcitani.solomod.component.ModDataComponents;
 import com.tarcitani.solomod.entity.ModEntities;
 import com.tarcitani.solomod.event.CombatEvents;
@@ -12,6 +13,7 @@ import com.tarcitani.solomod.mob.MobEvents;
 import com.tarcitani.solomod.network.ModNetwork;
 import com.tarcitani.solomod.skill.ClassAbility;
 import com.tarcitani.solomod.skill.DodgeRoll;
+import com.tarcitani.solomod.worldgen.ModStructures;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -38,6 +40,7 @@ public class SoloMod {
         ModAttachments.register(modBus);
         ModItems.register(modBus);
         ModEntities.register(modBus);
+        ModStructures.register(modBus);
         modBus.addListener(ModNetwork::register);
 
         // Eventos de jogo: classes com métodos estáticos @SubscribeEvent.
@@ -47,6 +50,7 @@ public class SoloMod {
         NeoForge.EVENT_BUS.register(ClassAbility.class);
         NeoForge.EVENT_BUS.register(DodgeRoll.class);
         NeoForge.EVENT_BUS.register(ModTestCommand.class);
+        NeoForge.EVENT_BUS.register(PassiveEchoEvents.class);
 
         LOGGER.info("[{}] MVP de Maestria/Elementos carregado.", MOD_ID);
     }

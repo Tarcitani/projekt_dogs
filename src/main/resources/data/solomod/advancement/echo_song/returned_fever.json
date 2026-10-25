@@ -1,0 +1,31 @@
+{
+  "parent": "solomod:echo_song/red_whisper",
+  "display": {
+    "icon": {
+      "id": "solomod:monarch_fire_head"
+    },
+    "title": {
+      "translate": "advancements.solomod.returned_fever.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.returned_fever.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 150
+  }
+}

@@ -30,6 +30,9 @@ public final class ModNetwork {
         registrar.playToClient(WeaponMotionPayload.TYPE, WeaponMotionPayload.STREAM_CODEC, WeaponMotionPayload::handle);
         registrar.playToClient(TechniqueSelectionPayload.TYPE, TechniqueSelectionPayload.STREAM_CODEC, TechniqueSelectionPayload::handle);
         registrar.playToClient(RollCooldownPayload.TYPE, RollCooldownPayload.STREAM_CODEC, RollCooldownPayload::handle);
+        registrar.playToClient(EraStatePayload.TYPE, EraStatePayload.STREAM_CODEC, EraStatePayload::handle);
+        registrar.playToClient(AmbientSilencePayload.TYPE, AmbientSilencePayload.STREAM_CODEC, AmbientSilencePayload::handle);
+        registrar.playToClient(ArenaSkyPayload.TYPE, ArenaSkyPayload.STREAM_CODEC, ArenaSkyPayload::handle);
         // Cliente -> servidor (Maestria e pedido legado da espada longa; uso das armas segue o ciclo vanilla)
         registrar.playToServer(UnlockTalentPayload.TYPE, UnlockTalentPayload.STREAM_CODEC, UnlockTalentPayload::handle);
         registrar.playToServer(SpendPointsPayload.TYPE, SpendPointsPayload.STREAM_CODEC, SpendPointsPayload::handle);
@@ -57,6 +60,26 @@ public final class ModNetwork {
         PlayerAnimPayload payload = new PlayerAnimPayload(player.getId(), anim, duration);
         if (includeSelf) PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, payload);
         else PacketDistributor.sendToPlayersTrackingEntity(player, payload);
+    }
+
+    /** Estado da Era VII (Soberano derrotado: liga a Cicatriz no Céu do cliente). */
+    public static void syncEra(ServerPlayer player, boolean sovereignDefeated) {
+        PacketDistributor.sendToPlayer(player, new EraStatePayload(sovereignDefeated));
+    }
+
+    /** Céu costurado do Anfiteatro do Selo Partido por {@code ticks} ticks. */
+    public static void sendArenaSky(ServerPlayer player, int ticks) {
+        PacketDistributor.sendToPlayer(player, new ArenaSkyPayload(ticks));
+    }
+
+    /** Tremor de tela só para um jogador. */
+    public static void sendShake(ServerPlayer player, float intensity, int duration) {
+        PacketDistributor.sendToPlayer(player, new ShakePayload(intensity, duration));
+    }
+
+    /** Silêncio de ambiente no cliente por {@code ticks} ticks (sino da Torre dos Ventos Quebrados). */
+    public static void sendAmbientSilence(ServerPlayer player, int ticks) {
+        PacketDistributor.sendToPlayer(player, new AmbientSilencePayload(ticks));
     }
 
     /** Cinemática de chefe (morte do Monarca, agonia ou morte do Soberano) para um jogador. */

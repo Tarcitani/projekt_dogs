@@ -4,14 +4,14 @@
 
 ### Um RPG de ação dentro do Minecraft
 
-**Maestria · Armas Modulares · Combate Elemental · Chefes com IA própria**
+**Maestria · Armas Modulares · Combate Elemental · Chefes com IA própria · Santuários · Fauna Pacífica**
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-62B47A?style=for-the-badge&logo=minecraft&logoColor=white)
 ![NeoForge](https://img.shields.io/badge/NeoForge-21.1.x-E04E14?style=for-the-badge)
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Status](https://img.shields.io/badge/status-MVP-8A2BE2?style=for-the-badge)
 
-[Sobre](#-sobre) · [Destaques](#-destaques) · [Começando](#-começando) · [Documentação](#-documentação) · [Comandos](#-comandos-de-teste) · [Colaborar](#-colaborando)
+[Sobre](#-sobre) · [Lore](#-a-história) · [Destaques](#-destaques) · [Bestiário](#bestiário) · [Começando](#️-como-instalar-para-desenvolver-setup-do-ambiente) · [Documentação](#-documentação) · [Comandos](#-comandos-de-teste) · [Colaborar](#-colaborando)
 
 </div>
 
@@ -25,9 +25,21 @@ As armas são sempre Normal e sem elemento. Cumprir o requisito de Maestria libe
 
 Os inimigos acompanham: cada **tier** de monstro tem corpo, IA e ataques próprios. Lacaios que caçam em bando, Elites que aparam golpes, Guardiões que teleportam e Monarcas com três fases que **leem o seu estilo de luta**.
 
-E acima deles, o **Soberano**: há eras os cinco Monarcas se uniram para derrotá-lo, e ele voltou com o poder de todos. É o chefe final desta versão de testes.
+E acima deles, o **Soberano**: aquele de quem os cinco Monarcas roubaram tudo. Cada Monarca derrotado devolve uma parte dele, e no fim ele desperta inteiro. É o chefe final desta versão de testes, com **6 estágios dublados por falas** e uma morte que quebra a realidade.
+
+Fora da história principal, o mundo guarda **seis Santuários de Eco**: masmorras opcionais com mini-chefes e guarnição própria. E nem tudo é hostil: **15 criaturas da Fauna Pacífica** podem ser vinculadas como companheiras de suporte.
 
 > 🧪 **Status:** MVP jogável. Os sistemas centrais estão prontos; há uma tela de testes (tecla **K**) e o comando `/modtest` para experimentar tudo no modo criativo.
+
+## 📜 A história
+
+> *Tudo o que vive canta. Quando algo morre, a sua canção fica no mundo como um **Eco**.*
+
+Os Ecos cantam em quatro **Vozes** (Água, Fogo, Ar e Terra) ou no **Silêncio** entre elas, e juntos sustentam a **Canção**, a física do mundo. No começo, um único ser guardava todas: o **Primeiro Coro**. Os cinco **Monarcas** o traíram, esquartejaram o corpo dele ainda vivo e fundaram cinco impérios com os membros e as Vozes roubados. O que sobrou enlouqueceu de **Fome** e foi trancado no **Selo** por cinco cúmplices, os guardiões dos Santuários. Hoje o chamam de **Soberano**.
+
+Você é o **Desperto Sem Voz**, e não por acaso: para que o Soberano não abrisse o Selo por dentro, o Arquivista partiu a alma dele em duas e jogou a **Vontade** no mundo. **Você é essa Vontade.** Por isso não tem elemento, absorve os Ecos que derrota (XP, Maestria) e lembra golpes que nunca aprendeu (a árvore de habilidades). Cada Monarca que você mata devolve uma parte roubada ao Selo, até a Fome despertar inteira. O confronto final é a **Dissonância Absoluta**, e a morte do Soberano rasga a Canção.
+
+➡️ A lore completa, a linha do tempo e as regras para criar conteúdo novo sem contradizer a história: **[docs/LORE.md](docs/LORE.md)**
 
 ## ✨ Destaques
 
@@ -79,11 +91,29 @@ Números de dano flutuantes, partículas por habilidade, animações, brilho emi
 <tr>
 <td valign="top">
 
-### 🧰 Feito para testar
-Tecla **K**: distribua pontos ou gere qualquer arma ou monstro com um clique. Comando `/modtest` para controle total.
+### 🏚️ Santuários de Eco
+**6 masmorras opcionais** geradas no mundo, cada uma com paleta, guarnição e um **mini-chefe** de mecânica única: as cópias sem sombra do Arquivista, a casca da Raiz-Mãe, a emboscada invisível do Caçador de Ecos. **24 mobs** com barra de vida, 3 fases, golpes telegrafados e saque próprio. A Catacumba é **enterrada**, com poço de escada até a superfície.
 
 </td>
 <td valign="top">
+
+### 🌿 Fauna Pacífica
+**15 companheiros de suporte**, 3 por linhagem (Silêncio, Fogo, Água, Terra, Ar). Vincule com um item, mantenha **um ativo** por vez e deixe-o reagir aos ataques dos chefes: desviar orbes, segurar empurrões, anular quedas. Os monstros os ignoram e eles **não morrem** de dano do ambiente (Forma Astral).
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 🧰 Feito para testar
+Tecla **K**: distribua pontos ou gere qualquer arma ou monstro com um clique. Comando `/modtest` para controle total. Todos os ovos ficam na aba criativa **Solo Mod**.
+
+</td>
+<td valign="top">
+
+### 📜 Lore conectada
+Elementos, tiers, Monarcas, Soberano, Fauna e Santuários seguem uma única história, com regras do cânone para os próximos mobs. Veja [docs/LORE.md](docs/LORE.md).
+
 </td>
 </tr>
 </table>
@@ -97,6 +127,28 @@ Tecla **K**: distribua pontos ou gere qualquer arma ou monstro com um clique. Co
 | **✦ Guardião** | Oráculo | Arauto Solar | Medusa Abissal | Monólito Ancestral | Olho da Tempestade |
 | **♛ Monarca** | Colosso Rei | Rei Vulcânico | Leviatã Coroado | Titã Ancestral | Imperador dos Céus |
 | **☬ Chefe final** | Soberano (todos os elementos) | | | | |
+
+#### Santuários de Eco
+
+| Santuário | Onde | Mini-chefe | Guarnição |
+|---|---|---|---|
+| 🔥 Forja Banhada em Cinzas | desertos, badlands, savanas | Cinzagrim, o Ferreiro | Escória Viva, Ferreiro Ressequido, Fagulha da Forja |
+| 📚 Biblioteca do Esquecimento | planícies, florestas | O Arquivista | Sentinela de Tinta, Escriba Espectral, Tomo Voador |
+| 🌊 Santuário das Marés | praias, pântanos, mangues | A Carpideira | Afogado do Coro, Caranguejo de Coral, Água-viva de Coral |
+| 🌳 Jardim Petrificado | taigas, selvas | Raiz-Mãe | Broto Espinhoso, Golem de Musgo, Vespa de Âmbar |
+| 🌪️ Torre dos Ventos Quebrados | colinas, picos | O Arauto | Harpia Cinzenta, Totem do Vendaval, Elemental de Brisa |
+| 💀 Catacumba Sussurrante | enterrada (planícies, florestas, taigas) | Caçador de Ecos | Ossada Sussurrante, Sombra Rastejante, Lamentador |
+
+#### Lugares colossais
+Cinco tronos gigantes, um por Monarca (com ele esperando lá dentro), e o **Anfiteatro do Selo Partido** no vazio do End, onde o Soberano aparece para quem já derrubou os cinco. Detalhes em [GAMEPLAY](docs/GAMEPLAY.md#-lugares-colossais-tronos-e-arena).
+
+#### Fauna Pacífica
+
+| 🔮 Silêncio | 🔥 Fogo | 💧 Água | 🪨 Terra | 🌪️ Ar |
+|---|---|---|---|---|
+| Batedor Espectral | Salamandra de Núcleo Ígneo | Axolote de Mana Líquida | Mini-Tank Silvestre | Arraia das Nuvens |
+| Morcego Eco-Rúnico | Escaravelho de Sílica Dourada | Caranguejo-Tartaruga de Lótus | Golem Pedregulho Rúnico | Coruja Tempestuosa de Sentinela |
+| Autômato Relíquia | Poldro de Cinzas Vulcânicas | Rêmora de Fossa Abissal | Gazela das Raízes de Âmbar | Mariposa da Fenda Dimensional |
 
 ➡️ Todas as regras, números e ataques: **[docs/GAMEPLAY.md](docs/GAMEPLAY.md)**
 
@@ -176,18 +228,19 @@ O arquivo compilado estará disponível em: `build/libs/solomod-0.1.0.jar`.
 
 ### 6. Teste Rápido no Jogo (2 minutos)
 
-1. Entre em um mundo **Singleplayer Criativo** com **Cheats Ativados** (Permite comandos).
-2. Pressione a tecla **K** para abrir a **Interface de Maestria** e navegue até a aba **Teste**.
-3. Selecione: *Classe: Adaga*, *Tier: S. Chefe*, *Elemento: Fogo* → Clique em **Gerar arma na mão**.
-4. Repare que o HUD indica que ela está **Adormecida** (exige Agilidade).
-5. Invoque um mob de *Ar* pelo botão da aba Teste e ataque-o para ver o dano neutro/básico.
-6. Clique três vezes no botão **+10 AGI** e ataque novamente: note os números flutuantes alaranjados com **"!"** e o mob recebendo o efeito elemental! 🔥
+1. Entre em um mundo **Singleplayer Criativo** com **Cheats Ativados** (permite comandos).
+2. Pressione **K**, vá à aba **Teste** e gere uma **Adaga** na mão (as armas são sempre Normais e sem elemento).
+3. Invoque um mob pela aba Teste e ataque-o: sem o requisito de Agilidade, o golpe não escala com a Maestria.
+4. Clique em **+10 AGI** e ataque de novo: os números flutuantes mostram o dano maior.
+5. Pegue um ovo da **Fauna Pacífica** na aba **Solo Mod**, ofereça o item de vínculo e veja o companheiro seguir você.
+6. Rode `/place structure solomod:ash_forge` (ou outro santuário) e enfrente a guarnição e o Cinzagrim no modo Sobrevivência. 🔥
 
 ## 📚 Documentação
 
 | Documento | Conteúdo |
 |---|---|
-| 🎮 [**GAMEPLAY.md**](docs/GAMEPLAY.md) | Regras de jogo: stats, elementos, tiers, armas, habilidades, IA dos mobs, Fúria, roteiros de teste |
+| 📜 [**LORE.md**](docs/LORE.md) | A história do mod: Eco e Vozes, Monarcas, Soberano, Fauna Pacífica, Santuários e as regras do cânone para conteúdo novo |
+| 🎮 [**GAMEPLAY.md**](docs/GAMEPLAY.md) | Regras de jogo: stats, elementos, tiers, armas, habilidades, IA dos mobs, Fúria, Fauna Pacífica, Santuários, roteiros de teste |
 | 🏗️ [**ARCHITECTURE.md**](docs/ARCHITECTURE.md) | O que é cada arquivo, diagramas de fluxo, pacotes de rede, recursos e scripts |
 | 🤝 [**CONTRIBUTING.md**](CONTRIBUTING.md) | Fluxo de Git, branches, convenções, checklist de PR |
 | 🤖 [**AGENTS.md**](AGENTS.md) | Guia para IAs: regras obrigatórias, receitas passo a passo e armadilhas |
@@ -202,7 +255,8 @@ src/main/java/com/tarcitani/solomod/
 ├── item/        armas, ovos e aba criativa
 ├── event/       combate e balanceamento
 ├── skill/       habilidades das armas
-├── entity/      criaturas e adaga arremessada
+├── entity/      criaturas, adaga arremessada, passive/ (Fauna Pacífica) e sanctuary/ (mobs dos Santuários)
+├── worldgen/    estruturas dos Santuários de Eco
 ├── mob/         IA dos monstros por tier
 ├── network/     pacotes cliente ⇄ servidor
 ├── command/     /modtest
@@ -228,10 +282,17 @@ Todos exigem OP (nível 2), ou seja, cheats ligados no singleplayer.
 | `/modtest unmark <alvos>` | remove o perfil do mob |
 | `/modtest spawn <tier> <elemento>` | invoca a criatura própria do tier |
 | `/modtest sovereign [estágio]` | invoca o Soberano (chefe final), opcionalmente já no estágio 1–6 |
+| `/modtest era <true\|false>` | liga/desliga a Era VII (pós-jogo) sem lutar: Cicatriz no Céu e reverência do Caçador |
+| `/place structure solomod:<santuário>` | gera um Santuário de Eco onde você está (comando vanilla) |
+| `/locate structure solomod:<santuário>` | mostra o Santuário mais próximo (comando vanilla) |
+
+<sub>Santuários: `ash_forge` `forgotten_library` `tide_sanctuary` `petrified_garden` `broken_wind_tower` `whispering_catacomb`. Tronos e arena: `inverted_pendulum_citadel` `cardiac_furnace` `drowned_sky_trench` `amber_hours_cradle` `static_tempest_pantheon` `shattered_seal_amphitheater` (no End).</sub>
 
 <sub>Classes atuais: `rapier` `longsword` `dagger` `hammer` · Tiers: `normal` `op` `sub_boss` `boss` · Elementos: `none` `fire` `water` `earth` `air`. Tiers e elementos são exclusivos dos mobs. Classes legadas permanecem registradas para carregar saves antigos.</sub>
 
 No criativo, **Solo Mod: Armas** contém uma arma de cada classe atual; os ovos ficam em **Solo Mod**. Para conferir os novos ataques, use `/modtest spawn boss fire` (ou `water`, `earth`, `air`, `none`) e passe para Sobrevivência. Os ícones são regenerados por `python tools/gen_boss_icons.py` e os modelos das armas por `python tools/gen_weapon_models.py`.
+
+As quatro armas são exclusivamente **Normal/sem elemento** (na lore, o Desperto não tem Voz), inclusive na aba Teste e em `/modtest weapon <classe>`. Armas antigas são normalizadas ao carregar; desbloqueios da árvore são preservados.
 
 **Árvores de habilidades:** abra **K → Habilidades**: um mapa único no estilo das conquistas vanilla, com o rosto do jogador no centro, as quatro armas normais da aba Armas em círculo (rapieira, espada longa, adaga e martelo) e habilidades ramificadas como raízes. Não há filtros por arma; arraste para navegar e use a roda para zoom. Há 1 ponto inicial + 1 a cada 100 XP Global, separado dos atributos; todas as ativações de habilidades cobram mana (recolher a adaga é gratuito). Desbloqueios persistem no jogador. Habilidades avançadas aprendidas funcionam na arma normal por Shift + direito; a suprema substitui a anterior nesse atalho. Detalhes e custos em [GAMEPLAY](docs/GAMEPLAY.md#árvores-de-habilidades--k--habilidades).
 
@@ -253,12 +314,12 @@ Velocidades base: **adaga 2,5**, **rapieira 2,2**, **espada longa 1,6** e **mart
 
 Detalhes, convenções e as áreas com risco de conflito: **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
-> ⚠️ `MobMeshes.java` e as texturas de `textures/entity/` são **gerados** pelos scripts de `tools/`. Edite o script, não o arquivo.
+> ⚠️ `MobMeshes.java` e as texturas de `textures/entity/` (incluindo `passive/` e `sanctuary/`) são **gerados** pelos scripts de `tools/` (`gen_mob_art.py`, `gen_passive_echo.py`, `gen_sanctuary.py`). Edite o script, não o arquivo.
+>
+> 📜 Mob, chefe ou estrutura novos devem seguir as **[regras do cânone](docs/LORE.md#-regras-do-cânone-para-conteúdo-novo)**.
 
 ---
 
 <div align="center">
 <sub>Feito com ☕ e muitos blocos por <b>Tarcitani</b> e amigos · NeoForge 1.21.1</sub>
 </div>
-
-As quatro armas são exclusivamente **Normal/sem elemento**, inclusive na aba Teste e em `/modtest weapon <classe>`. Armas antigas são normalizadas ao carregar; desbloqueios da árvore são preservados. Esta mudança não altera os tiers, elementos, ataques ou atributos de mobs, chefes e subchefes.

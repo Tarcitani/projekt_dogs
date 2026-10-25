@@ -1,5 +1,6 @@
 package com.tarcitani.solomod.network;
 
+import com.tarcitani.solomod.advancement.ModAdvancements;
 import com.tarcitani.solomod.SoloMod;
 import com.tarcitani.solomod.core.StatType;
 import com.tarcitani.solomod.event.StatsLogic;
@@ -35,6 +36,7 @@ public record SpendPointsPayload(StatType stat, int amount) implements CustomPac
             if (!(context.player() instanceof ServerPlayer player)) return;
             int amount = Math.min(Math.max(payload.amount(), 1), 100); // limita abuso de pacote
             if (StatsLogic.stats(player).spendPoints(payload.stat(), amount) > 0) {
+                ModAdvancements.onPointsSpent(player);
                 StatsLogic.onStatsChanged(player);
             }
         });

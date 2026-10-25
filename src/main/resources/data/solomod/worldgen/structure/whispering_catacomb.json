@@ -1,0 +1,8 @@
+{
+  "type": "solomod:sanctuary",
+  "sanctuary": "whispering_catacomb",
+  "biomes": "#solomod:has_structure/whispering_catacomb",
+  "step": "underground_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {}
+}

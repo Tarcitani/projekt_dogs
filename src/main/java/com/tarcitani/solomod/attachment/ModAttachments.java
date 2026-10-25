@@ -32,6 +32,12 @@ public final class ModAttachments {
                     .serialize(MobProfile.CODEC)
                     .build());
 
+    /** Companheiro ativo da Fauna Pacífica (Ressonância de Alma Única). Salvo com o jogador. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<ActiveEchoAttachment>> ACTIVE_ECHO =
+            ATTACHMENT_TYPES.register("active_echo", () -> AttachmentType.builder(() -> ActiveEchoAttachment.NONE)
+                    .serialize(ActiveEchoAttachment.CODEC)
+                    .build());
+
     public static void register(IEventBus modBus) {
         ATTACHMENT_TYPES.register(modBus);
     }

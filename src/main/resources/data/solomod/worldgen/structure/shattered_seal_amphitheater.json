@@ -1,0 +1,8 @@
+{
+  "type": "solomod:colossal",
+  "colossus": "shattered_seal_amphitheater",
+  "biomes": "#solomod:has_structure/shattered_seal_amphitheater",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {}
+}

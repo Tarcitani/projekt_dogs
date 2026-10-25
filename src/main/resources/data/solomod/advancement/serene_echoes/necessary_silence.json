@@ -1,0 +1,28 @@
+{
+  "parent": "solomod:serene_echoes/soul_tuning_fork",
+  "display": {
+    "icon": {
+      "id": "minecraft:glass_bottle"
+    },
+    "title": {
+      "translate": "advancements.solomod.necessary_silence.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.necessary_silence.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ]
+}

@@ -1,6 +1,6 @@
 # 🎮 Gameplay — Regras e mecânicas
 
-Referência completa do que o Solo Mod faz dentro do jogo. Para saber **onde** cada coisa está no código, veja [ARCHITECTURE.md](ARCHITECTURE.md).
+Referência completa do que o Solo Mod faz dentro do jogo. Para saber **onde** cada coisa está no código, veja [ARCHITECTURE.md](ARCHITECTURE.md); para o **porquê** na história, [LORE.md](LORE.md).
 
 - [Maestria (stats)](#-maestria-stats)
 - [Elementos](#-elementos)
@@ -8,6 +8,8 @@ Referência completa do que o Solo Mod faz dentro do jogo. Para saber **onde** c
 - [Armas](#️-armas)
 - [Mobs por tier](#-mobs-por-tier)
 - [Criaturas próprias](#-criaturas-próprias)
+- [Fauna Pacífica](#-fauna-pacífica-15-mobs-de-suporte)
+- [Santuários de Eco](#️-santuários-de-eco-conteúdo-opcional)
 - [O Soberano (chefe final)](#-o-soberano-chefe-final)
 - [Conquistas](#-conquistas)
 - [Interface](#️-interface)
@@ -249,9 +251,116 @@ Cada tier tem uma criatura com modelo próprio, e cada criatura tem uma forma **
 
 Olhos, gemas, chamas e rachaduras ficam numa **camada emissiva** que pulsa na cor do elemento. As partes decorativas (chamas, nadadeiras, anéis, asas) se mexem sozinhas.
 
+## 🌿 Fauna Pacífica (15 mobs de suporte)
+
+Quinze mobs que não atacam: três por elemento, para equilibrar os chefes. Eles nascem dos **ovos da aba Solo Mod** do criativo (não aparecem na natureza). Para vincular um, o jogador segura o item indicado e clica no mob; o item é consumido, exceto quando o mob já é seu e você só o reativa.
+
+**Regras comuns**
+- **Ressonância de Alma Única:** cada jogador tem um companheiro **ativo**. Vincular ou reativar um mob o torna ativo; os outros vinculados ficam parados, em espera. Só o ativo segue o dono e só o ativo reage aos gatilhos.
+- **Cargas e exaustão:** cada mob tem de 1 a 3 cargas. Usar a habilidade gasta uma. Ao gastar a última, entra em **Exaustão Elemental** pelo tempo indicado, e ao fim recarrega tudo.
+- **Forma Astral:** dano ambiental que mataria o mob (queda, lava, fogo, afogamento) deixa-o com 1 de vida, invisível e sem IA por 60 s. Depois ele reaparece ao lado do dono.
+- **Chefes não o atingem:** todo dano de Guardião, Monarca e Soberano é ignorado pelos mobs da fauna, inclusive corpo a corpo.
+
+| Mob | Linhagem | Vínculo | Habilidade (cargas / exaustão) | Gatilho |
+|---|---|---|---|---|
+| Batedor Espectral | Neutro | Fragmento de Ametista | Pulso de Afastamento (2 / 35 s) | Bote de Lacaio a até 10 blocos: derruba o Lacaio por 8 s |
+| Morcego Eco-Rúnico | Neutro | Glow Berries, agachado | Sonar Arcano (3 / 30 s) | Elite contra-atacando ou Guardião prestes a Translocar (até 16 / 22 blocos): silhueta azul por 6 s |
+| Autômato Relíquia | Neutro | Lápis-lazúli (bloco) ou Olho do Fim; nasce parado | Égide Cinética (1 / 50 s) | Rajada Elemental do Guardião: escudo de 3 s que absorve até 3 orbes |
+| Salamandra de Núcleo Ígneo | Fogo | Creme de Magma | Dreno Térmico (3 / 25 s) | Jogador em chamas com Diabrete ou Executor de fogo a até 16 blocos: apaga o fogo e dá 2 corações de Absorção |
+| Escaravelho de Sílica Dourada | Fogo | Pepita de Ouro, só entre 5000 e 7000 ticks do dia | Espelho Solar (2 / 40 s) | Projétil ígneo a 3 blocos: rebate ao conjurador e o atordoa, se não estiver em Fúria |
+| Poldro de Cinzas Vulcânicas | Fogo | Fungo Carmesim | Passo de Cinzas (2 / 45 s) | Pisar em magma ou lava: Resistência ao Fogo por 6 s, com a lava carregando o jogador |
+| Axolote de Mana Líquida | Água | Peixe Tropical | Purificação Abissal (3 / 30 s) | Enquanto tem cargas, dá respiração debaixo d'água. Com Lentidão, Cegueira ou Náusea: remove e dá Graça do Golfinho por 5 s |
+| Caranguejo-Tartaruga de Lótus | Água | Bloco de Musgo ou Erva Marinha | Bolha de Ancoragem (2 / 40 s) | Maremoto criado a até 24 blocos: bolha de 4 s que corta o empurrão em 80% |
+| Rêmora de Fossa Abissal | Água | Fragmento de Prismarinho | Intercepção Marinha (3 / 25 s) | Esfera perseguidora do Leviatã a 2,5 blocos do jogador: estourada |
+| Mini-Tank Silvestre | Terra | Favo de Mel ou Maçã Dourada | Amortecedor Sísmico (2 / 40 s) | Golpe Sísmico ou Pisão de chefe de terra a até 20 blocos: cúpula de 5 blocos por 4 s que corta o lançamento vertical em 85% |
+| Golem Pedregulho Rúnico | Terra | Quartzo do Nether ou Ferro Bruto | Gravidade de Chumbo (2 / 35 s) | Repulsão de Guardião a até 16 blocos ou golpe pesado de Elite de Terra: imune a empurrões por 3 s |
+| Gazela das Raízes de Âmbar | Terra | Muda de árvore, agachado | Seiva Libertadora (2 / 30 s) | Raízes Ancestrais do Titã sob o jogador: a raiz não brota, some a Fadiga de Mineração e dá Velocidade II por 3 s |
+| Arraia das Nuvens | Ar | Membrana de Fantasma | Corrente Ascendente (2 / 40 s) | Queda maior que 8 blocos: zera o dano e dá Queda Lenta por 4 s |
+| Coruja Tempestuosa de Sentinela | Ar | Carne de Coelho (crua ou cozida) ou Pena | Evasão de Rajada (3 / 25 s) | Investida telegrafada de Elite a até 16 blocos: empurra o jogador 3 blocos para o lado |
+| Mariposa da Fenda Dimensional | Ar | Fruta do Coro Assada | Passo de Fenda (1 / 60 s) | Dano de Pérola do End anulado; no estágio 6 do Soberano, o Raio do Peito leva o jogador 6 blocos para trás dele |
+
+**Limitações conhecidas**
+- Os mobs ainda não aparecem na natureza, e o Autômato não tem os 18 slots de baú.
+- A cúpula do Mini-Tank não cancela o tremor de câmera. O Golem não rola. A Gazela só intercepta as raízes do Titã.
+- A Coruja não exige o contato visual de 3 s para vincular. A Arraia reage a qualquer queda longa, não só aos Tornados.
+- A Mariposa usa a mesma carga para a Pérola e para o Raio do Peito.
+
+## 🏚️ Santuários de Eco (conteúdo opcional)
+
+Seis masmorras opcionais que nascem no mundo, fora da linha Monarcas → Soberano. Não há missões nem NPC: o jogador acha a estrutura, enfrenta a guarnição e o mini-chefe e leva o saque.
+
+**Planta comum** (29×29, redonda): arena central com 4 enfeites, anel (fosso com 4 pontes, ou seco), pátio, muralha com 4 portões e 4 pilares nas diagonais. Baú no pátio com o saque menor; o grande sai do chefe. **Guarnição** (nasce com a estrutura, persistente): o chefe no centro, 3 capangas principais e 2 secundários no pátio e 2 voadores. Os mobs de santuário não atacam uns aos outros nem sofrem as ondas e explosões do próprio chefe.
+
+**Raridade**: um de cada a cada ~34 chunks nos biomas listados. Teste com `/locate structure solomod:<nome>` ou `/place structure solomod:<nome>`.
+
+**Chefes**: barra de vida própria, 3 fases por vida (acima de 66%, acima de 33%, resto) e golpes sempre telegrafados (anel, linha, partículas ou som). Na fase 3 o intervalo entre golpes cai para 1,5 s e o chefe chama reforços (até 4 a 6 por perto).
+
+| Santuário (`<nome>`) | Biomas | Chefe | Capangas |
+|---|---|---|---|
+| 🔥 **Forja Banhada em Cinzas** (`ash_forge`) | desertos, badlands, savanas | **Cinzagrim, o Ferreiro** (260) | Escória Viva, Ferreiro Ressequido, Fagulha da Forja |
+| 📚 **Biblioteca do Esquecimento** (`forgotten_library`) | planícies, florestas | **O Arquivista** (220) | Sentinela de Tinta, Escriba Espectral, Tomo Voador |
+| 🌊 **Santuário das Marés** (`tide_sanctuary`) | praias, pântanos, mangues | **A Carpideira** (240) | Afogado do Coro, Caranguejo de Coral, Água-viva de Coral |
+| 🌳 **Jardim Petrificado** (`petrified_garden`) | taigas, selvas | **Raiz-Mãe** (300) | Broto Espinhoso, Golem de Musgo, Vespa de Âmbar |
+| 🌪️ **Torre dos Ventos Quebrados** (`broken_wind_tower`) | colinas, picos, bosques de cerejeira | **O Arauto** (220, voa) | Harpia Cinzenta, Totem do Vendaval, Elemental de Brisa |
+| 💀 **Catacumba Sussurrante** (`whispering_catacomb`) | planícies, florestas, taigas (enterrada) | **Caçador de Ecos** (240) | Ossada Sussurrante, Sombra Rastejante, Lamentador |
+
+A Catacumba fica 22 blocos abaixo da superfície: uma sala fechada com teto, sem portões, e um poço com escada no lado norte (lanterna de alma na boca do poço).
+
+### A falha da realidade
+Cada santuário é uma "cena do crime" onde a realidade falha (ver [LORE.md](LORE.md)). Parte é construída com a estrutura; o resto é efeito vivo enquanto você está dentro (`worldgen/StructureAmbientHandler`, a cada 0,5 s).
+
+| Santuário | Na construção | Enquanto você está dentro |
+|---|---|---|
+| 🔥 Forja | 4 correntes descem do céu sobre a arena segurando bigornas paradas no ar; os braseiros queimam fogo de alma (azul). | Cinza caindo. Perto dos braseiros, **geada na tela sem dano** (o congelamento para abaixo do ponto em que fere). |
+| 📚 Biblioteca | 4 ilhas de estantes penduradas de cabeça para baixo, com lanternas. | Gotas de tinta **subindo** do chão e 3 **sombras sem corpo** andando em círculo pelo pátio. |
+| 🌊 Marés | 3 lágrimas gigantes de vidro paradas no ar, com luz no núcleo. | **Chuva horizontal** atravessando a arena e gotejamento sob as lágrimas. |
+| 🌳 Jardim | 4 árvores de pedra em forma de nervo (tronco de tufo e dendritos). | O chão **respira**: um anel de esporos abre e fecha a cada 4 s, com o som do fôlego. |
+| 🌪️ Torre | 7 anéis desalinhados flutuando sobre a arena, com o sino no topo; pilares altos com para-raios. | Ondas de choque visuais saem do sino a cada 3 s; a até 18 blocos do centro, **silêncio total** de ambiente, clima e música. |
+| 💀 Catacumba | 3 costelas de osso cruzando a sala e uma parede de lâminas (barras de ferro) com crânios. | **Chama negra** (fumaça e tinta) nos braseiros; perto deles, **escuridão**. |
+
+### Golpes dos chefes
+- **Cinzagrim** (fogo; imune a fogo e lava): *Martelada* (onda de 9 blocos, pule) · *Investida* (fase 2+, linha marcada por 0,8 s; para na parede) · *Erupção* (fase 2+, 4 brasas em volta do alvo) · *Fagulhas* (fase 3).
+- **O Arquivista** (arcano; flutua a 3 blocos): *Rajada de Páginas* (leque de 5 runas) · *Selo Rúnico* (3 selos no chão, um sob o alvo) · *Cópias* (fase 2+: 2 ilusões por 20 s que morrem com um golpe e **não têm sombra**) · *Salto de Página* (fase 3: reaparece atrás do alvo já atirando).
+- **A Carpideira** (água): *Maré* (onda de 10 blocos, pule) · *Lágrimas* (6 gotas em volta do alvo) · *Canto* (fase 2+: dois anéis de 10 bolhas em todas as direções) · *Coro* (fase 3: Afogados do Coro).
+- **Raiz-Mãe** (terra; lenta, armadura 10): *Raízes* (fileira de 7 raízes até o alvo, uma atrás da outra) · *Tremor* (onda de 10 blocos) · *Casca* (fase 2+: 4 s sofrendo só 25% do dano; recue) · *Brotos* (fase 3: 3 Brotos Espinhosos).
+- **O Arauto** (ar; voa 5 blocos acima): *Rajada* (empurra para longe quem estiver a 9 blocos) · *Mergulho* (mira 0,7 s e desce em linha reta) · *Tempestade* (fase 2+: 3 descargas em volta do alvo) · *Brisas* (fase 3).
+- **Caçador de Ecos** (arcano): *Lâminas* (3 facas em leque) · *Sumir* (fica invisível 2 s; pegadas de alma aparecem atrás do alvo meio segundo antes do golpe) · *Rede de Ecos* (fase 2+: 5 marcas em cruz) · *Uivo* (fase 3: Lamentadores). **Único do mod que ataca a Fauna Pacífica.**
+
+### Capangas
+| Capanga | Vida | Comportamento |
+|---|---|---|
+| Escória Viva | 30 | Golpe queima 4 s; ao morrer estoura em clarão (aviso de 0,8 s). |
+| Ferreiro Ressequido | 44 | A cada 6 s, com o alvo perto, martelada com onda de fogo curta. |
+| Fagulha da Forja | 12 | Voa a 5–10 blocos e atira bolas de fogo (2,5 s). |
+| Sentinela de Tinta | 36 | Golpe cega por 3 s. |
+| Escriba Espectral | 20 | Flutua longe e escreve uma runa sob o alvo que explode em 1,5 s. |
+| Tomo Voador | 14 | Voa e atira runas arcanas (2 s). |
+| Afogado do Coro | 28 | Golpe deixa lento por 3 s. |
+| Caranguejo de Coral | 40 | Golpes de frente perdem 60% do dano; ataque pelos lados. |
+| Água-viva de Coral | 16 | Paira alto e atira bolhas (2,25 s). |
+| Broto Espinhoso | 16 | Rápido; quem o acerta corpo a corpo leva 2 de espinhos. |
+| Golem de Musgo | 50 | A cada 6 s, tremor de terra de 5 blocos. |
+| Vespa de Âmbar | 12 | Voa perto e atira ferrões (1,75 s). |
+| Harpia Cinzenta | 18 | Circula alto e mergulha no alvo a cada 4 s. |
+| Totem do Vendaval | 40 | Não se move; rajada em anel de 6 blocos que empurra (4 s). |
+| Elemental de Brisa | 14 | Voa e atira rajadas de ar (2 s). |
+| Ossada Sussurrante | 26 | Golpe enfraquece por 4 s. |
+| Sombra Rastejante | 20 | Invisível a mais de 4 blocos do alvo (só a fumaça denuncia). |
+| Lamentador | 16 | Voa e atira lamentos arcanos (2,75 s). |
+
+### Saque dos chefes
+- **Cinzagrim**: bastões de blaze, ouro, obsidiana, creme de magma, diamantes, 35% restos de netherite.
+- **Arquivista**: 2–3 livros encantados, frascos de experiência, lápis-lazúli, ametista, diamantes, 25% totem da imortalidade.
+- **Carpideira**: coração do mar, prismarinho, conchas de náutilo, diamantes, 30% tridente.
+- **Raiz-Mãe**: esmeraldas, maçãs douradas, favos, ametista, diamantes, 20% maçã dourada encantada.
+- **Arauto**: membrana de phantom, penas, cargas de vento, bastões de breeze, diamantes, 15% élitros.
+- **Caçador de Ecos**: fragmentos de eco, pérolas do End, frascos de experiência, ossos, diamantes, 30% bússola de recuperação.
+
 ## 👑 O Soberano (chefe final)
 
-**História**: há eras, os cinco Monarcas se uniram para derrotar o Soberano. Ele voltou com o poder de todos eles e é o chefe final desta versão de testes. No futuro ele vai morar numa dimensão própria; por enquanto nasce pelo **ovo** da aba Solo Mod ou por `/modtest sovereign [estágio]`.
+**História** (ver [LORE.md](LORE.md)): o Soberano é o Primeiro Coro, de quem os cinco Monarcas roubaram membros e Vozes. Cada Monarca derrotado devolve uma parte ao Selo, e ele desperta inteiro como chefe final desta versão de testes.
+
+**Falas** (`mob/SovereignStageDialogueManager.java`, textos em `dialogue.solomod.sovereign.*`): intro no primeiro alvo e fala do estágio 1 cinco segundos depois; a cada agonia, a fala de transição no letreiro do close; ao fim da agonia, a fala de início do novo estágio na barra de ação; no estágio 6, uma fala ao disparar o Raio do Peito e outra na exaustão. A agonia que leva à Fúria vaza partículas de glitch roxo. Ao matar um jogador ele ri com uma de três falas. Na morte, o letreiro mostra a fala 1, troca para a fala 2 aos 2,5 s (sem reiniciar a cena, com separação de canais ciano/vermelho) e, aos 5 s, todo o servidor recebe o aviso da Era VII. No futuro ele vai morar numa dimensão própria; por enquanto nasce pelo **ovo** da aba Solo Mod ou por `/modtest sovereign [estágio]`.
 
 **Corpo**: gigante (escala de renderização 7: cerca de 31 blocos de altura, 36 com os braços erguidos), com um pedaço de cada Monarca: braço de pedra e chifres do Colosso Rei, perna de magma e vulcão no ombro do Rei Vulcânico, pinça e barba de tentáculos do Leviatã Coroado, perna de raízes e copa do Titã Ancestral, asas e auréola do Imperador dos Céus. A coroa tem uma ponta de cada Monarca e cinco fragmentos orbitam o corpo. **Sem brilho**: não tem contorno luminoso atravessando paredes nem camada emissiva (só a aura vermelha de Fúria no estágio 6). Vida 700, dano 11 por golpe.
 
@@ -286,30 +395,83 @@ Olhos, gemas, chamas e rachaduras ficam numa **camada emissiva** que pulsa na co
 
 **Fim**: o Soberano morre bugando, quem estava perto ou lutou vê a cinemática "O SOBERANO CAIU" e, em seguida, os **créditos** (música de créditos do Minecraft; ESPAÇO acelera, ESC sai e volta ao mundo).
 
+## 🗿 Lugares colossais (tronos e arena)
+
+Onde ficam as partes roubadas do Soberano, a realidade falha em escala gigante (ver [LORE.md](LORE.md)). São cinco tronos, um por Monarca, cada um com o seu Monarca já esperando, e o Anfiteatro do Selo Partido no End. Formas construídas em código (`worldgen/ColossalShapes`), cerca de 70 a 150 blocos de largura; raros (um a cada ~64 chunks nos biomas listados; o Anfiteatro a cada ~40). Teste com `/place structure solomod:<nome>` ou `/locate structure solomod:<nome>`.
+
+| Lugar (`<nome>`) | Onde | Monarca | O que se vê | Efeito vivo |
+|---|---|---|---|---|
+| Cidadela do Pêndulo Invertido (`inverted_pendulum_citadel`) | planícies, prados | Colosso Rei | Praça de pedra, um teto flutuante com 6 torres e uma torre de menagem penduradas de cabeça para baixo, e um monumento com a marca vazia de um braço direito colossal. | Detritos parados no ar. |
+| Fornalha Cardíaca (`cardiac_furnace`) | badlands, planalto de savana | Rei Vulcânico | Vulcão suspenso sobre uma praça de basalto, com a câmara do coração (núcleo de magma) e uma cratera de lava contida no topo. | Fogo e fumaça caindo **para cima**; um batimento a cada 10 s que treme a tela. |
+| Fossa do Céu Afogado (`drowned_sky_trench`) | oceanos profundos (32+ de água) | Leviatã Coroado | Um cubo **seco** de 60 blocos no fundo do mar, cercado de vidro com o mar do lado de fora, dois navios naufragados flutuando e três garras saindo de sulcos no chão. | Gotas caindo do teto de vidro. |
+| Berço das Horas de Âmbar (`amber_hours_cradle`) | florestas escuras, taigas antigas | Titã Ancestral | Árvore de pedra com raízes abrindo para o céu, quatro esferas de âmbar com criaturas da Era II congeladas e uma artéria fossilizada sob o chão, com raízes descendo até ela. | Mel escorrendo das esferas. |
+| Panteão da Tempestade Estática (`static_tempest_pantheon`) | picos e colinas | Imperador dos Céus | Três anéis de mármore e seis colunas em volta de um furacão congelado em espiral, pontes de relâmpago cristalizado (luz roxa) e as queimaduras das asas cortadas no chão. | Faíscas paradas no ar e trovões distantes. |
+| Anfiteatro do Selo Partido (`shattered_seal_amphitheater`) | ilhas externas do End (sobre o vazio) | — | Teatro cirúrgico de obsidiana suspenso no vazio, com arquibancada em degraus, a mesa no centro e cinco correntes rompidas. | O céu vira **retalhos** dos cinco lugares roubados com bordas de falha ciano/vermelho. |
+
+**O Soberano no Anfiteatro**: quem já partiu o Selo (conquista "O Selo Partido", os cinco Monarcas) e chega a até 24 blocos do centro chama o Soberano, se não houver outro por perto. Se ele cair no vazio, volta ao centro da arena em vez de morrer.
+
+**Monarcas dos tronos**: nascem com a estrutura, já com o elemento do trono, e não reaparecem depois de derrotados. As criaturas no âmbar não têm IA e são invulneráveis.
+
+## 💥 Era VII (pós-jogo)
+
+Depois da primeira morte do Soberano, o mundo guarda a flag `isSovereignDefeated` (`era/EraSevenState`, salva na pasta `data/` do mundo e enviada aos clientes ao entrar). Para testar sem a luta: `/modtest era true` (ou `false`).
+
+| Sinal | O que faz |
+|---|---|
+| **Fragmento de Dissonância** | O Soberano solta 1 ao morrer (também na aba Solo Mod). Item épico com brilho, tooltip piscando ciano/vermelho. No chão é indestrutível: fogo, lava, cacto, explosão e qualquer dano não o afetam, nunca some por tempo e, se cair no vazio, reaparece no topo da mesma coluna (ou no spawn). Ainda não tem uso. |
+| **Cicatriz no Céu** | No Overworld, entre os ticks 17500 e 18500 do dia (por volta da meia-noite), uma fenda fina aparece no zênite: núcleo branco e canais ciano e vermelho desalinhados, tremendo, entrando e saindo em 7,5 s. Caem fagulhas de estática sem som bem acima do jogador. Teste com `/time set 17600`. |
+| **Reverência do Caçador** | Com a flag ligada, o Caçador de Ecos, na primeira vez que mira um jogador, ajoelha por 3 s sem atacar (mensagem na barra de ação) e só depois luta. Vale uma vez por Caçador (fica salvo). |
+
 ## 🏆 Conquistas
 
-O mod adiciona uma aba própria **Solo Mod** na tela de conquistas (Advancements) do Minecraft (tecla **L**), com uma conquista narrativa para a derrota de cada forma do Monarca e duas **secretas** (só aparecem quando ganhas):
+São **27 conquistas em três abas** na tela de conquistas do Minecraft (tecla **L**), todas contadas pela lore ([LORE.md](LORE.md)). A recompensa é **XP do Minecraft** (a barra verde), não o XP Global da Maestria. Os JSON são gerados por `python tools/gen_advancements.py`; os textos ficam em `advancements.solomod.<id>.*`.
 
-| Conquista | Chefe | Elemento | Natureza e contexto narrativo | Tipo / Recompensa |
-|---|---|---|---|---|
-| **A Queda da Coroa Pétrea** | Colosso Rei | Neutro | Monarca primordial de rocha pura e força bruta indestrutível que desafia todas as forças elementais. | Desafio · 150 XP |
-| **Cinzas do Vulcão** | Rei Vulcânico | Fogo | Monarca do magma em tronco-vulcão vivo que expele erupções e transforma terras em caldeiras ardentes. | Desafio · 150 XP |
-| **Calmaria no Abismo** | Leviatã Coroado | Água | Rei-kraken com pinças titânicas que comanda maremotos devastadores e os abismos oceânicos. | Desafio · 150 XP |
-| **Raízes Milenares Desfeitas** | Titã Ancestral | Terra | Árvore colossal com copa impenetrável e coração de âmbar cujas raízes sustentavam o peso do mundo. | Desafio · 150 XP |
-| **O Trono Despedaçado** | Imperador dos Céus | Ar | Senhor alado das tempestades que comanda vendavais cortantes e relâmpagos em seu trono celestial. | Desafio · 150 XP |
-| **Cinco Coroas Caídas** | Todos os 5 Monarcas | Mestre | Derrotar os cinco Monarcas e dominar todos os elementos. | Desafio Mestre · 1000 XP |
-| **???** *(oculta, ícone de três interrogações)* | — | — | Aparece junto com o Selo Partido, quando os 5 Monarcas caem: "Algo está acordando...". **Some** quando o Soberano é derrotado, dando lugar à conquista dele. | Objetivo |
-| **O Selo Partido** *(secreta)* | — | — | Vem junto com a anterior. "Há eras, os cinco Monarcas se uniram contra algo maior que todos eles. Agora que caíram... nada mais o prende." Insinua que não é o fim. | Objetivo |
-| **Soberania Absoluta** *(secreta, ícone: a cabeça do Soberano)* | Soberano | Todos | Derrotar o Soberano, que tomou para si o poder dos cinco Monarcas. Também revela o Selo Partido, se faltava. | Desafio · 2000 XP |
+**Quem ganha**: as de chefe vão para todo jogador que causou dano a ele e está online quando ele morre (quem só assistiu não ganha). A lista de quem lutou não é salva: se o chunk descarregar no meio da luta, ela recomeça. Um mob vanilla marcado como Monarca por `/modtest mob` não conta.
 
-A recompensa é **XP do Minecraft** (a barra verde), não o XP Global da Maestria.
+### 📜 A Canção do Eco (história)
+| Conquista | Como ganhar | Tipo / XP |
+|---|---|---|
+| **Nascido no Silêncio** | Entrar no mundo (raiz da aba). | Tarefa |
+| **Gosto de Violência** | Matar o primeiro Lacaio. | Tarefa |
+| **Memória Muscular** | Gastar o primeiro ponto de Maestria. | Tarefa |
+| **Guarda Quebrada** | Matar uma Elite. | Tarefa |
+| **O Sussurro Vermelho** | Matar um Guardião depois que ele entrou em Fúria. | Objetivo · 50 |
+| **O Primeiro Golpe** | Matar o Colosso Rei. | Desafio · 150 |
+| **Febre Devolvida** | Matar o Rei Vulcânico tendo rebatido (ou desviado com o Escaravelho) uma Bola de Fogo Real na mesma sessão. | Desafio · 150 |
+| **Maré Vazia** | Matar o Leviatã Coroado. | Desafio · 150 |
+| **Raiz Cortada** | Matar o Titã Ancestral. | Desafio · 150 |
+| **Queda do Usurpador** | Matar o Imperador dos Céus. | Desafio · 150 |
+| **O Selo Partido** | Matar os 5 Monarcas (progresso 0/5; o do Fogo conta mesmo sem rebater a bola). | Objetivo · 300 |
+| **Cara a Cara no Espelho** *(oculta)* | Ser mirado pelo Soberano ou feri-lo. | Objetivo |
+| **Dissonância Absoluta** *(oculta)* | Matar o Soberano. | Desafio · 500 |
+| **[ERRO: SEXTA VOZ DETECTADA]** *(oculta)* | Chega sozinha 10 s depois de matar o Soberano. | Desafio |
 
-Cada conquista de derrota usa o **rosto do respectivo chefe em pixel art 16×16**: pedra e coroa do Colosso, carvão e chamas do Rei Vulcânico, kraken com coroa de coral do Leviatã, casca e copa do Titã, elmo alado do Imperador e coroa dos cinco poderes do Soberano. Os itens `monarch_<elemento>_head` e `sovereign_head` são gerados por `python tools/gen_boss_icons.py`; o ícone secreto `???` permanece oculto até sua revelação.
+### 🌿 Ecos Serenos (Fauna Pacífica)
+A aba aparece no primeiro vínculo.
 
-- **Quem ganha**: todo jogador que causou dano ao chefe durante a luta e está online quando ele morre. Quem só assistiu, espectadores e mortes sem jogador (lava, `/kill`) não ganham nada.
-- **Só a criatura conta**: um mob vanilla marcado como Monarca por `/modtest mob boss ...` não dá conquista.
-- **Progresso do desafio mestre**: "Cinco Coroas Caídas" mostra o progresso (0/5) conforme cada forma diferente é derrotada.
-- A lista de quem lutou não é salva: se o chunk do chefe descarregar no meio da luta, ela recomeça.
+| Conquista | Como ganhar | Tipo / XP |
+|---|---|---|
+| **Diapasão da Alma** | Vincular (ou reativar) um companheiro (raiz da aba). | Tarefa |
+| **Silêncio Necessário** | Gastar a última carga de um companheiro (Exaustão). | Tarefa |
+| **O Que Já Morreu Não Morre** | Ver um companheiro entrar na Forma Astral. | Tarefa |
+| **Harmonia das Cinco Linhagens** | Vincular um de cada linhagem (progresso 0/5). | Objetivo · 100 |
+| **Salto Entre Quadros** | Ser tirado do Raio do Peito pela Mariposa da Fenda Dimensional. | Desafio · 100 |
+| **O Primeiro Coro** | Vincular as 15 formas (progresso 0/15). | Desafio · 300 |
+
+### 🏚️ Os Cúmplices do Selo (Santuários)
+A aba aparece no primeiro guardião derrotado; a raiz é o desafio que junta os seis.
+
+| Conquista | Como ganhar | Tipo / XP |
+|---|---|---|
+| **A Mentira dos Cinco Tronos** | Derrotar os 6 guardiões de Santuário (progresso 0/6). | Desafio · 400 |
+| **Correntes para Ninguém** | Derrotar Cinzagrim. | Tarefa · 100 |
+| **O Peso de Uma Sombra** | Derrotar o Arquivista verdadeiro (cópias não contam). | Tarefa · 100 |
+| **Canção da Culpa** | Derrotar a Carpideira. | Tarefa · 100 |
+| **Coração Empedrado** | Derrotar a Raiz-Mãe. | Tarefa · 100 |
+| **O Grito Engolido** | Derrotar o Arauto. | Tarefa · 100 |
+| **Fiel Até o Fim** | Derrotar o Caçador de Ecos. | Tarefa · 100 |
+
+Os ícones dos Monarcas e do Soberano são os rostos em pixel art (`monarch_<elemento>_head`, `unknown_boss`, `sovereign_head`), gerados por `python tools/gen_boss_icons.py`.
 
 ## 🖥️ Interface
 

@@ -1,5 +1,6 @@
 package com.tarcitani.solomod.mob;
 
+import com.tarcitani.solomod.entity.passive.PassiveEchoTriggers;
 import com.tarcitani.solomod.advancement.ModAdvancements;
 import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.MobTier;
@@ -378,6 +379,8 @@ final class MonarchBrain extends TierBrain {
             if (t == MonarchPowers.ROOT_FIRST || t == MonarchPowers.ROOT_SECOND) {
                 if (t == MonarchPowers.ROOT_FIRST) anim(MobAnim.SLAM, 10);
                 for (LivingEntity v : powerVictims(MonarchPowers.ROOT_RANGE)) {
+                    // Pólen âmbar da Gazela: a raiz nem chega a brotar sob o jogador.
+                    if (PassiveEchoTriggers.amberPollen(v)) continue;
                     Hazards.add(new Hazards.Blast(level(), mob, element, v.position(), MonarchPowers.ROOT_RADIUS,
                             t == MonarchPowers.ROOT_FIRST ? MonarchPowers.ROOT_DELAY : MonarchPowers.ROOT_SECOND_DELAY,
                             baseDamage() * MonarchPowers.ROOT_DAMAGE, potency()));
@@ -499,6 +502,7 @@ final class MonarchBrain extends TierBrain {
 
     /** Impacto terrestre compartilhado pelo pisão e pelo salto; blocos respeitam mobGriefing. */
     private void earthImpact(double radius, float directDamage, float waveDamage, float shake) {
+        PassiveEchoTriggers.quakeStarted(mob, mob.position());
         sound(SoundEvents.MACE_SMASH_GROUND_HEAVY, 2.5F, 0.4F);
         sound(SoundEvents.GENERIC_EXPLODE.value(), 2F, 0.5F);
         particles(ParticleTypes.EXPLOSION, mob.position(), 5, 2, 0);
@@ -586,6 +590,7 @@ final class MonarchBrain extends TierBrain {
             }
             if (t == 20 || (t == 32 && phase == 3)) {
                 if (t == 20) {
+                    PassiveEchoTriggers.quakeStarted(mob, mob.position());
                     anim(MobAnim.SLAM, 12);
                     for (LivingEntity e : enemiesWithin(2.5 + mob.getBbWidth() / 2)) {
                         strike(e, baseDamage() * 1.6F, true);

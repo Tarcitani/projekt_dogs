@@ -1,5 +1,7 @@
 package com.tarcitani.solomod.mob;
 
+import com.tarcitani.solomod.advancement.ModAdvancements;
+import com.tarcitani.solomod.entity.passive.PassiveEchoTriggers;
 import com.tarcitani.solomod.attachment.ModAttachments;
 import com.tarcitani.solomod.entity.TierMob;
 import com.tarcitani.solomod.network.ModNetwork;
@@ -105,10 +107,15 @@ public final class MobEvents {
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
         Hazards.tick();
+        PassiveEchoTriggers.tick();
+        SovereignStageDialogueManager.tick();
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         Hazards.clear();
+        PassiveEchoTriggers.clear();
+        SovereignStageDialogueManager.clear();
+        ModAdvancements.clear();
     }
 }

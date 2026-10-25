@@ -1,0 +1,8 @@
+{
+  "type": "solomod:colossal",
+  "colossus": "drowned_sky_trench",
+  "biomes": "#solomod:has_structure/drowned_sky_trench",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {}
+}

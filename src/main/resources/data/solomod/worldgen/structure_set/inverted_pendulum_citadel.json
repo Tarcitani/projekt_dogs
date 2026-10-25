@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "solomod:inverted_pendulum_citadel",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 64,
+    "separation": 28,
+    "salt": 190221553
+  }
+}

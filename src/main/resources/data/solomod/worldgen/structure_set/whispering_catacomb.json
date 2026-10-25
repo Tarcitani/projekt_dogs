@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "solomod:whispering_catacomb",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 34,
+    "separation": 12,
+    "salt": 281746655
+  }
+}

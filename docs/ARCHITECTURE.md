@@ -84,14 +84,21 @@ flowchart LR
 | Arquivo | O que é |
 |---|---|
 | `PlayerStatsAttachment.java` | Stats, XP, pontos, mana e IDs de habilidades aprendidas do jogador. Pontos de habilidade = nível menos custos dos nós aprendidos; independentes dos atributos. Campo NBT opcional `habilidades` e lista no buffer de sync. Constantes `XP_PER_POINT=100`, `BASE_MANA=20`, `MANA_PER_INT=5`, `MAX_STAT=999`. Depois de alterar, **sempre** chame `StatsLogic.onStatsChanged(player)`. |
+| `ActiveEchoAttachment.java` | Record `(echo)` com o UUID do companheiro ativo da Fauna Pacífica (Ressonância de Alma Única). `NONE` quando não há companheiro. Salvo com o jogador. |
 | `MobProfile.java` | Record `(tier, element)` que marca um mob como "do mod". |
 | `ModAttachments.java` | Registro de `PLAYER_STATS` (salvo com a entidade e copiado na morte; o sync com o cliente é **manual** via `SyncStatsPayload`) e `MOB_PROFILE` (só existe em mobs marcados: teste com `hasData`). |
+
+### `era/` — pós-jogo
+
+| Arquivo | O que faz |
+|---|---|
+| `EraSevenState.java` | `SavedData` do Overworld com `isSovereignDefeated`. `setSovereignDefeated` salva e manda `EraStatePayload` a todos; `syncTo` no login (`PlayerEvents.onLogin`). Ligada por `SovereignBrain.onDeath` e por `/modtest era`. Lida pelo `EchoHunter` (reverência). |
 
 ### `advancement/` — conquistas
 
 | Arquivo | O que é |
 |---|---|
-| `ModAdvancements.java` | Concessão das conquistas. `awardBossDefeat(player, element)` dá `defeat_monarch_<elemento>` e o critério `monarch_<elemento>` do desafio mestre `defeat_all_monarchs`; com os cinco, dá a secreta `broken_seal`. `awardSovereignDefeat(player)` dá a secreta `defeat_sovereign` (e o selo, se faltava). Os critérios são `minecraft:impossible` (só o código concede). Também controla o ícone oculto `sovereign_unknown` ("???"): concedido com os 5 Monarcas e **revogado** ao derrotar o Soberano, quando surge `defeat_sovereign` com a cabeça dele. Chamado por `MonarchBrain.onDeath` e `SovereignBrain.onDeath`. |
+| `ModAdvancements.java` | Concessão das 27 conquistas em três abas (`echo_song/`, `serene_echoes/`, `seal_accomplices/`). Só a raiz da aba 1 usa `minecraft:tick`; o resto usa `minecraft:impossible` e é concedido por ganchos: `onTierKill` (`PlayerEvents.onKill`), `onPointsSpent` (`SpendPointsPayload`), `onRoyalFireballReflected` (`RoyalFireball`), `awardBossDefeat` (`MonarchBrain.onDeath`), `onSovereignSeen`/`awardSovereignDefeat` (`SovereignBrain`; a Sexta Voz vem 10 s depois pela agenda do `SovereignStageDialogueManager`), `onEchoBond`/`onEchoExhausted`/`onEchoAstral` (`PassiveEchoEntity`), `onFrameJump` (`PassiveEchoTriggers`) e `onSanctuaryBossDefeat` (`SanctuaryBoss.die`). Contadores (Monarcas, linhagens, 15 Ecos, 6 guardiões) são critérios da própria conquista. `ECHO_LINEAGE` diz a linhagem de cada forma da Fauna. |
 
 ### `item/` — itens
 
@@ -99,6 +106,7 @@ flowchart LR
 |---|---|
 | `ModularWeaponItem.java` | Item base de todas as armas. Tooltip (verde/vermelho conforme o requisito), clique direito (técnica de classe) e Shift + direito (habilidade avançada aprendida), `create(...)` para fabricar uma pilha configurada. |
 | `ModItems.java` | Registra 1 item por `WeaponClass`, 20 ovos elementais, o ovo do Soberano e os itens-ícones dos seis chefes. Aba **Solo Mod** para ovos; **Solo Mod: Armas** contém só os quatro itens de `WeaponClass.AVAILABLE`, neutros e de tier Normal. |
+| `DissonanceShardItem.java`, `DissonanceShardEntity.java` | Fragmento de Dissonância (Era VII): item épico com tooltip ciano/vermelho que, no chão, vira uma `ItemEntity` indestrutível (`hasCustomEntity`/`createEntity`): recusa todo dano, não expira e volta à superfície se cair no vazio. Solto por `SovereignBrain.onDeath`. |
 
 ### `event/` — regras do servidor
 
@@ -131,7 +139,22 @@ flowchart LR
 | `WaterOrb.java` | Esfera de água 3D do Soberano (`extends Entity`, não salva) em três modos: `ORBIT` (gira nele), `HOMING` (persegue o jogador e explode em respingo; um golpe direto a estoura) e `WAVE` (só visual: a crista do Maremoto). |
 | `ThrownDagger.java` | Adaga arremessada (`extends AbstractArrow`): voa girando, crava, volta como bumerangue quando o dono chama. |
 | `RoyalFireball.java` | Entidade `royal_fireball` (`Projectile`): bola de 2,4 blocos, lenta e rebatível. Colisão volumétrica e reflexão no servidor; devolvida causa dano mágico do jogador e tenta `TierBrain.stunFromFireball(100)` (bloqueado na Fúria). NBT guarda conjurador, reflexão, dano e idade. Modelo próprio em `RoyalFireballRenderer` (cubos no estilo do Minecraft, sem item vanilla). `launchGenki` é a genki-dama do Soberano: nasce acima das mãos, desce sobre o jogador e explode em área (`blastRadius`). Devolvida ao Soberano, só o atordoa (imune a fogo). As bolas do Soberano são removidas fora do estágio 2. |
-| `ModEntities.java` | Registra `minion`, `elite`, `guardian`, `monarch`, `sovereign`, `thrown_dagger` e `royal_fireball`, além dos atributos. `forTier(tier)` devolve o tipo da criatura do tier (BOSS = Monarca). |
+| `passive/PassiveEchoEntity.java` | Base abstrata da Fauna Pacífica (`extends PathfinderMob`). Cargas (1–3 via `maxCharges`), exaustão (`cooldownTicks`), Forma Astral no `hurt` (dano ambiental letal → vida 1, invisível e sem IA por `DORMANT_TICKS`), bloqueio de todo dano de Guardião/Monarca/Soberano, vínculo por item (`isBondOffer`/`mobInteract`), seguimento do dono só quando é o companheiro ativo (`followOwner`) e `flyTowards`. Estado sincronizado por `EntityData`; cargas, exaustão, dormência e dono vão no NBT. |
+| `passive/` — 15 formas | Uma classe por mob, todas `extends PassiveEchoEntity`: `SpectralScout`, `EchoRunicBat`, `RelicAutomaton` (Neutro); `IgneousSalamander`, `GoldenSilicaScarab`, `VolcanicAshColt` (Fogo); `LiquidManaAxolotl`, `LotusTurtleCrab`, `AbyssalTrenchRemora` (Água); `SylvanMiniTank`, `RunicBoulderGolem`, `AmberRootGazelle` (Terra); `CloudMantaRay`, `StormSentinelOwl`, `DimensionalRiftMoth` (Ar). Cada uma declara cargas, exaustão, item de vínculo, partícula da Forma Astral e a habilidade (`onAbility`). |
+| `passive/PassiveEchoTriggers.java` | Gatilhos chamados pelos cérebros (`MinionBrain`, `EliteBrain`, `GuardianBrain`, `MonarchBrain`, `SovereignBrain`), pela esfera de água (`WaterOrb`), pela bola de fogo (`RoyalFireball`) e pelo `Hazards`. Só o companheiro **ativo** do jogador reage (`activeOf`). Guarda estado temporário no servidor (marcas, escudos, bolhas, gravidade, cúpulas), avançado por `tick()` (chamado em `MobEvents`) e zerado em `clear()`. `dampenPush` é aplicado por `Hazards.push` e aplica imunidade, bolha, cúpula e corte vertical. |
+| `passive/PassiveEchoEvents.java` | Evento do game bus registrado em `SoloMod`: anula o dano de teleporte de Pérola do End quando a Mariposa ativa tem carga. |
+| `sanctuary/SanctuaryMob.java` | Base dos mobs dos Santuários de Eco (`extends Monster`). Não usam `TierIdentity` nem cérebros: cada um decide os golpes na própria classe. Tem o golpe sincronizado (`attackId`, `attackTicks`, `swing`) que o modelo usa para animar, `addGroundGoals`/`addTargetGoals` e `isIllusion`. `Hazards.isEnemy` trata todos como aliados entre si. |
+| `sanctuary/SanctuaryBoss.java` | Base dos 6 chefes: barra de vida (`ServerBossEvent`), 3 fases (`phase()`), ciclo `chooseAttack` → `tickAttack` (true enquanto o golpe dura), `pick`, `summon` e `countNearby`. |
+| `sanctuary/Bruiser.java`, `Slammer.java`, `HoverShooter.java`, `HoverNearTargetGoal.java` | Bases dos capangas: corpo a corpo com efeito no golpe (`onHit`); martelada telegrafada com onda de choque do elemento; voador que paira e dispara (`shoot`, orbe por padrão); e a meta de voo usada pelos voadores e pelos chefes que voam. |
+| `sanctuary/` — chefes | `Cinzagrim` (Forja), `Archivist` (Biblioteca; as cópias são a mesma entidade com `ILLUSION`, sem saque nem barra), `Weeper` (Marés), `RootMother` (Jardim; corta o dano no golpe Casca), `Herald` (Torre; voa), `EchoHunter` (Catacumba; também mira `PassiveEchoEntity`). Saque em `loot_table/entities/<id>`. |
+| `sanctuary/` — capangas | Forja: `LivingSlag`, `WitheredSmith`, `ForgeSpark`. Biblioteca: `InkSentinel`, `SpectralScribe`, `FlyingTome`. Marés: `ChoirDrowned`, `CoralCrab`, `CoralJelly`. Jardim: `ThornSprout`, `MossGolem`, `AmberWasp`. Torre: `GrayHarpy`, `GaleTotem`, `BreezeElemental`. Catacumba: `WhisperingBones`, `CreepingShadow`, `WailingShade`. |
+| `worldgen/ModStructures.java` | Registra um `StructureType` (`solomod:sanctuary`) e um `StructurePieceType` para os 6 santuários. |
+| `worldgen/SanctuaryKind.java` | Enum dos 6 santuários: nome serializado (campo `"sanctuary"` do JSON e NBT da peça, **não renomeie**), paleta de blocos (`Palette`), guarnição (chefe, capangas, voador) e se é enterrado. |
+| `worldgen/SanctuaryStructure.java`, `SanctuaryPiece.java` | Estrutura (mede a superfície; enterrada fica 22 abaixo, com a caixa até a superfície) e peça única que constrói a planta redonda em código, o poço da Catacumba, o baú (`loot_table/chests/<nome>`) e a guarnição. Dados em `data/solomod/worldgen/` (structure, structure_set) e tags `has_structure/<nome>`. |
+| `worldgen/StructureAmbientHandler.java` | A falha da realidade viva de cada santuário: a cada 10 ticks acha o santuário em que o jogador está (`getStructureWithPieceAt`) e aplica o efeito (partículas, geada sem dano na Forja, escuridão na Catacumba, silêncio da Torre por `AmbientSilencePayload`). A parte física (correntes, bigornas em `block_display`, estantes, lágrimas, árvores-nervo, torre fatiada, costelas) é `SanctuaryPiece.buildRealityFault`. |
+| `worldgen/ColossalKind.java`, `ColossalShapes.java` | Os 5 tronos e o Anfiteatro: tamanho da caixa, como achar a base (superfície, fundo do mar, vazio) e o Monarca de cada trono; as formas bloco a bloco (funções puras de posição relativa: cones, toros, cápsulas, espirais, com ruído de hash), os pontos do Monarca e das esferas de âmbar. Meia-largura abaixo de 128 (limite de ligação de estruturas do Minecraft). |
+| `worldgen/ColossalStructure.java`, `ColossalPiece.java` | Estrutura (`solomod:colossal`, campo `"colossus"` no JSON) e peça que percorre só a interseção da caixa com o pedaço de mundo gerado, escreve as formas e cria o Monarca do trono (perfil aplicado antes do `finalizeSpawn`) e as criaturas congeladas. O `StructureAmbientHandler` também cuida dos efeitos dos colossos e chama o Soberano no Anfiteatro (com `Sovereign.setHome`, que o devolve à arena se cair no vazio). |
+| `ModEntities.java` | Registra `minion`, `elite`, `guardian`, `monarch`, `sovereign`, `thrown_dagger`, `royal_fireball` e as 15 formas da Fauna Pacífica, além dos atributos. `forTier(tier)` devolve o tipo da criatura do tier (BOSS = Monarca). |
 
 ### `mob/` — IA e identidade dos mobs (servidor)
 
@@ -144,6 +167,7 @@ flowchart LR
 | `GuardianBrain.java` | SUB_BOSS: controle de distância, orbes, Repulsão, Salto, Translocar, Invocação + ataques de Fúria. |
 | `MonarchBrain.java` | BOSS: 3 fases, leitura do estilo do jogador (perto/longe), barra de chefe, todos os ataques do chefe + Fúria. Guarda quem causou dano e, na morte, concede as conquistas a esses jogadores. O maior arquivo de IA. |
 | `SovereignBrain.java` | O Soberano: 6 estágios de vida, agonia invulnerável com close (`CinematicPayload` `CLOSE_UP`) a cada estágio, um ataque novo por estágio (`StageMove`: Punho, Genki-dama, Maremoto, Raízes, Pisão, Tornados), Fúria sem fim no 6º com o Raio do Peito (`ChestBeam`, prioridade, termina em `kneel`) e os poderes dos Monarcas um por vez, voos curtos (`Hop`: recuo antes do raio, avanço contra kite/preso), **escolha por prioridade** (`Move.urgency`: pisão/punho quando colado, voo, raio) e leitura de como o jogador luta (pressão melee/ranged, combo pós-pisão), trava de vida por estágio em `onHurt`, **estágio restaurado pela vida** ao reinstalar o cérebro (`stageFromHealth`), padrões de vários jogadores (foco rotativo, grupo junto/espalhado, `damageTakenMultiplier` por jogador), movimento direto sem pathfinding (`chase`), risada com cinemática, cinemática final + créditos e conquista na morte. `skipToStage` para o `/modtest`. |
+| `SovereignStageDialogueManager.java` | Roteiro do Soberano: intro, falas de início e transição de cada estágio (transição no letreiro do close, início na barra de ação), fala do Raio do Peito e da exaustão, risada aleatória, morte por glitch (fala 1 no letreiro, troca para a fala 2 sem reiniciar a cena, aviso da Era VII a todo o servidor) e partículas ciano/vermelho/roxo. Tarefas atrasadas no servidor, avançadas por `tick()` em `MobEvents`. Textos em `dialogue.solomod.sovereign.*`. O cliente (`BossCinematic`) quebra falas longas em linhas e troca o texto de uma cena já aberta quando chega um pacote da mesma entidade e tipo. |
 | `Hazards.java` | Ataques que existem no mundo por alguns ticks sem ser entidade: orbes, áreas marcadas (meteoros), ondas de choque, tornados e `QuakeBlocks` (terremoto: blocos do chão viram `FallingBlockEntity` e voltam). Simulados no servidor e desenhados com partículas. Também tem helpers de dano em área (`enemiesIn`, `hit`, `push`) e sons. |
 | `MobAnim.java` | Enum das animações de ação dos mobs (`WINDUP, LUNGE, DASH, COMBO, CAST, LEAP, SLAM, ROAR..., AGONY`). O servidor diz **qual** animação e por quanto tempo; o cliente desenha. |
 | `MobEvents.java` | Liga tudo ao ciclo de vida: reinstala o brain quando um mob salvo é carregado, tick, dano (Fúria, aparar, invulnerabilidade), morte, envia a identidade a quem começa a ver o mob, tick de `Hazards`. |
@@ -186,6 +210,9 @@ Todos registrados em `ModNetwork.register` (protocolo `"5"`; cliente e servidor 
 | `ClientSetup.java` | Mod bus: tecla **K**, camada do HUD, cores dos itens (tinta por elemento), layers dos modelos e renderers. |
 | `ClientGameEvents.java` | Game bus: tela K, tick/render do dano e cancelamento de `RenderGuiLayerEvent.Pre` só para `VanillaGuiLayers.PLAYER_HEALTH`, condicionado à visibilidade da HUD. Logout reinicia interpolação. |
 | `ClientAccess.java` | Único ponto em que o código comum toca classes de cliente (`localPlayer()`). |
+| `ClientEraState.java`, `SkyScarRenderer.java` | Cópia no cliente da flag da Era VII (`EraStatePayload`) e a Cicatriz no Céu: fenda com aberração cromática desenhada em `AFTER_SKY` no zênite, entre os ticks 17500 e 18500 do dia, mais fagulhas de estática no `ClientTickEvent`. |
+| `AmbientSilence.java` | Silêncio do sino da Torre: enquanto `AmbientSilencePayload` estiver valendo, cancela no `PlaySoundEvent` todo som de ambiente, clima, música e disco (e para os que já tocavam). |
+| `ArenaSkyRenderer.java` | Céu do Anfiteatro (`ArenaSkyPayload`): cinco retalhos coloridos com bordas de falha ciano/vermelho em `AFTER_SKY`. |
 | `SkillTreeLayout.java` | Coordenadas radiais em quatro setores de 90°, catálogo `WeaponClass.AVAILABLE` e seus 19 nós visíveis. Classes legadas ficam fora do mapa; dados persistidos são preservados. Nenhum estado de gameplay ou filtro. |
 | `SkillTreeScreen.java` | Mapa radial único em K → Habilidades: skin no centro, quatro armas normais do catálogo em círculo, raízes com molduras vanilla, arraste nos dois eixos e zoom ancorado no cursor. Sem filtros. Tooltips e botão Aprender. |
 | `StatsScreen.java` | Tela K com cartões de atributos em duas colunas, resumo de mana/XP/arma/técnica e abas Maestria/Teste. Painel e cartões antes dos widgets, preservando clique/foco/narração. |
@@ -231,7 +258,7 @@ Dados do servidor ficam em `src/main/resources/data/solomod/`:
 
 | Pasta | Conteúdo | Origem |
 |---|---|---|
-| `advancement/` | `root.json` (aba "Solo Mod"), `defeat_monarch_<elemento>.json` (5), `defeat_all_monarchs.json` e as secretas (`"hidden": true`) `broken_seal.json` e `defeat_sovereign.json`. Títulos e descrições em `advancements.solomod.*` no lang. | manual |
+| `advancement/` | 27 JSON em três pastas de aba (`echo_song/`, `serene_echoes/`, `seal_accomplices/`). Títulos e descrições em `advancements.solomod.<id>.*` no lang. | `gen_advancements.py` |
 
 `src/main/templates/META-INF/neoforge.mods.toml` é o template de metadados: o Gradle substitui `${...}` com os valores de `gradle.properties`.
 
@@ -247,11 +274,15 @@ Dados do servidor ficam em `src/main/resources/data/solomod/`:
 | `weapon_icons.py` | 9 sprites GUI 32×32 (oito classes normais + fantasma da adaga) | aço facetado, ouro, couro, gemas e ornamentos; apenas pixel art sem suavização |
 | `gen_weapon_elements.py` | utilitário legado sem chamada no pipeline atual | variantes elementais de armas desativadas |
 | `gen_sovereign_effects.py` | `textures/entity/sovereign_tornado.png`, `water_orb.png`, `water_orb_core.png` | texturas 16x16 de pixels grandes dos efeitos 3D do Soberano (a mesma saída sempre: ruído por hash de x, y) |
+| `gen_passive_echo.py` | `textures/entity/passive/*.png` e `*_glow.png` (15 pares 64×64 da Fauna Pacífica; o brilho é tons de cinza, tingido pela cor do elemento no render) | Mesma função de hash determinística dos outros geradores; cada forma tem uma função de pixel. As malhas são feitas em código (`client/model/PassiveEchoModels.java`). O brilho é derivado da malha: o script lê os cubos, calcula a área de UV de cada um e acende só os cubos listados em `GLOW_CUBES`. `--repack` reempacota os `texOffs` sem sobreposição; rode-o depois de mudar a malha. |
+| `gen_sanctuary.py` | `textures/entity/sanctuary/*.png` e `*_glow.png` (24 criaturas) e os modelos de item dos ovos dos Santuários de Eco | O shelf packing de `SanctuaryModels.Atlas` é repetido aqui lendo, em ordem, `a.add(...)`, `a.glow(...)` e `legs(...)` do Java; só os cubos de `a.glow` acendem. A cor base vem de `PALETTES`. Mexeu na malha: rode o script. Nada de laços em torno dessas chamadas. |
+| `gen_dissonance_shard.py` | `textures/item/dissonance_shard.png` e o modelo do item | Pixel art 16×16: caco escuro com núcleo branco e canais ciano/vermelho desalinhados. |
+| `gen_advancements.py` | `data/solomod/advancement/<aba>/*.json` (27 conquistas) | Uma tabela por conquista: aba, pai, ícone, moldura, oculta, critérios e XP. Os nomes dos critérios precisam bater com `ModAdvancements`. Apaga e recria a pasta. |
 | `gen_sovereign_icons.py` | `textures/item/sovereign_head.png` e `unknown_boss.png` | ícones 16x16 das conquistas do Soberano (a cabeça e o "???"); o desenho são as matrizes no próprio script |
 
 Rode da raiz: `python tools/gen_mob_art.py` e `python tools/gen_weapon_models.py`.
 
-Ícones dos chefes: `python tools/gen_boss_icons.py`. `ModItems.MONARCH_*_HEAD` registra os itens visuais usados por `defeat_monarch_<elemento>.json`, com modelo `item/generated`; o Soberano usa `SOVEREIGN_HEAD`.
+Ícones dos chefes: `python tools/gen_boss_icons.py`. `ModItems.MONARCH_*_HEAD` registra os itens visuais usados como ícones das conquistas dos Monarcas (`echo_song/first_strike` etc.), com modelo `item/generated`; o Soberano usa `SOVEREIGN_HEAD`.
 
 Os poderes elementais dos Monarcas ficam em `MonarchBrain`, selecionados pelo elemento no construtor e registrados nos conjuntos normal e de Fúria. `TierIdentity.MonarchPowers` centraliza o balanceamento dessas versões. `WaterOrb` calcula raio/altura da órbita pelo conjurador; ela e `SovereignTornado` mantêm a limpeza por estágio apenas quando o dono é o Soberano. `MonarchModel` anima GENKI, STOMP, FLOAT e JUMP, herdados por `SovereignModel`. A tela `StatsScreen` usa `WeaponClass.AVAILABLE` como seleção e envia o **ordinal real**, preservando o protocolo de `TestActionPayload`.
 
@@ -302,6 +333,12 @@ sequenceDiagram
 4. A cada ataque especial o brain envia `MobAnimPayload` → `client/MobAnimations` anima.
 5. Na morte, `PlayerEvents.onKill` dá XP ao jogador conforme o tier. Se for o Monarca, `MonarchBrain.onDeath` dispara a cinemática e `ModAdvancements.awardBossDefeat` para quem causou dano a ele.
 6. O Soberano (`SovereignBrain`) é diferente: a cada 1/6 da vida para no limite, agoniza (`CinematicPayload` `CLOSE_UP`) e troca para o poder de um Monarca; no 6º estágio entra em Fúria sem fim, reúne todos os poderes e ganha o raio do peito, ajoelhando após o raio (`kneel`). Na morte manda `CinematicPayload` `FINALE`, e o cliente abre `CreditsScreen` quando a cena acaba.
+
+### Fauna Pacífica: vínculo, gatilho e efeito
+1. **Vínculo:** `PassiveEchoEntity.mobInteract` checa o item (`isBondOffer`). Na primeira vez, define o dono e consome o item. Depois, o dono reativa o mob com o mesmo item (sem consumir), e `ModAttachments.ACTIVE_ECHO` passa a apontar para ele. Os outros vinculados deixam de seguir o dono, porque `followOwner` só roda para o companheiro ativo.
+2. **Gatilho:** um cérebro de mob hostil (ou `WaterOrb`, `RoyalFireball`, `Hazards`) chama um método de `PassiveEchoTriggers` no momento da telegrafia. Esse método procura o companheiro ativo do jogador envolvido (`activeOf`), checa alcance e chama `useAbility(player)`, que gasta a carga e entra na exaustão quando a carga acaba.
+3. **Efeito no servidor:** o gatilho aplica o resultado (derrubar, cancelar uma raiz, rebater um projétil, teleportar). Os efeitos temporários ficam em mapas estáticos no `PassiveEchoTriggers`, avançados por `tick()` (chamado em `MobEvents.onServerTick`) e zerados em `clear()` quando o servidor para. Não são salvos.
+4. **Empurrões:** `Hazards.push` passa o vetor por `PassiveEchoTriggers.dampenPush`, que aplica a imunidade do Golem, a bolha da Tartaruga, a cúpula do Mini-Tank e o corte vertical. O knockback vanilla de ataques comuns não passa por esse caminho.
 
 ### Stats
 

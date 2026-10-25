@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "solomod:static_tempest_pantheon",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 64,
+    "separation": 28,
+    "salt": 455102833
+  }
+}

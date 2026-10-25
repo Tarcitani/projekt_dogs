@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "solomod:forgotten_library",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 34,
+    "separation": 12,
+    "salt": 728193551
+  }
+}

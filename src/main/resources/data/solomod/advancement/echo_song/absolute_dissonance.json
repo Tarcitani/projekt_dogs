@@ -1,0 +1,31 @@
+{
+  "parent": "solomod:echo_song/mirror_face",
+  "display": {
+    "icon": {
+      "id": "solomod:sovereign_head"
+    },
+    "title": {
+      "translate": "advancements.solomod.absolute_dissonance.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.absolute_dissonance.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 500
+  }
+}

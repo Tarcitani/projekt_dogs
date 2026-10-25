@@ -1,0 +1,28 @@
+{
+  "parent": "solomod:echo_song/absolute_dissonance",
+  "display": {
+    "icon": {
+      "id": "minecraft:barrier"
+    },
+    "title": {
+      "translate": "advancements.solomod.error_sixth_voice.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.error_sixth_voice.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ]
+}

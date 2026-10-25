@@ -1,0 +1,115 @@
+{
+  "parent": "solomod:serene_echoes/five_lineages_harmony",
+  "display": {
+    "icon": {
+      "id": "minecraft:note_block"
+    },
+    "title": {
+      "translate": "advancements.solomod.the_first_choir.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.the_first_choir.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "spectral_scout": {
+      "trigger": "minecraft:impossible"
+    },
+    "echo_runic_bat": {
+      "trigger": "minecraft:impossible"
+    },
+    "relic_automaton": {
+      "trigger": "minecraft:impossible"
+    },
+    "igneous_salamander": {
+      "trigger": "minecraft:impossible"
+    },
+    "golden_silica_scarab": {
+      "trigger": "minecraft:impossible"
+    },
+    "volcanic_ash_colt": {
+      "trigger": "minecraft:impossible"
+    },
+    "liquid_mana_axolotl": {
+      "trigger": "minecraft:impossible"
+    },
+    "lotus_turtle_crab": {
+      "trigger": "minecraft:impossible"
+    },
+    "abyssal_trench_remora": {
+      "trigger": "minecraft:impossible"
+    },
+    "sylvan_mini_tank": {
+      "trigger": "minecraft:impossible"
+    },
+    "runic_boulder_golem": {
+      "trigger": "minecraft:impossible"
+    },
+    "amber_root_gazelle": {
+      "trigger": "minecraft:impossible"
+    },
+    "cloud_manta_ray": {
+      "trigger": "minecraft:impossible"
+    },
+    "storm_sentinel_owl": {
+      "trigger": "minecraft:impossible"
+    },
+    "dimensional_rift_moth": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "spectral_scout"
+    ],
+    [
+      "echo_runic_bat"
+    ],
+    [
+      "relic_automaton"
+    ],
+    [
+      "igneous_salamander"
+    ],
+    [
+      "golden_silica_scarab"
+    ],
+    [
+      "volcanic_ash_colt"
+    ],
+    [
+      "liquid_mana_axolotl"
+    ],
+    [
+      "lotus_turtle_crab"
+    ],
+    [
+      "abyssal_trench_remora"
+    ],
+    [
+      "sylvan_mini_tank"
+    ],
+    [
+      "runic_boulder_golem"
+    ],
+    [
+      "amber_root_gazelle"
+    ],
+    [
+      "cloud_manta_ray"
+    ],
+    [
+      "storm_sentinel_owl"
+    ],
+    [
+      "dimensional_rift_moth"
+    ]
+  ],
+  "rewards": {
+    "experience": 300
+  }
+}

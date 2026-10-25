@@ -1,6 +1,7 @@
 package com.tarcitani.solomod.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -16,6 +17,7 @@ import com.tarcitani.solomod.core.MobTier;
 import com.tarcitani.solomod.core.StatType;
 import com.tarcitani.solomod.core.WeaponClass;
 import com.tarcitani.solomod.entity.ModEntities;
+import com.tarcitani.solomod.era.EraSevenState;
 import com.tarcitani.solomod.entity.Sovereign;
 import com.tarcitani.solomod.event.StatsLogic;
 import com.tarcitani.solomod.item.ModItems;
@@ -163,6 +165,14 @@ public final class ModTestCommand {
                         .executes(ctx -> spawnSovereign(ctx, 1))
                         .then(Commands.argument("stage", IntegerArgumentType.integer(1, SovereignBrain.STAGES))
                                 .executes(ctx -> spawnSovereign(ctx, IntegerArgumentType.getInteger(ctx, "stage")))))
+
+                .then(Commands.literal("era")
+                        .then(Commands.argument("sovereign_defeated", BoolArgumentType.bool())
+                                .executes(ctx -> {
+                                    boolean value = BoolArgumentType.getBool(ctx, "sovereign_defeated");
+                                    EraSevenState.setSovereignDefeated(ctx.getSource().getServer(), value);
+                                    return feedback(ctx, "Era VII: Soberano derrotado = %s.", value);
+                                })))
 
                 .then(Commands.literal("unmark")
                         .then(Commands.argument("targets", EntityArgument.entities())

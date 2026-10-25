@@ -1,0 +1,31 @@
+{
+  "parent": "solomod:seal_accomplices/lie_of_five_thrones",
+  "display": {
+    "icon": {
+      "id": "minecraft:prismarine_shard"
+    },
+    "title": {
+      "translate": "advancements.solomod.song_of_guilt.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.song_of_guilt.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 100
+  }
+}

@@ -1,6 +1,8 @@
 package com.tarcitani.solomod.entity;
 
+import com.tarcitani.solomod.advancement.ModAdvancements;
 import com.tarcitani.solomod.core.ElementType;
+import com.tarcitani.solomod.entity.passive.PassiveEchoTriggers;
 import com.tarcitani.solomod.mob.Hazards;
 import com.tarcitani.solomod.mob.TierBrain;
 import com.tarcitani.solomod.mob.TierIdentity;
@@ -9,6 +11,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -94,6 +97,7 @@ public final class RoyalFireball extends Projectile {
         if (level().isClientSide()) return true;
         reflected = true;
         setOwner(player);
+        if (player instanceof ServerPlayer serverPlayer) ModAdvancements.onRoyalFireballReflected(serverPlayer);
         setDeltaMovement(player.getLookAngle().normalize().scale(TierIdentity.ROYAL_FIREBALL_RETURN_SPEED));
         hurtMarked = true;
         hasImpulse = true;
@@ -112,6 +116,18 @@ public final class RoyalFireball extends Projectile {
     @Override
     public void tick() {
         super.tick();
+        if (!reflected && getOwner() instanceof LivingEntity boss && level() instanceof ServerLevel server) {
+            // Espelho Solar do Escaravelho: a bola é rebatida ao conjurador pelo jogador que a defletiu.
+            ServerPlayer deflector = PassiveEchoTriggers.solarMirror(server, position());
+            if (deflector != null) {
+                ModAdvancements.onRoyalFireballReflected(deflector);
+                reflected = true;
+                setOwner(deflector);
+                setDeltaMovement(boss.getEyePosition().subtract(position()).normalize().scale(TierIdentity.ROYAL_FIREBALL_RETURN_SPEED));
+                hurtMarked = true;
+                burst(ParticleTypes.CRIT, 24);
+            }
+        }
         if (!level().isClientSide()) {
             if (++age > TierIdentity.ROYAL_FIREBALL_LIFE || !(level() instanceof ServerLevel server)
                     || caster == null || !(server.getEntity(caster) instanceof LivingEntity boss) || !boss.isAlive()) {

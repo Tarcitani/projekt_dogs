@@ -1,0 +1,8 @@
+{
+  "type": "solomod:colossal",
+  "colossus": "inverted_pendulum_citadel",
+  "biomes": "#solomod:has_structure/inverted_pendulum_citadel",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {}
+}

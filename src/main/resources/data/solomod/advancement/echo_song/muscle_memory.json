@@ -1,0 +1,28 @@
+{
+  "parent": "solomod:echo_song/born_in_silence",
+  "display": {
+    "icon": {
+      "id": "solomod:hammer"
+    },
+    "title": {
+      "translate": "advancements.solomod.muscle_memory.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.muscle_memory.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ]
+}

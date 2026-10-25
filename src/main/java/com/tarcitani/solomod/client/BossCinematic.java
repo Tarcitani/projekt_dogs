@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -20,6 +21,8 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
+
+import java.util.List;
 
 /**
  * Cinemáticas de chefe ({@link CinematicPayload.Kind}):
@@ -48,6 +51,12 @@ public final class BossCinematic {
     public static void start(CinematicPayload payload) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
+        // Mesma cena ainda rodando (ex.: a segunda fala da morte do Soberano): só troca o texto, sem reiniciar.
+        if (active() && payload.entityId() == entityId && payload.kind() == kind) {
+            header = payload.header();
+            title = payload.title();
+            return;
+        }
         entityId = payload.entityId();
         start = mc.level.getGameTime();
         duration = payload.duration();
@@ -143,12 +152,30 @@ public final class BossCinematic {
         g.drawString(font, top, -font.width(top) / 2, 0, alpha | (closeUp() ? 0xD04545 : 0xE8C547), false);
         g.pose().popPose();
 
-        // A fala do estágio é longa: letra menor que a do nome do chefe.
+        // Falas são longas: quebra em linhas de até 90% da tela; com mais de uma linha, a letra diminui.
         float scale = closeUp() ? 1.3F : 2.0F;
+        List<FormattedCharSequence> lines = font.split(title, (int) (w * 0.9F / scale));
+        if (lines.size() > 1) {
+            scale = Math.min(scale, 1.0F);
+            lines = font.split(title, (int) (w * 0.9F / scale));
+        }
+        float lineHeight = font.lineHeight + 1;
         g.pose().pushPose();
-        g.pose().translate(w / 2F, h - bar / 2F - 4 * scale, 0);
+        g.pose().translate(w / 2F, h - bar / 2F - lines.size() * lineHeight * scale / 2F, 0);
         g.pose().scale(scale, scale, 1);
-        g.drawString(font, title, -font.width(title) / 2, 0, alpha | 0xFFFFFF, true);
+        boolean glitch = kind == CinematicPayload.Kind.FINALE && Minecraft.getInstance().level != null
+                && Minecraft.getInstance().level.getEntity(entityId) instanceof Sovereign;
+        for (int i = 0; i < lines.size(); i++) {
+            FormattedCharSequence line = lines.get(i);
+            int x = -font.width(line) / 2, y = (int) (i * lineHeight);
+            if (glitch) {
+                // Dissonância Absoluta: canais ciano e vermelho desalinhados, tremendo a cada tick.
+                int jitter = (int) (e * 7) % 3 - 1;
+                g.drawString(font, line, x - 1 + jitter, y, alpha | 0x00E5FF, false);
+                g.drawString(font, line, x + 1 - jitter, y, alpha | 0xFF1744, false);
+            }
+            g.drawString(font, line, x, y, alpha | 0xFFFFFF, !glitch);
+        }
         g.pose().popPose();
     }
 

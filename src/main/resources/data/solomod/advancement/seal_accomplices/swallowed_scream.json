@@ -1,0 +1,31 @@
+{
+  "parent": "solomod:seal_accomplices/lie_of_five_thrones",
+  "display": {
+    "icon": {
+      "id": "minecraft:bell"
+    },
+    "title": {
+      "translate": "advancements.solomod.swallowed_scream.title"
+    },
+    "description": {
+      "translate": "advancements.solomod.swallowed_scream.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "rewards": {
+    "experience": 100
+  }
+}
