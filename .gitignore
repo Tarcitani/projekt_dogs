@@ -9,3 +9,8 @@ javac.*.args
 __pycache__/
 bin/
 .vscode/launch.json
+
+# Estado de agentes e ferramentas de IA: não é conteúdo do projeto (em qualquer pasta)
+**/.omc/*
+!**/.omc/skills/
+.claude/
