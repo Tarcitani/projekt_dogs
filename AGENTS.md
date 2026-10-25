@@ -7,7 +7,7 @@ Este arquivo é para qualquer IA (Antigravity, Claude, Copilot, Cursor, Codex...
 **Solo Mod**: mod de Minecraft **1.21.1** para **NeoForge** (plugin `net.neoforged.moddev`), em **Java 21**. É um RPG com:
 
 - **Maestria**: 4 stats do jogador (FOR/AGI/INT/VIT), XP Global e pontos.
-- **Armas modulares**: 7 classes; tier, elemento, requisito e habilidade gravados no ItemStack.
+- **Armas modulares**: catálogo com rapieira, espada longa, adaga e martelo; 4 classes legadas preservadas. Somente armas Normal/sem elemento; habilidades aprendidas na árvore do jogador. Campos antigos do ItemStack são normalizados ao carregar.
 - **Combate elemental**: ciclo Água > Fogo > Ar > Terra > Água.
 - **Mobs por tier**: 4 tiers com IA própria, ataques telegrafados, Fúria e chefes com fases. Há 4 criaturas com 5 formas cada (base + 4 elementos).
 
@@ -55,7 +55,7 @@ tools/                    scripts Python que GERAM arte e código
 ./gradlew compileJava    # checagem rápida de compilação
 python tools/gen_mob_art.py        # regera texturas de mobs + MobMeshes.java
 python tools/gen_weapon_models.py  # regera modelos/texturas das armas e ovos
-powershell -File tools/gen_boss_icons.ps1 # ícone pixel art da cabeça do Rei Vulcânico (Windows)
+python tools/gen_boss_icons.py     # rostos pixel art dos seis chefes + modelos de item
 powershell -File tools/gen_royal_fireball.ps1 # texturas originais da bola de fogo 3D (Windows)
 ```
 
@@ -69,7 +69,7 @@ No Windows use `gradlew.bat`. Não há testes automatizados: valide com `./gradl
 4. **Stats mudaram → `StatsLogic.onStatsChanged(player)`.** Ela reaplica atributos e sincroniza. O sync do attachment é manual (`SyncStatsPayload`), não automático.
 5. **`WeaponData` é um record imutável.** Para alterar, crie uma cópia e `stack.set(ModDataComponents.WEAPON_DATA, ...)`. Campo novo → atualize o `CODEC` **e** o `STREAM_CODEC`, com default em `optionalFieldOf` para não quebrar mundos salvos.
 6. **Não reordene enums.** Ordinais são usados no protocolo e nos assets:
-   - `ElementType`: o predicate `solomod:element` nos modelos de item usa o ordinal (1=water, 2=earth, 3=fire, 4=air).
+   - `ElementType`: ordinais e formas das criaturas preservam a ordem (1=water, 2=earth, 3=fire, 4=air); armas não usam mais o predicate `solomod:element`.
    - `MobTier`, `WeaponClass`, `StatType`: ordinais vão nos argumentos de `TestActionPayload`, e `TierMob` usa `tier.ordinal()`.
    - `MobAnim`, `CinematicPayload.Kind`: vão pela rede como ordinal.
    - Adicione constantes novas **no fim**.
@@ -83,7 +83,8 @@ No Windows use `gradlew.bat`. Não há testes automatizados: valide com `./gradl
 ### Nova classe de arma
 1. Constante no **fim** de `core/WeaponClass` (nome serializado, peso, stat, dano, velocidade, habilidade padrão).
 2. `ModItems` e `ClientSetup` iteram sobre `WeaponClass.values()`: o item, a cor e os predicates vêm automaticamente.
-3. Assets: `models/item/<nome>.json` (+ `_fire/_water/_earth/_air` e overrides de `solomod:element`), `textures/item/<nome>.png` + `<nome>_overlay.png` (camada tingida, `tintindex 1`). Gere as variantes pelos scripts de `tools/`.
+   O catálogo visível da aba Armas e da tela Teste vem de `WeaponClass.AVAILABLE`; são quatro itens, uma unidade neutra de cada. Índice da lista não é ordinal de rede.
+3. Assets: apenas `models/item/<nome>.json` (sem variantes/overrides elementais de armas), `textures/item/<nome>.png` + `<nome>_overlay.png` (camada tingida, `tintindex 1`). Gere as variantes pelos scripts de `tools/`.
 4. Lang: `weapon_class.solomod.<nome>` nos dois idiomas.
 5. Habilidade de classe (opcional): `skill/ClassAbility`.
 
@@ -119,7 +120,10 @@ No Windows use `gradlew.bat`. Não há testes automatizados: valide com `./gradl
 - **`CombatEvents` usa `LivingIncomingDamageEvent`** (antes da armadura). Não mude para `LivingDamageEvent` sem entender que o multiplicador elemental passaria a agir depois da armadura.
 - **Brains não são salvos**: só o `MobProfile` persiste. `MobEvents.onJoin` reinstala o brain quando o mob é carregado.
 - **Ter `MobProfile` = ser mob do mod**: dá XP, é alvo dos Hazards como "aliado" (não leva dano deles) e fica hostil ao jogador. Teste com `hasData(ModAttachments.MOB_PROFILE)`.
-- **Ataque da espada longa** é cancelado no cliente e vira `SpinAttackPayload`; o giro é validado no servidor (`ClassAbility.spinAttack`).
+- **Armas e controles**: R alterna `WeaponTechnique` por classe (espada: Meia-Lua/Ascendente/Cruzado; rapieira: Dash/Chuva de Agulhas/Passo do Vento; martelo: Salto/Giro/Ruptura). `WeaponControls` só mantém confirmação do servidor; seleções são independentes, por sessão, e compartilhar técnica não reinicia recarga do item. R não alterna durante uso/ação/menu. Ataque esquerdo é vanilla. `SpinAttackPayload`/`ClassAbility.spinAttack` são compatibilidade validada. Só o dash da rapieira usa `startUsingItem`/`releaseUsing`; outras técnicas usam clique simples. Na adaga arremessada, Shift + direito teleporta/recolhe e direito chama de volta; tier com Shift após recolher. Só o Salto do martelo inicia no ar/escala com a queda (teto 24 blocos); Giro/Ruptura exigem chão. A Ruptura para em paredes, líquidos, bordas e chunks não carregados; fragmentos são visuais. Balanceamento em `StatsLogic.WeaponAbilities`; `WeaponTechnique` e `PlayerAnim` só recebem constantes no fim.
+- **HUD**: `SoloHud`/`HudArt` desenham brasão e trilhos compactos. `ClientGameEvents` cancela só a camada `PLAYER_HEALTH` enquanto a HUD está visível; absorção, veneno/wither e dano são representados na vida personalizada. Não cancele fome, armadura, ar ou vida da montaria junto com os corações.
+- **Rolamento**: duplo Ctrl é detectado em `client/DodgeInput`; `DodgeRollPayload` só pede eixos locais. `skill/DodgeRoll` (registrado em `SoloMod`) valida chão, estado e recarga; movimento e janela curta de esquiva são do servidor (`StatsLogic.Dodge`). Não combine ações de arma com o rolamento. `RollAnimationPayload` envia a direção real. O protocolo de rede atual é `5`. `RollCooldownPayload` sincroniza a barra amarela sob a mana. XP Global fica no contorno do escudo de nível (`HudArt.crest`), uma volta por nível; não há barra inferior de rolamento.
+- **Poses e efeitos das armas**: `client/mixin/HumanoidModelMixin` aplica poses após `HumanoidModel.setupAnim`, antes de `PlayerModel` copiar mangas; configuração só na seção `client` de `solomod.client.mixins.json`. Não mova esse mixin para o lado comum. `WeaponEffects` desenha os três cortes 3D a partir de `CrescentSlashPayload`; `MotionEffects`/`FxGeometry` desenham velocidade, raios dourados e impacto a partir de `WeaponMotionPayload`. Tudo visual e com teste de profundidade. O martelo usa poses de mão e iluminação próprias em `tools/gen_weapon_models.py`, incluindo as variantes elementais.
 - **Bolas de Fogo Reais** têm modelo 3D próprio (`RoyalFireballRenderer`, cubos no estilo do Minecraft; texturas 16x16 de `tools/gen_royal_fireball.ps1`), não usam fire charge/Ghast. A espada longa permite golpe direto ao mirá-las. Devolvê-las ao conjurador causa dano e tenta `TierBrain.stunFromFireball(100)`: Fúria e transições bloqueiam stun. No Soberano só existem nos estágios 2/6. O ícone de Cinzas do Vulcão é gerado por `tools/gen_boss_icons.ps1`.
 - **Chefes (BOSS e SUB_BOSS)**: `KNOCKED_DOWN` preserva o ordinal, mas agora é recuperação agachada (nunca deitada). `LAUGH` foi acrescentado ao fim do enum; `MobEvents.onDeath` agenda a risada do chefe vencedor por 80 ticks, mesmo sem alvo. Fúria tem grito compartilhado de entrada e a cada 100 ticks; nenhuma aplicação de stun passa por ela.
 - **Investidas do Rei Vulcânico** convertem partes do piso natural exposto em magma permanente via `Hazards.magmaTrail`, respeitando `mobGriefing`; a autoria do magma para risadas é só da sessão atual. **Soberano**: modelo 5× maior (`RENDER_SCALE=7`), com caixa física independente, foco cinemático e culling ajustados.
@@ -133,9 +137,16 @@ No Windows use `gradlew.bat`. Não há testes automatizados: valide com `./gradl
 - **Regra dos poderes do Soberano**: estágios 1 a 5 usam só os poderes do próprio elemento (`StageMove.ownStage`); só o 6 libera todos (um por vez) mais o raio. Poder novo precisa declarar o estágio a que pertence.
 - **A morte do Soberano é glitch, não cinzas**: o sorteio visual vem do número do quadro (`TierMobModel.glitchFrame`); mantenha determinístico ou o corpo e as camadas de cor tremem fora de sincronia.
 - **Terremoto de blocos**: `Hazards.QuakeBlocks` usa `FallingBlockEntity` (o bloco volta ao pousar), só em terra/pedra/areia/cascalho expostos e com `mobGriefing`. Tremor de câmera: `ModNetwork.sendShake` (`ShakePayload`).
-- **Ícones de conquista são itens**: `unknown_boss` ("???") e `sovereign_head` (`ModItems`, `tools/gen_sovereign_icons.py`). `sovereign_unknown` é oculta e concedida/revogada pelo código (`ModAdvancements`).
+- **Ícones de conquista são itens**: `monarch_<elemento>_head` para os cinco Monarcas, `unknown_boss` ("???") e `sovereign_head` (`ModItems`, `tools/gen_boss_icons.py`, que reutiliza `tools/gen_sovereign_icons.py`). `sovereign_unknown` é oculta e concedida/revogada pelo código (`ModAdvancements`).
+- **Poderes dos Monarcas**: `MonarchBrain` acrescenta os poderes correspondentes do Soberano (fogo: genki-dama; água: maremoto e esferas; terra: raízes, pisão e pulão; ar: tornados), também na Fúria. O neutro usa o Golpe Sísmico com empurrão. Balanceamento em `TierIdentity.MonarchPowers`. `MonarchModel` compartilha poses com `SovereignModel`; as restrições de estágio de `WaterOrb`/`SovereignTornado` só valem para o Soberano.
 - **Partículas altas ou distantes** (mais de 32 blocos): use `Hazards.farParticles`, senão só quem está colado vê.
 - **O Soberano não pula estágio**: `SovereignBrain.onHurt` devolve a vida ao limite do estágio, inclusive em golpe fatal. Só dano com a tag `bypasses_invulnerability` (`/kill`, void) passa direto.
 - **`.vscode/launch.json` não vai para o Git** (caminhos absolutos da máquina). `run/`, `build/`, `bin/` e `.gradle/` também são ignorados.
 - **Encoding**: os arquivos são UTF-8 com acentos. No PowerShell, leia com `-Encoding utf8`, senão o texto aparece corrompido. Nunca regrave um arquivo com outro encoding.
 - **Versão do NeoForge**: `neo_version` em `gradle.properties` (`21.1.x`). Se o build falhar ao resolver, tente uma `21.1.x` mais recente.
+
+- **Árvores de habilidades**: `skill/SkillTree` tem IDs estáveis por classe e dependências; `PlayerStatsAttachment` persiste `habilidades` (default vazio), calcula pontos de habilidade separados dos stats (1 inicial + 1/100 XP Global) e sincroniza a lista manualmente. `UnlockTalentPayload` pede um nó e o servidor valida. `StatsLogic.Talents` centraliza custos. K → Habilidades usa `client/SkillTreeScreen`, molduras vanilla e mapa radial único (sem filtros): skin do jogador no centro, somente as quatro armas de `WeaponClass.AVAILABLE` em círculo (ícones Normal/sem elemento) e raízes de habilidades; classes legadas não aparecem no mapa, mas os dados são preservados; geometria em `SkillTreeLayout`. Arraste 2D e zoom pela roda. R só percorre técnicas aprendidas. Toda ativação cobra mana uma vez; retorno da adaga é gratuito; dash cobra ao soltar e teleporte após validar destino. Habilidade avançada exige nó + arma normal da classe + requisitos; `SkillTree.activeSkill` prioriza a suprema em Shift + direito.
+- **Ícones de arma ≠ modelo na mão**: `tools/gen_weapon_models.py` gera `neoforge:separate_transforms` nas oito classes, formas normais e fantasma da adaga; variantes elementais de armas foram removidas. `tools/weapon_icons.py` gera os ícones detalhados 32×32 com materiais, gemas e ornamentos próprios. **Somente `perspectives.gui` usa sprite pixel art** (inventário/hotbar/HUD/menus); `base` conserva geometria 3D e poses na mão, chão, molduras e projétil. Preserve essa separação. Classes legadas também trocam apenas a perspectiva GUI e mantêm seus modelos anteriores na mão/mundo.
+- **Contorno dos chefes**: não ligar `setGlowingTag` em BOSS/SUB_BOSS. `TierIdentity.apply` deixa desligado e `MobEvents.onJoin` limpa flags salvas antes da mudança. Detalhes emissivos e aura de Fúria continuam independentes.
+
+- **Somente armas Normal**: `WeaponData` normaliza tier, elemento, requisito e skill legados no construtor; codecs e ordinais ficam compatíveis com saves. Não usar MobTier/ElementType para gerar variantes de armas. `/modtest weapon <classe>` e GIVE_WEAPON geram só as quatro normais. Na tela Teste, tier/elemento são exclusivamente dos mobs. Preservar integralmente lógica, atributos, ovos e assets de BOSS/SUB_BOSS. Habilidades avançadas vêm de `SkillTree.activeSkill`, não do componente do item.

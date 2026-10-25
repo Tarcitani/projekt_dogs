@@ -2,7 +2,7 @@
   "parent": "solomod:root",
   "display": {
     "icon": {
-      "id": "solomod:monarch_earth_spawn_egg"
+      "id": "solomod:monarch_earth_head"
     },
     "title": {
       "translate": "advancements.solomod.defeat_monarch_earth.title"
@@ -21,7 +21,9 @@
     }
   },
   "requirements": [
-    ["defeated"]
+    [
+      "defeated"
+    ]
   ],
   "rewards": {
     "experience": 150

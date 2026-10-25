@@ -203,7 +203,7 @@ public final class SovereignBrain extends TierBrain {
     @Override protected int thinkGap() { return 40 - 4 * stage; }
     @Override protected int meleeInterval() { return 30 - 2 * stage; }
     @Override protected float meleeElementChance() { return 0F; }
-    /** No estágio 6 só há o raio: as recargas têm de ser lidas como estão (o ciclo raio, cansaço e caminhada). */
+    /** No estágio 6 as recargas nominais preservam o ciclo do raio, cansaço e demais poderes. */
     @Override protected float cooldownScale() { return stage == STAGES ? 1.0F : 1.0F - 0.06F * (stage - 1); }
     /** A Fúria não começa pela vida: ela vem no fim da última agonia. */
     @Override protected float rageThreshold() { return 0F; }

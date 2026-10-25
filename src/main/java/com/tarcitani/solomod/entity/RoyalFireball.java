@@ -31,9 +31,9 @@ import java.util.UUID;
  * ao conjurador, causa dano atribuído ao jogador e o deixa agachado por 100 ticks, salvo na Fúria
  * e durante rugidos/agonia. Na Fúria o dano continua valendo, mas não causa stun.
  *
- * <p>A genki-dama do Soberano ({@link #launchGenki}) sai de cima das mãos dele, desce sobre o jogador e
- * explode em área ao tocar o chão. Como o Soberano é imune a fogo, rebatê-la nele só o atordoa (não
- * causa dano).
+ * <p>A genki-dama do Soberano e do Rei Vulcânico ({@link #launchGenki}) sai de cima das mãos do
+ * conjurador, desce sobre o jogador e explode em área ao tocar o chão. Como o Soberano é imune a fogo,
+ * rebatê-la nele só o atordoa (não causa dano); no Rei Vulcânico, segue a regra de dano e stun da bola comum.
  * Modelo 3D próprio de 2,4 blocos (núcleo, crosta de magma e coroas orbitais), sem item vanilla.
  * Núcleo luminoso, espiral de chamas, fumaça e faíscas indicam o trajeto; impactos não destroem blocos.
  * Dono original, reflexão, dano e idade persistem em NBT; toda colisão/reflexão é decidida pelo servidor.

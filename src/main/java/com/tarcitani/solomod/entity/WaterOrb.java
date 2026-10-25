@@ -4,6 +4,7 @@ import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.mob.Hazards;
 import com.tarcitani.solomod.mob.SovereignBrain;
 import com.tarcitani.solomod.mob.TierBrain;
+import com.tarcitani.solomod.mob.TierIdentity.MonarchPowers;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -21,7 +22,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.UUID;
 
 /**
- * Esfera de água do Soberano (modo água), com modelo 3D próprio em CUBOS, no estilo do Minecraft (ver
+ * Esfera de água do Soberano (modo água) e do Leviatã Coroado, com modelo 3D próprio em CUBOS, no estilo do Minecraft (ver
  * {@code WaterOrbRenderer}). Três jeitos:
  * <ul>
  *   <li>{@code ORBIT}: gira em volta do Soberano por um tempo (telegrafa o ataque);</li>
@@ -32,6 +33,7 @@ import java.util.UUID;
  *       calculado pelo ataque, não por elas).</li>
  * </ul>
  * Não é salva e roda só no servidor; o cliente desenha e solta bolhas.
+ * A órbita acompanha o porte do conjurador; as restrições de estágio só se aplicam ao Soberano.
  */
 public final class WaterOrb extends Entity {
     public static final float SIZE = 2.0F;
@@ -53,7 +55,15 @@ public final class WaterOrb extends Entity {
         noPhysics = true;
     }
 
-    /** Esfera que gira em volta do Soberano por {@code orbitTicks} e depois persegue {@code target}. */
+    private static double orbitRadius(LivingEntity owner) {
+        return owner instanceof Sovereign ? ORBIT_RADIUS : MonarchPowers.ORB_RADIUS;
+    }
+
+    private static double orbitHeight(LivingEntity owner) {
+        return owner instanceof Sovereign ? ORBIT_HEIGHT : owner.getBbHeight() * MonarchPowers.ORB_HEIGHT_RATIO;
+    }
+
+    /** Esfera que gira em volta do conjurador por {@code orbitTicks} e depois persegue {@code target}. */
     public static void orbit(ServerLevel level, LivingEntity owner, LivingEntity target, double phase, int orbitTicks, float damage) {
         WaterOrb orb = new WaterOrb(ModEntities.WATER_ORB.get(), level);
         orb.mode = Mode.ORBIT;
@@ -62,7 +72,7 @@ public final class WaterOrb extends Entity {
         orb.phase = phase;
         orb.orbitTicks = orbitTicks;
         orb.damage = damage;
-        orb.setPos(owner.position().add(Math.cos(phase) * ORBIT_RADIUS, ORBIT_HEIGHT, Math.sin(phase) * ORBIT_RADIUS));
+        orb.setPos(owner.position().add(Math.cos(phase) * orbitRadius(owner), orbitHeight(owner), Math.sin(phase) * orbitRadius(owner)));
         level.addFreshEntity(orb);
     }
 
@@ -118,8 +128,9 @@ public final class WaterOrb extends Entity {
         }
         if (mode == Mode.ORBIT) {
             double a = phase + age * 0.14;
-            Vec3 c = boss.position().add(0, ORBIT_HEIGHT, 0);
-            setPos(c.x + Math.cos(a) * ORBIT_RADIUS, c.y + Math.sin(age * 0.2 + phase) * 0.6, c.z + Math.sin(a) * ORBIT_RADIUS);
+            Vec3 c = boss.position().add(0, orbitHeight(boss), 0);
+            double radius = orbitRadius(boss);
+            setPos(c.x + Math.cos(a) * radius, c.y + Math.sin(age * 0.2 + phase) * 0.6, c.z + Math.sin(a) * radius);
             if (age >= orbitTicks) {
                 mode = Mode.HOMING;
                 age = 0;

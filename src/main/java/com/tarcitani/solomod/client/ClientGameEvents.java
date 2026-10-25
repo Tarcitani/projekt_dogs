@@ -7,11 +7,22 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
-/** Eventos de jogo só de cliente: tecla da tela, tick dos números de dano e renderização no mundo. */
+/** Eventos de cliente: tela, HUD e mundo. Oculta só os corações; rolamento e XP ficam na HUD superior. */
 @EventBusSubscriber(modid = SoloMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class ClientGameEvents {
     private ClientGameEvents() {}
+
+    @SubscribeEvent public static void onGuiLayer(RenderGuiLayerEvent.Pre event) {
+        if (event.getName().equals(VanillaGuiLayers.PLAYER_HEALTH) && SoloHud.visible()) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) { SoloHud.reset(); }
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {

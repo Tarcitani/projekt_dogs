@@ -1,33 +1,22 @@
 {
-  "parent": "minecraft:item/handheld",
+  "loader": "neoforge:separate_transforms",
+  "gui_light": "front",
   "textures": {
-    "layer0": "solomod:item/greatsword",
-    "layer1": "solomod:item/greatsword_overlay"
+    "particle": "solomod:item/greatsword"
   },
-  "overrides": [
-    {
-      "predicate": {
-        "solomod:element": 1
-      },
-      "model": "solomod:item/greatsword_water"
-    },
-    {
-      "predicate": {
-        "solomod:element": 2
-      },
-      "model": "solomod:item/greatsword_earth"
-    },
-    {
-      "predicate": {
-        "solomod:element": 3
-      },
-      "model": "solomod:item/greatsword_fire"
-    },
-    {
-      "predicate": {
-        "solomod:element": 4
-      },
-      "model": "solomod:item/greatsword_air"
+  "base": {
+    "parent": "minecraft:item/handheld",
+    "textures": {
+      "layer0": "solomod:item/greatsword",
+      "layer1": "solomod:item/greatsword_overlay"
     }
-  ]
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "solomod:item/greatsword_icon"
+      }
+    }
+  }
 }

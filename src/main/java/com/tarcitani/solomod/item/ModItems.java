@@ -28,14 +28,19 @@ import java.util.function.Supplier;
 
 /**
  * Itens do mod: uma arma por classe (solomod:greatsword, solomod:dagger...), um ovo por criatura e elemento,
- * o ovo do Soberano, o ícone pixel art da cabeça do Rei Vulcânico e a aba própria do mod no inventário criativo.
+ * o ovo do Soberano e os rostos dos seis chefes em pixel art. A aba Solo Mod reúne criaturas;
+ * a aba Armas contém só rapieira, espada longa, adaga e martelo, uma unidade neutra de cada.
  */
 public final class ModItems {
     private ModItems() {}
 
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(SoloMod.MOD_ID);
-    /** Item visual da conquista Cinzas do Vulcão; arte gerada por tools/gen_boss_icons.ps1. */
+    /** Rostos das conquistas; arte e modelos gerados por tools/gen_boss_icons.py. */
+    public static final DeferredItem<Item> MONARCH_NONE_HEAD = ITEMS.registerSimpleItem("monarch_none_head");
     public static final DeferredItem<Item> MONARCH_FIRE_HEAD = ITEMS.registerSimpleItem("monarch_fire_head");
+    public static final DeferredItem<Item> MONARCH_WATER_HEAD = ITEMS.registerSimpleItem("monarch_water_head");
+    public static final DeferredItem<Item> MONARCH_EARTH_HEAD = ITEMS.registerSimpleItem("monarch_earth_head");
+    public static final DeferredItem<Item> MONARCH_AIR_HEAD = ITEMS.registerSimpleItem("monarch_air_head");
     /** Ícones da conquista do Soberano: "???" antes de derrotá-lo e a cabeça dele depois. Só aparecem nas conquistas. */
     public static final DeferredItem<Item> UNKNOWN_BOSS = ITEMS.registerSimpleItem("unknown_boss");
     public static final DeferredItem<Item> SOVEREIGN_HEAD = ITEMS.registerSimpleItem("sovereign_head");
@@ -86,26 +91,25 @@ public final class ModItems {
     }
 
     /**
-     * Aba "Solo Mod": todas as armas prontas (cada classe em cada tier e elemento — as de tier Normal não têm
-     * elemento) e todos os ovos.
+     * Aba "Solo Mod": ovos de todas as criaturas; as armas ficam em uma aba separada.
      */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = TABS.register("solomod", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.solomod"))
-            .icon(() -> ModularWeaponItem.create(get(WeaponClass.LONGSWORD), WeaponData.of(WeaponClass.LONGSWORD, MobTier.BOSS, ElementType.FIRE)))
+            .icon(() -> new ItemStack(SOVEREIGN_EGG.get()))
             .displayItems((params, output) -> {
-                for (WeaponClass wc : WeaponClass.values()) {
-                    for (MobTier tier : MobTier.values()) {
-                        for (ElementType element : ElementType.values()) {
-                            if (tier.allowsElement() == (element == ElementType.NONE)) continue;
-                            output.accept(ModularWeaponItem.create(get(wc), WeaponData.of(wc, tier, element)));
-                        }
-                    }
-                }
                 for (MobTier tier : MobTier.values()) {
                     EGGS.get(tier).values().forEach(egg -> output.accept(new ItemStack(egg.get())));
                 }
                 output.accept(new ItemStack(SOVEREIGN_EGG.get()));
             })
+            .build());
+
+    /** Quatro armas normais sem variantes de tier/elemento; /modtest também gera somente essas versões. */
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> WEAPONS_TAB = TABS.register("weapons", () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.solomod.weapons"))
+            .icon(() -> new ItemStack(get(WeaponClass.HAMMER)))
+            .displayItems((params, output) -> WeaponClass.AVAILABLE.forEach(wc ->
+                    output.accept(ModularWeaponItem.create(get(wc), WeaponData.of(wc, MobTier.NORMAL, ElementType.NONE)))))
             .build());
 
     public static ModularWeaponItem get(WeaponClass wc) {

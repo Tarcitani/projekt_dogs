@@ -25,10 +25,11 @@ import net.minecraft.core.particles.ParticleTypes;
 import java.util.List;
 
 /**
- * Habilidades ativas das armas. O {@code skillId} gravado no WeaponData aponta para uma destas.
+ * Habilidades avançadas aprendidas na árvore, utilizáveis nas armas normais por Shift + direito.
+ * A seleção vem de SkillTree.activeSkill; o campo skillId do item é apenas compatibilidade de save.
  *
  * <p>Para criar uma nova: adicione uma constante com custo/recarga/INT mínima e implemente {@link #perform}.
- * A potência escala com o nível de habilidade do tier (menor = 1x, suprema = 2x).
+ * Potência por habilidade: avançada = 1x, suprema = 2x, independente de tiers de armas/mobs.
  */
 public enum WeaponSkill {
     //                id                 mana  recarga(ticks)  INT mín.
@@ -39,7 +40,7 @@ public enum WeaponSkill {
     GROUND_SLAM      ("ground_slam",      25,   100,            10),
     /** Projétil mágico instantâneo (raycast) que escala com INT. */
     MANA_BOLT        ("mana_bolt",        10,   30,             5),
-    /** Suprema: explosão elemental em área que sempre aplica a passiva do elemento. */
+    /** Suprema: explosão neutra de Maestria em área; ID preservado para os desbloqueios salvos. */
     ELEMENTAL_BURST  ("elemental_burst",  40,   200,            20);
 
     private final String id;
@@ -78,7 +79,7 @@ public enum WeaponSkill {
      */
     public int perform(ServerPlayer player, WeaponData data) {
         ServerLevel level = player.serverLevel();
-        float power = data.mobTier().skillLevel() >= 2 ? 2.0F : 1.0F;
+        float power = this == ELEMENTAL_BURST ? 2.0F : 1.0F;
         // Dano base da habilidade: dano da classe x tier x escalonamento do stat x potência.
         float base = (data.weaponClass().baseDamage() + 1.0F) * data.mobTier().damageMultiplier()
                 * StatsLogic.weaponScaling(player, data) * power;

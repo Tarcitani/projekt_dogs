@@ -11,7 +11,7 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** Entidades do mod: criaturas, Soberano, adaga, bola de fogo real, tornado e esfera de água do Soberano. */
+/** Entidades do mod: criaturas, Soberano, adaga e poderes 3D compartilhados pelos Monarcas e Soberano. */
 public final class ModEntities {
     private ModEntities() {}
 
@@ -47,13 +47,13 @@ public final class ModEntities {
                     .sized(TierIdentity.ROYAL_FIREBALL_SIZE, TierIdentity.ROYAL_FIREBALL_SIZE)
                     .fireImmune().clientTrackingRange(12).updateInterval(1).build("royal_fireball"));
 
-    /** Tornado do Soberano (modo ar): funil 3D que persegue um jogador. Não é salvo no mundo. */
+    /** Tornado do Soberano e do Imperador dos Céus: funil 3D que persegue um jogador. Não é salvo no mundo. */
     public static final DeferredHolder<EntityType<?>, EntityType<SovereignTornado>> SOVEREIGN_TORNADO =
             ENTITY_TYPES.register("sovereign_tornado", () -> EntityType.Builder.<SovereignTornado>of(SovereignTornado::new, MobCategory.MISC)
                     .sized(SovereignTornado.WIDTH, SovereignTornado.HEIGHT).noSave().fireImmune()
                     .clientTrackingRange(12).updateInterval(1).build("sovereign_tornado"));
 
-    /** Esfera de água do Soberano (modo água): gira em volta dele e depois persegue um jogador. Não é salva. */
+    /** Esfera do Soberano e do Leviatã: orbita o conjurador e depois persegue um jogador. Não é salva. */
     public static final DeferredHolder<EntityType<?>, EntityType<WaterOrb>> WATER_ORB =
             ENTITY_TYPES.register("water_orb", () -> EntityType.Builder.<WaterOrb>of(WaterOrb::new, MobCategory.MISC)
                     .sized(WaterOrb.SIZE, WaterOrb.SIZE).noSave().fireImmune()

@@ -1,13 +1,14 @@
 """
 Versões elementais das armas (chamado por gen_weapon_models.py).
 
-* Armas 2D (espadão, machado, adaga, kunai, varinha): o sprite 16x16 é ampliado para 32x32 e redesenhado —
+* Armas 2D legadas (espadão, machado, kunai, varinha): o sprite 16x16 é ampliado para 32x32 e redesenhado —
   cores, forma e detalhes mudam por elemento:
     Fogo  lâmina em brasa com línguas de fogo subindo das bordas, cabo de carvão com brasas
     Água  lâmina de água com ondas, espuma nas bordas e gotas pingando, cabo de coral
     Terra lâmina de pedra serrilhada com rachaduras, musgo no topo e cristais incrustados, cabo de casca
     Ar    lâmina prateada com rastros de vento e penas saindo da guarda, cabo claro enrolado
-* Armas 3D (rapieira, claymore): paleta própria por elemento + peças extras (chamas, barbatanas, rochas, penas).
+* Armas 3D (rapieira, espada longa, adaga, martelo): paleta própria por elemento.
+  Rapieira e espada longa também recebem peças extras (chamas, barbatanas, rochas, penas).
 """
 import os
 import random

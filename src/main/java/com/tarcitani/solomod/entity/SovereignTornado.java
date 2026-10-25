@@ -21,13 +21,14 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Tornado do Soberano (modo ar): uma entidade com modelo 3D próprio em CUBOS, no estilo do Minecraft (pilha de
+ * Tornado do Soberano (modo ar) e do Imperador dos Céus: uma entidade com modelo 3D próprio em CUBOS, no estilo do Minecraft (pilha de
  * anéis quadrados girando, ver {@code SovereignTornadoRenderer}) que persegue um jogador a 0,13 bloco/tick (mais lento que quem anda),
  * dura 11 s e lança para o alto quem encosta no pé dele. A velocidade de lançamento dá cerca de 11 blocos de
  * altura: o dano vem sobretudo da queda. Quem já foi lançado fica 3 s imune ao mesmo tornado.
  *
  * <p>Toda a lógica roda no servidor; o cliente só desenha e solta poeira. Não é salva (some ao recarregar o
  * mundo) e não tem colisão nem pode ser golpeada: o perigo é o pé dele, não o corpo.
+ * As restrições de estágio só se aplicam ao Soberano; o Imperador pode conjurá-lo em todas as fases.
  */
 public final class SovereignTornado extends Entity {
     public static final double SPEED = 0.13, RADIUS = 2.2, LAUNCH = 1.45;

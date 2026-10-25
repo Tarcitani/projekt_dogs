@@ -36,6 +36,8 @@ import java.util.function.IntFunction;
 /**
  * Cliente -> servidor: botões da aba "Teste" (equivalentes aos comandos /modtest).
  * Exige permissão de operador (nível 2) — no singleplayer, mundo com cheats ligados.
+ * Gerar arma aceita só as quatro classes atuais e sempre produz Normal/sem elemento.
+ * Tier e elemento continuam configuráveis exclusivamente nas ações de mobs.
  *
  * @param action qual ação
  * @param a      1º argumento (ordinal de classe/stat/tier, ou quantidade)
@@ -44,7 +46,7 @@ import java.util.function.IntFunction;
  */
 public record TestActionPayload(Action action, int a, int b, int c) implements CustomPacketPayload {
     public enum Action {
-        /** a = WeaponClass, b = MobTier, c = ElementType */
+        /** a = WeaponClass disponível; b/c legados ignorados, sempre Normal/sem elemento. */
         GIVE_WEAPON,
         /** a = quantidade */
         ADD_XP,
@@ -96,7 +98,8 @@ public record TestActionPayload(Action action, int a, int b, int c) implements C
         switch (p.action()) {
             case GIVE_WEAPON -> {
                 WeaponClass wc = pick(WeaponClass.values(), p.a());
-                WeaponData data = WeaponData.of(wc, pick(MobTier.values(), p.b()), pick(ElementType.values(), p.c()));
+                if (!WeaponClass.AVAILABLE.contains(wc)) return;
+                WeaponData data = WeaponData.defaultFor(wc);
                 ItemStack stack = ModularWeaponItem.create(ModItems.get(wc), data);
                 ItemStack previous = player.getMainHandItem();
                 player.setItemInHand(InteractionHand.MAIN_HAND, stack);

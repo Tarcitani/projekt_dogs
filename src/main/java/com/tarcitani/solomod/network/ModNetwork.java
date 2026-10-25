@@ -9,11 +9,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-/** Registro de pacotes e helper de sincronização. */
+/** Registro do protocolo 5: stats com árvores, pedidos de desbloqueio e recarga de rolamento, além do combate. */
 public final class ModNetwork {
     private ModNetwork() {}
 
-    private static final String PROTOCOL_VERSION = "1";
+    private static final String PROTOCOL_VERSION = "5";
 
     /** Listener do mod bus (registrado em SoloMod). */
     public static void register(RegisterPayloadHandlersEvent event) {
@@ -25,10 +25,28 @@ public final class ModNetwork {
         registrar.playToClient(PlayerAnimPayload.TYPE, PlayerAnimPayload.STREAM_CODEC, PlayerAnimPayload::handle);
         registrar.playToClient(CinematicPayload.TYPE, CinematicPayload.STREAM_CODEC, CinematicPayload::handle);
         registrar.playToClient(ShakePayload.TYPE, ShakePayload.STREAM_CODEC, ShakePayload::handle);
-        // Cliente -> servidor (botões da tela de Maestria, giro da espada longa)
+        registrar.playToClient(RollAnimationPayload.TYPE, RollAnimationPayload.STREAM_CODEC, RollAnimationPayload::handle);
+        registrar.playToClient(CrescentSlashPayload.TYPE, CrescentSlashPayload.STREAM_CODEC, CrescentSlashPayload::handle);
+        registrar.playToClient(WeaponMotionPayload.TYPE, WeaponMotionPayload.STREAM_CODEC, WeaponMotionPayload::handle);
+        registrar.playToClient(TechniqueSelectionPayload.TYPE, TechniqueSelectionPayload.STREAM_CODEC, TechniqueSelectionPayload::handle);
+        registrar.playToClient(RollCooldownPayload.TYPE, RollCooldownPayload.STREAM_CODEC, RollCooldownPayload::handle);
+        // Cliente -> servidor (Maestria e pedido legado da espada longa; uso das armas segue o ciclo vanilla)
+        registrar.playToServer(UnlockTalentPayload.TYPE, UnlockTalentPayload.STREAM_CODEC, UnlockTalentPayload::handle);
         registrar.playToServer(SpendPointsPayload.TYPE, SpendPointsPayload.STREAM_CODEC, SpendPointsPayload::handle);
         registrar.playToServer(TestActionPayload.TYPE, TestActionPayload.STREAM_CODEC, TestActionPayload::handle);
         registrar.playToServer(SpinAttackPayload.TYPE, SpinAttackPayload.STREAM_CODEC, SpinAttackPayload::handle);
+        registrar.playToServer(DodgeRollPayload.TYPE, DodgeRollPayload.STREAM_CODEC, DodgeRollPayload::handle);
+        registrar.playToServer(CycleTechniquePayload.TYPE, CycleTechniquePayload.STREAM_CODEC, CycleTechniquePayload::handle);
+    }
+
+    /** Mostra efeitos tanto para quem viu a partida quanto para quem está perto da chegada do teleporte. */
+    public static void sendWeaponMotion(ServerPlayer player, WeaponMotionPayload.Kind kind, int entityId,
+                                        net.minecraft.world.phys.Vec3 from, net.minecraft.world.phys.Vec3 to, float power) {
+        WeaponMotionPayload payload = new WeaponMotionPayload(kind, entityId, from, to, power);
+        for (ServerPlayer viewer : player.serverLevel().players()) {
+            if (viewer == player || viewer.distanceToSqr(from) < 48 * 48 || viewer.distanceToSqr(to) < 48 * 48)
+                PacketDistributor.sendToPlayer(viewer, payload);
+        }
     }
 
     /**

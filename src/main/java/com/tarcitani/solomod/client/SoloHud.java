@@ -2,114 +2,130 @@ package com.tarcitani.solomod.client;
 
 import com.tarcitani.solomod.attachment.ModAttachments;
 import com.tarcitani.solomod.attachment.PlayerStatsAttachment;
-import com.tarcitani.solomod.component.WeaponData;
+import com.tarcitani.solomod.core.WeaponClass;
+import com.tarcitani.solomod.event.StatsLogic.WeaponAbilities;
 import com.tarcitani.solomod.item.ModularWeaponItem;
+import com.tarcitani.solomod.skill.ClassAbility;
+import com.tarcitani.solomod.skill.WeaponTechnique;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
+import java.util.UUID;
 
 /**
- * HUD do mod (canto superior esquerdo):
- * <pre>
- *  Nv 3            XP 245
- *  [====------]  (até o próximo ponto)
- *  MP 35/70
- *  [=========-]  (azul, animado)
- *  +2 pontos! [K]           (pisca)
- *  ── arma na mão ──
- *  Fogo · Ativa / Adormecida
- *  [recarga da habilidade]
- * </pre>
+ * HUD compacta (164 × 62 com arma): vida/mana, rolamento abaixo da mana e faixa da técnica.
+ * Vida inclui absorção e cores de veneno/wither; substitui só PLAYER_HEALTH, via ClientGameEvents.
+ * Barras são suavizadas, o brasão pulsa em perigo/subida de nível e a carga da rapieira expande só 12 px.
+ * XP Global percorre o contorno do escudo de nível: uma volta completa representa a subida de nível.
+ * A barra amarela sob a mana indica o rolamento confirmado pelo servidor; não há barra junto ao XP vanilla.
  */
 public final class SoloHud {
     private SoloHud() {}
+    private static float mana, health, xp, lastHealth;
+    private static UUID owner;
+    private static int ticks, lastLevel, levelFlash, hurtFlash;
+    private static long rollReadyAt;
 
-    private static final int X = 6, Y = 6, WIDTH = 110;
-    private static final int BG = 0x90000000;
-
-    /** Valor exibido da mana: persegue o valor real para a barra deslizar em vez de pular. */
-    private static float shownMana = -1;
-    private static float shownManaPrev = -1;
-    private static int ticks;
-
+    public static void reset() { owner = null; rollReadyAt = 0; }
+    public static void rollCooldown(int remaining) {
+        var player = Minecraft.getInstance().player;
+        if (player != null) rollReadyAt = player.level().getGameTime() + Math.max(0, remaining);
+    }
+    public static boolean visible() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.player != null && !mc.options.hideGui && !mc.player.isSpectator();
+    }
     public static void tick() {
-        ticks++;
         Player player = Minecraft.getInstance().player;
-        if (player == null) return;
-        int real = player.getData(ModAttachments.PLAYER_STATS).getManaAtual();
-        shownManaPrev = shownMana;
-        shownMana = shownMana < 0 ? real : Mth.lerp(0.25F, shownMana, real);
-        if (shownManaPrev < 0) shownManaPrev = shownMana;
+        if (player == null) { reset(); return; }
+        var stats = player.getData(ModAttachments.PLAYER_STATS);
+        float nextXp = (stats.getXpGlobal() % PlayerStatsAttachment.XP_PER_POINT) / (float) PlayerStatsAttachment.XP_PER_POINT;
+        if (!player.getUUID().equals(owner)) {
+            owner = player.getUUID(); mana = stats.getManaAtual(); health = lastHealth = player.getHealth(); xp = nextXp;
+            lastLevel = stats.getLevel(); levelFlash = hurtFlash = 0;
+        }
+        if (stats.getLevel() != lastLevel) { levelFlash = stats.getLevel() > lastLevel ? 30 : 0; xp = 0; lastLevel = stats.getLevel(); }
+        if (player.getHealth() < lastHealth) hurtFlash = 10;
+        lastHealth = player.getHealth();
+        mana = Mth.lerp(0.22F, mana, stats.getManaAtual());
+        health = Mth.lerp(0.25F, health, player.getHealth());
+        xp = Mth.lerp(0.2F, xp, nextXp);
+        if (levelFlash > 0) levelFlash--;
+        if (hurtFlash > 0) hurtFlash--;
+        ticks++;
     }
 
     public static void render(GuiGraphics g, DeltaTracker delta) {
+        if (!visible()) return;
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
-        if (player == null || mc.options.hideGui || player.isSpectator()) return;
-        Font font = mc.font;
-        PlayerStatsAttachment s = player.getData(ModAttachments.PLAYER_STATS);
-        float partial = delta.getGameTimeDeltaPartialTick(false);
-
-        ItemStack held = player.getMainHandItem();
-        boolean holdingWeapon = held.getItem() instanceof ModularWeaponItem;
-        int height = 46 + (s.getPontosDisponiveis() > 0 ? 11 : 0) + (holdingWeapon ? 26 : 0);
-        g.fill(X - 3, Y - 3, X + WIDTH + 3, Y + height, BG);
-
-        // Nível + XP Global
-        int y = Y;
-        g.drawString(font, Component.translatable("hud.solomod.level", s.getLevel()), X, y, 0xFFD54F, true);
-        String xp = "XP " + s.getXpGlobal();
-        g.drawString(font, xp, X + WIDTH - font.width(xp), y, 0xFFFFFF, true);
-        y += 10;
-        float xpProgress = (s.getXpGlobal() % PlayerStatsAttachment.XP_PER_POINT) / (float) PlayerStatsAttachment.XP_PER_POINT;
-        bar(g, X, y, WIDTH, 4, xpProgress, 0xFFFFB300, 0xFF3A2E00);
-        y += 8;
-
-        // Mana (barra animada)
-        float mana = Mth.lerp(partial, shownManaPrev, shownMana);
-        g.drawString(font, "MP " + s.getManaAtual() + "/" + s.getMaxMana(), X, y, 0x7FC8FF, true);
-        y += 10;
-        bar(g, X, y, WIDTH, 6, mana / Math.max(1, s.getMaxMana()), 0xFF2F80ED, 0xFF0B2545);
-        y += 10;
-
-        // Pontos disponíveis (piscando)
+        if (!player.getUUID().equals(owner)) tick();
+        var font = mc.font;
+        var s = player.getData(ModAttachments.PLAYER_STATS);
+        var held = player.getMainHandItem();
+        boolean weapon = held.getItem() instanceof ModularWeaponItem;
+        boolean charging = weapon && ((ModularWeaponItem) held.getItem()).weaponClass() == WeaponClass.RAPIER
+                && player.isUsingItem() && player.getUseItem() == held;
+        int x = 8, y = 8, bx = x + 40, bw = 124;
+        float time = ticks + delta.getGameTimeDeltaPartialTick(false);
+        float hp = player.getHealth() / Math.max(1, player.getMaxHealth());
+        int accent = levelFlash > 0 ? 0xFFFFF0B8 : hp < 0.3F && Mth.sin(time * 0.3F) > 0 ? 0xFFEF6961 : RpgUi.GOLD;
+        HudArt.crest(g, x + 2, y + 4, accent, levelFlash > 0 ? 1 : xp);
+        Component level = Component.literal(String.valueOf(s.getLevel()));
+        float scale = Math.min(1.1F, 23F / Math.max(1, font.width(level)));
+        RpgUi.fit(g, font, level, x + 17 - Math.round(font.width(level) * scale / 2), y + 18, 23, RpgUi.TEXT, scale);
+        int lifeColor = player.hasEffect(MobEffects.WITHER) ? 0xFF8A819D : player.hasEffect(MobEffects.POISON) ? 0xFF88AF42 : 0xFFDC595C;
+        if (hurtFlash > 0 && hurtFlash % 4 < 2) lifeColor = 0xFFFFB9A1;
+        HudArt.rail(g, bx, y + 5, bw, 11, health / Math.max(1, player.getMaxHealth()), lifeColor, time);
+        Component life = Component.translatable("hud.solomod.health_compact", Math.round(player.getHealth()), Math.round(player.getMaxHealth()));
+        if (player.getAbsorptionAmount() > 0) life = Component.translatable("hud.solomod.health_absorption", Math.round(player.getHealth()), Math.round(player.getMaxHealth()), Math.round(player.getAbsorptionAmount()));
+        RpgUi.fit(g, font, life, bx + 5, y + 7, bw - 10, RpgUi.TEXT, 0.85F);
+        // A absorção tem trilho dourado próprio sobre a borda da vida, além do número +escudo.
+        if (player.getAbsorptionAmount() > 0) g.fill(bx, y + 3, bx + Math.max(1, (int) ((bw - 2) * Math.min(1, player.getAbsorptionAmount() / player.getMaxHealth()))), y + 4, RpgUi.GOLD);
+        HudArt.rail(g, bx, y + 22, bw, 8, mana / Math.max(1, s.getMaxMana()), RpgUi.CYAN, time);
+        RpgUi.fit(g, font, Component.translatable("hud.solomod.mana_compact", s.getManaAtual(), s.getMaxMana()), bx + 5, y + 22, bw - 10, RpgUi.TEXT, 0.75F);
+        float rollRemaining = Math.max(0, rollReadyAt - player.level().getGameTime() - delta.getGameTimeDeltaPartialTick(false));
+        RpgUi.bar(g, bx, y + 33, bw - 1, 2,
+                1 - rollRemaining / com.tarcitani.solomod.event.StatsLogic.Dodge.COOLDOWN_TICKS, RpgUi.GOLD, time);
+        // Pequenas aletas ligam os trilhos ao brasão sem um painel retangular ocupando a tela.
+        g.fill(x + 31, y + 11, bx - 2, y + 12, RpgUi.GOLD);
+        g.fill(x + 30, y + 27, bx - 2, y + 28, 0xFF60778A);
         if (s.getPontosDisponiveis() > 0) {
-            boolean on = (ticks / 10) % 2 == 0;
-            Component text = Component.translatable("hud.solomod.points", s.getPontosDisponiveis(),
-                    ClientSetup.OPEN_STATS.getTranslatedKeyMessage());
-            g.drawString(font, text, X, y, on ? 0x7CFC00 : 0x3E7E00, true);
-            y += 11;
+            RpgUi.fit(g, font, Component.translatable("hud.solomod.points_compact", s.getPontosDisponiveis(), ClientSetup.OPEN_STATS.getTranslatedKeyMessage()),
+                    x, y + 47, 36, accent, 0.75F);
         }
-
-        // Arma na mão: elemento, estado da Maestria e recarga da habilidade
-        if (holdingWeapon) {
-            WeaponData data = ModularWeaponItem.getData(held);
+        if (weapon) {
+            var data = ModularWeaponItem.getData(held);
             boolean unlocked = s.meets(data.requiredStatType(), data.requiredStatValue());
-            g.fill(X, y, X + WIDTH, y + 1, 0x60FFFFFF);
-            y += 4;
-            Component state = unlocked
-                    ? Component.translatable("hud.solomod.weapon_active", data.elementType().displayName())
-                    : Component.translatable("hud.solomod.weapon_dormant", data.requiredStatValue(),
-                    data.requiredStatType().shortName().getString());
-            g.drawString(font, state, X, y, unlocked ? 0xFFFFFF : 0xFF5555, true);
-            y += 10;
-            if (data.hasSkill()) {
-                float cd = player.getCooldowns().getCooldownPercent(held.getItem(), partial);
-                int color = !unlocked ? 0xFF555555 : cd > 0 ? 0xFF9C27B0 : 0xFFE040FB;
-                bar(g, X, y, WIDTH, 4, unlocked ? 1.0F - cd : 0F, color, 0xFF2A0033);
+            int row = y + 41;
+            g.fill(bx - 2, row - 2, bx + bw + 2, row + 20, 0xA0080E18);
+            g.fill(bx - 2, row - 2, bx + 14, row - 1, accent);
+            g.renderItem(held, bx, row);
+            boolean selectable = WeaponTechnique.supports(data.weaponClass());
+            Component technique = selectable ? WeaponControls.selected(data.weaponClass()).displayName()
+                    : ClassAbility.hasAbility(data.weaponClass()) ? ClassAbility.displayName(data.weaponClass()) : data.weaponClass().displayName();
+            String talentId = selectable ? com.tarcitani.solomod.skill.SkillTree.forTechnique(WeaponControls.selected(data.weaponClass())).id()
+                    : data.weaponClass().getSerializedName() + (data.weaponClass() == WeaponClass.DAGGER ? ".throw" : ".leap");
+            if (ClassAbility.hasAbility(data.weaponClass()) && !s.hasTalent(talentId)) technique = Component.translatable("hud.solomod.talent_locked");
+            RpgUi.fit(g, font, technique, bx + 20, row + 1, bw - 37, RpgUi.TEXT, 0.85F);
+            if (selectable) {
+                g.fill(bx + bw - 12, row, bx + bw - 1, row + 10, 0xFF3A3440);
+                RpgUi.fit(g, font, WeaponControls.CYCLE.getTranslatedKeyMessage(), bx + bw - 10, row + 2, 8, accent, 0.85F);
             }
+            float cd = player.getCooldowns().getCooldownPercent(held.getItem(), delta.getGameTimeDeltaPartialTick(false));
+            RpgUi.bar(g, bx + 20, row + 13, bw - 24, 2, 1 - cd, cd > 0 ? 0xFF8E7FB8 : accent, time);
+            int rune = unlocked ? ClientSetup.tintFor(data.elementType()) | 0xFF000000 : 0xFFE26E71;
+            g.fill(bx + bw - 2, row + 12, bx + bw, row + 15, rune);
         }
-    }
-
-    private static void bar(GuiGraphics g, int x, int y, int w, int h, float progress, int fg, int bg) {
-        g.fill(x, y, x + w, y + h, bg);
-        int filled = (int) (w * Mth.clamp(progress, 0F, 1F));
-        if (filled > 0) g.fill(x, y, x + filled, y + h, fg);
-        g.fill(x, y, x + filled, y + 1, 0x40FFFFFF); // brilho no topo
+        if (charging) {
+            int row = y + 65;
+            double distance = Math.round(ClassAbility.rapierDistance(player.getTicksUsingItem()) * 10) / 10.0;
+            RpgUi.fit(g, font, Component.translatable("hud.solomod.rapier_charge", distance), bx, row, bw, RpgUi.CYAN, 0.75F);
+            RpgUi.bar(g, bx, row + 8, bw - 1, 2, player.getTicksUsingItem() / (float) WeaponAbilities.RAPIER_CHARGE_TICKS, RpgUi.CYAN, time);
+        }
     }
 }

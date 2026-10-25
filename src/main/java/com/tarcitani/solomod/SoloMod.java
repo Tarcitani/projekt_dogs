@@ -11,6 +11,7 @@ import com.tarcitani.solomod.item.ModItems;
 import com.tarcitani.solomod.mob.MobEvents;
 import com.tarcitani.solomod.network.ModNetwork;
 import com.tarcitani.solomod.skill.ClassAbility;
+import com.tarcitani.solomod.skill.DodgeRoll;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -44,6 +45,7 @@ public class SoloMod {
         NeoForge.EVENT_BUS.register(PlayerEvents.class);
         NeoForge.EVENT_BUS.register(MobEvents.class);
         NeoForge.EVENT_BUS.register(ClassAbility.class);
+        NeoForge.EVENT_BUS.register(DodgeRoll.class);
         NeoForge.EVENT_BUS.register(ModTestCommand.class);
 
         LOGGER.info("[{}] MVP de Maestria/Elementos carregado.", MOD_ID);

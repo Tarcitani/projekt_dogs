@@ -19,9 +19,9 @@
 
 ## 📖 Sobre
 
-O **Solo Mod** transforma o Minecraft num RPG de progressão. O jogador fica mais forte distribuindo pontos de **Maestria**, e as armas valem pelo que **são**: de que tier de monstro vieram, que elemento carregam e que habilidade guardam.
+O **Solo Mod** transforma o Minecraft num RPG de progressão. O jogador fica mais forte distribuindo pontos de **Maestria**, e aprende habilidades numa árvore compartilhada pelas quatro armas normais: rapieira, espada longa, adaga e martelo.
 
-Uma arma poderosa não serve a qualquer um. Sem o stat exigido, o elemento e a habilidade ficam **adormecidos** e ela bate como uma arma comum. Para despertá-la, é preciso caçar monstros mais fortes, ganhar XP, subir de Maestria e acertar o elemento certo no inimigo certo.
+As armas são sempre Normal e sem elemento. Cumprir o requisito de Maestria libera o escalonamento de dano; habilidades são aprendidas na árvore e gastam mana. Caçar monstros concede XP para evoluir atributos e desbloqueios.
 
 Os inimigos acompanham: cada **tier** de monstro tem corpo, IA e ataques próprios. Lacaios que caçam em bando, Elites que aparam golpes, Guardiões que teleportam e Monarcas com três fases que **leem o seu estilo de luta**.
 
@@ -42,7 +42,7 @@ Quatro atributos (**FOR · AGI · INT · VIT**) que mudam dano, velocidade, mana
 <td width="50%" valign="top">
 
 ### 🗡️ Armas Modulares
-**7 classes** (espadão, machado, espada longa, adaga, rapieira, kunai, varinha) × **4 tiers** × **5 elementos**. Cada arma tem habilidade própria: arremessar a adaga e chamá-la de volta, girar a claymore em 360°, mergulhar com o machado.
+**4 classes no catálogo**: rapieira, espada longa, adaga e martelo, todas com **ícones pixel art nos menus e modelos 3D em cubos na mão**. Aba criativa **Solo Mod: Armas** com uma de cada, sem duplicatas; a aba Teste gera somente as armas normais; tier e elemento ficam exclusivos dos mobs. Carregue o dash da rapieira com rastros de velocidade, alterne três técnicas da espada longa, escolha entre chamar a adaga de volta ou teleportar num relâmpago dourado e mergulhe com o martelo: mais altura gera mais dano e blocos erguidos no impacto.
 
 </td>
 </tr>
@@ -58,7 +58,7 @@ Quatro atributos (**FOR · AGI · INT · VIT**) que mudam dano, velocidade, mana
 ### 👹 Monstros por Tier
 **Lacaio → Elite → Guardião → Monarca**, cada um com IA própria, ataques telegrafados e **Fúria** a 25% de vida. **20 criaturas** com modelo e textura exclusivos por elemento.
 
-O **Rei Vulcânico** lança bolas de fogo lentas com modelo 3D próprio de magma (2,4 blocos de diâmetro) desde a fase 1: rebata com um ataque mirando nele para deixá-lo **agachado se recuperando por 5 segundos**, fora da Fúria. Suas investidas deixam trechos do chão natural em magma (`mobGriefing`). O Soberano usa bolas de fogo **apenas nos estágios 2 e 6** e tem modelo **5× maior**. Todos os chefes gritam na Fúria, ficam imunes a stun durante ela e riem por 4 s ao derrotar um jogador. A conquista **Cinzas do Vulcão** usa a cabeça do Rei em pixel art como ícone.
+Cada Monarca usa os poderes do seu elemento que aparecem no Soberano: **Genki-dama de fogo**, **Maremoto e Esferas de Água**, **Raízes, Pisão e Pulão de terra** e **Tornados de ar**. O Colosso Rei usa o Punho Sísmico. Os poderes continuam disponíveis na Fúria. O **Rei Vulcânico** também mantém bolas de fogo rebatíveis e investidas que deixam magma (`mobGriefing`). As conquistas de derrota usam o **rosto do respectivo chefe em pixel art**.
 
 </td>
 </tr>
@@ -66,7 +66,7 @@ O **Rei Vulcânico** lança bolas de fogo lentas com modelo 3D próprio de magma
 <td valign="top">
 
 ### 👑 O Soberano
-Chefe final gigante, feito de pedaços dos cinco Monarcas. **6 estágios**: a cada um ele agoniza num **close cinemático** e desperta um ataque novo; no último entra em **Fúria até morrer**, usando só o **raio do peito** e caindo ajoelhado, cansado, depois dele. Joga genki-dama de fogo, pisa o chão, chama tornados e se adapta a **vários jogadores**. Derrotá-lo encerra o mod com **créditos**.
+Chefe final gigante, feito de pedaços dos cinco Monarcas. **6 estágios**: a cada um ele agoniza num **close cinemático** e desperta o poder de um Monarca; nos estágios 1–5 usa só o poder correspondente. No último entra em **Fúria até morrer**, reúne todos os poderes e ganha o **raio do peito**, após o qual fica ajoelhado, cansado. Adapta-se a **vários jogadores**. Derrotá-lo encerra o mod com **créditos**.
 
 </td>
 <td valign="top">
@@ -223,13 +223,27 @@ Todos exigem OP (nível 2), ou seja, cheats ligados no singleplayer.
 | `/modtest points <qtd>` | define os pontos disponíveis |
 | `/modtest mana` | enche a mana |
 | `/modtest reset` | zera tudo |
-| `/modtest weapon <classe> <tier> [elemento] [requisito] [habilidade]` | cria a arma na mão |
+| `/modtest weapon <classe>` | cria uma das quatro armas normais, sem elemento |
 | `/modtest mob <alvos> <tier> <elemento>` | transforma mobs vanilla em mobs do mod |
 | `/modtest unmark <alvos>` | remove o perfil do mob |
 | `/modtest spawn <tier> <elemento>` | invoca a criatura própria do tier |
 | `/modtest sovereign [estágio]` | invoca o Soberano (chefe final), opcionalmente já no estágio 1–6 |
 
-<sub>Classes: `greatsword` `axe` `longsword` `dagger` `rapier` `kunai` `wand` · Tiers: `normal` `op` `sub_boss` `boss` · Elementos: `none` `fire` `water` `earth` `air`</sub>
+<sub>Classes atuais: `rapier` `longsword` `dagger` `hammer` · Tiers: `normal` `op` `sub_boss` `boss` · Elementos: `none` `fire` `water` `earth` `air`. Tiers e elementos são exclusivos dos mobs. Classes legadas permanecem registradas para carregar saves antigos.</sub>
+
+No criativo, **Solo Mod: Armas** contém uma arma de cada classe atual; os ovos ficam em **Solo Mod**. Para conferir os novos ataques, use `/modtest spawn boss fire` (ou `water`, `earth`, `air`, `none`) e passe para Sobrevivência. Os ícones são regenerados por `python tools/gen_boss_icons.py` e os modelos das armas por `python tools/gen_weapon_models.py`.
+
+**Árvores de habilidades:** abra **K → Habilidades**: um mapa único no estilo das conquistas vanilla, com o rosto do jogador no centro, as quatro armas normais da aba Armas em círculo (rapieira, espada longa, adaga e martelo) e habilidades ramificadas como raízes. Não há filtros por arma; arraste para navegar e use a roda para zoom. Há 1 ponto inicial + 1 a cada 100 XP Global, separado dos atributos; todas as ativações de habilidades cobram mana (recolher a adaga é gratuito). Desbloqueios persistem no jogador. Habilidades avançadas aprendidas funcionam na arma normal por Shift + direito; a suprema substitui a anterior nesse atalho. Detalhes e custos em [GAMEPLAY](docs/GAMEPLAY.md#árvores-de-habilidades--k--habilidades).
+
+**Apresentação:** os ícones de GUI das oito armas são pixel art detalhada 32×32, com aço, ouro e gemas, sem variantes elementais; os modelos 3D na mão e no mundo foram preservados. A barra amarela sob a mana mostra a recarga do rolamento. O XP Global preenche o contorno do escudo de nível; uma volta completa indica o próximo nível. Chefes novos e salvos não usam contorno branco.
+
+Controles das armas (após aprender): **espada longa → R** alterna **Meia-Lua, Ascendente e Cruzado**, **botão direito** executa (esquerdo é ataque comum); **adaga → botão direito** para arremessar/retornar e **Shift + botão direito com ela arremessada** para teleportar até ela; **rapieira → segurar botão direito e soltar**, com distância aproximada de 3–14 blocos indicada no HUD; **martelo → botão direito** para salto no chão ou mergulho imediato no ar. A queda aumenta dano/raio até 24 blocos. A habilidade avançada aprendida fica em **Shift + botão direito** (na adaga, depois de recolhê-la). Animações e roteiro de teste em [docs/GAMEPLAY.md](docs/GAMEPLAY.md#habilidades-e-animações-das-quatro-armas).
+
+**Duplo Ctrl → rolamento** na direção de WASD (sem direção, para a frente), com cambalhota, poeira, breve janela de esquiva e recuperação entre usos. Ctrl isolado mantém a corrida normal. O **Corte em Meia-Lua** agora tem preparação de duas mãos, poses dos braços e mangas, lâmina de luz 3D com cor elemental, clarões e som pesado no impacto.
+
+**R também alterna as técnicas da rapieira e do martelo**, mantendo a escolha de cada arma: rapieira tem **Estocada Relâmpago**, **Chuva de Agulhas** (três estocadas) e **Passo do Vento** (estocada + recuo); martelo tem **Salto Esmagador**, **Giro Demolidor** e **Ruptura Sísmica** (onda frontal). Botão direito usa a escolhida; apenas o dash da rapieira requer segurar/soltar.
+
+Velocidades base: **adaga 2,5**, **rapieira 2,2**, **espada longa 1,6** e **martelo 0,8 ataques/s**, antes de AGI e penalidades. A HUD agora é compacta, com **brasão rúnico, coroa, filigranas e trilhos de vida/mana/XP**: aproximadamente 164×62 pixels de GUI com arma. Ela substitui os corações vanilla e mostra também absorção, veneno/wither e dano; fome/armadura/oxigênio/montaria continuam normais. O painel **K** guarda os detalhes dos atributos e a técnica selecionada.
 
 ## 🤝 Colaborando
 
@@ -246,3 +260,5 @@ Detalhes, convenções e as áreas com risco de conflito: **[CONTRIBUTING.md](CO
 <div align="center">
 <sub>Feito com ☕ e muitos blocos por <b>Tarcitani</b> e amigos · NeoForge 1.21.1</sub>
 </div>
+
+As quatro armas são exclusivamente **Normal/sem elemento**, inclusive na aba Teste e em `/modtest weapon <classe>`. Armas antigas são normalizadas ao carregar; desbloqueios da árvore são preservados. Esta mudança não altera os tiers, elementos, ataques ou atributos de mobs, chefes e subchefes.

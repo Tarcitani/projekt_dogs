@@ -17,7 +17,7 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-/** Liga os cérebros ao ciclo de vida: dano, mortes, risada do chefe vencedor e poses ao iniciar tracking. */
+/** Remove o contorno legado dos chefes ao carregar e liga os cérebros ao ciclo de vida e tracking. */
 public final class MobEvents {
     private MobEvents() {}
 
@@ -30,6 +30,9 @@ public final class MobEvents {
             TierIdentity.apply(mob, mob.tier(), mob.randomElement());
         } else if (event.getEntity() instanceof PathfinderMob mob && mob.hasData(ModAttachments.MOB_PROFILE)) {
             if (mob instanceof TierMob creature) creature.setElement(mob.getData(ModAttachments.MOB_PROFILE).element());
+            var tier = mob.getData(ModAttachments.MOB_PROFILE).tier();
+            if (tier == com.tarcitani.solomod.core.MobTier.BOSS || tier == com.tarcitani.solomod.core.MobTier.SUB_BOSS)
+                mob.setGlowingTag(false);
             TierBrain.install(mob);
         }
     }
