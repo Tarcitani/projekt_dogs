@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Tela de Maestria (tecla K). Duas abas:
+ * Tela de Maestria (tecla K), com acesso à árvore em estilo conquistas vanilla:
  * <ul>
  *   <li><b>Maestria</b>: nível, XP, pontos e botões +1/+5 para distribuir em FOR/AGI/INT/VIT.</li>
  *   <li><b>Teste</b>: atalhos dos comandos /modtest (gerar arma, invocar/marcar mob, XP, stats, mana, reset).
@@ -30,6 +30,7 @@ import java.util.List;
  * </ul>
  * Não pausa o jogo, então os valores atualizam ao vivo conforme o servidor sincroniza.
  * O painel usa cartões de aço escuro e ouro, em duas colunas. O seletor de armas usa o catálogo atual; os pacotes sempre enviam o ordinal original da classe.
+ * Gerar arma usa apenas a classe (Normal/sem elemento); seletores de tier/elemento são exclusivos dos mobs.
  */
 public class StatsScreen extends Screen {
     private static final int PANEL_W = 308, PANEL_H = 226;
@@ -61,6 +62,8 @@ public class StatsScreen extends Screen {
                 .bounds(left + 10, top + 34, 86, 16).build()).active = testTab;
         addRenderableWidget(RpgButton.builder(Component.translatable("screen.solomod.tab_test"), b -> switchTab(true))
                 .bounds(left + 102, top + 34, 86, 16).build()).active = !testTab;
+        addRenderableWidget(RpgButton.builder(Component.translatable("screen.solomod.tab_skills"),
+                b -> minecraft.setScreen(new SkillTreeScreen(this))).bounds(left + 194, top + 34, 104, 16).build());
 
         if (testTab) initTestTab(); else initMasteryTab();
     }
@@ -121,7 +124,7 @@ public class StatsScreen extends Screen {
 
         // Ações que usam a seleção
         addRenderableWidget(RpgButton.builder(Component.translatable("screen.solomod.give_weapon"),
-                b -> send(Action.GIVE_WEAPON, WeaponClass.AVAILABLE.get(selClass).ordinal(), selTier, selElement)).bounds(x2, y, w, h).build());
+                b -> send(Action.GIVE_WEAPON, WeaponClass.AVAILABLE.get(selClass).ordinal(), 0, 0)).bounds(x2, y, w, h).build());
         addRenderableWidget(RpgButton.builder(Component.translatable("screen.solomod.spawn_mob"),
                 b -> send(Action.SPAWN_MOB, selTier, selElement, 0)).bounds(x2, y + gap, w, h).build());
         addRenderableWidget(RpgButton.builder(Component.translatable("screen.solomod.mark_nearest"),
@@ -158,11 +161,11 @@ public class StatsScreen extends Screen {
     }
 
     private static Component tierLabel() {
-        return Component.translatable("screen.solomod.sel_tier", MobTier.values()[selTier].displayName());
+        return Component.translatable("screen.solomod.sel_mob_tier", MobTier.values()[selTier].displayName());
     }
 
     private static Component elementLabel() {
-        return Component.translatable("screen.solomod.sel_element", ElementType.values()[selElement].displayName());
+        return Component.translatable("screen.solomod.sel_mob_element", ElementType.values()[selElement].displayName());
     }
 
     // ------------------------------------------------------------------ desenho

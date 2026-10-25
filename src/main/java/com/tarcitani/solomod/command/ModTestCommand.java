@@ -23,7 +23,6 @@ import com.tarcitani.solomod.item.ModularWeaponItem;
 import com.tarcitani.solomod.mob.SovereignBrain;
 import com.tarcitani.solomod.mob.TierIdentity;
 import com.tarcitani.solomod.network.TestActionPayload;
-import com.tarcitani.solomod.skill.WeaponSkill;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -56,16 +55,15 @@ import java.util.function.Function;
  * /modtest points &lt;qtd&gt;                            define os pontos disponíveis
  * /modtest mana                                    enche a mana
  * /modtest reset                                   zera tudo
- * /modtest weapon &lt;classe&gt; &lt;tier&gt; [elemento] [requisito] [habilidade]
- *                                                  cria a arma configurada na mão principal
+ * /modtest weapon &lt;classe&gt;                         cria a arma Normal/sem elemento na mão principal
  * /modtest mob &lt;alvos&gt; &lt;tier&gt; &lt;elemento&gt;            transforma mobs em "mobs do mod"
  * /modtest unmark &lt;alvos&gt;                          remove o perfil
  * /modtest spawn &lt;tier&gt; &lt;elemento&gt;              invoca a criatura do tier (modelo próprio)
  * /modtest sovereign [estágio]                     invoca o Soberano (chefe final), opcionalmente já no
  *                                                  estágio 1-6 (pula as cinemáticas do caminho)
  * </pre>
- * O autocomplete de armas mostra rapier, longsword, dagger e hammer. Nomes legados continuam aceitos
- * para permitir testes com itens de mundos antigos.
+ * Armas: apenas rapier, longsword, dagger e hammer, sempre normais.
+ * Tier/elemento permanecem nos subcomandos de mobs, sem alterar chefes e subchefes.
  */
 public final class ModTestCommand {
     private ModTestCommand() {}
@@ -143,15 +141,7 @@ public final class ModTestCommand {
 
                 .then(Commands.literal("weapon")
                         .then(enumArg("class", WeaponClass.AVAILABLE.toArray(WeaponClass[]::new))
-                                .then(enumArg("tier", MobTier.values())
-                                        .executes(ctx -> giveWeapon(ctx, false, false, false))
-                                        .then(enumArg("element", ElementType.values())
-                                                .executes(ctx -> giveWeapon(ctx, true, false, false))
-                                                .then(Commands.argument("required", IntegerArgumentType.integer(0, PlayerStatsAttachment.MAX_STAT))
-                                                        .executes(ctx -> giveWeapon(ctx, true, true, false))
-                                                        .then(Commands.argument("skill", StringArgumentType.word())
-                                                                .suggests(suggest(Arrays.stream(WeaponSkill.values()).map(WeaponSkill::id).toArray(String[]::new)))
-                                                                .executes(ctx -> giveWeapon(ctx, true, true, true))))))))
+                                .executes(ModTestCommand::giveWeapon)))
 
                 .then(Commands.literal("mob")
                         .then(Commands.argument("targets", EntityArgument.entities())
@@ -204,20 +194,12 @@ public final class ModTestCommand {
         return 1;
     }
 
-    private static int giveWeapon(CommandContext<CommandSourceStack> ctx, boolean hasElement, boolean hasRequired,
-                                  boolean hasSkill) throws CommandSyntaxException {
+    /** Sempre entrega uma das quatro armas normais; tiers e elementos pertencem apenas aos mobs. */
+    private static int giveWeapon(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayerOrException();
         WeaponClass wc = parse(ctx, "class", WeaponClass::byName);
-        MobTier tier = parse(ctx, "tier", MobTier::byName);
-        ElementType element = hasElement ? parse(ctx, "element", ElementType::byName) : ElementType.NONE;
-
-        WeaponData data = WeaponData.of(wc, tier, element);
-        if (hasRequired) data = data.withRequirement(IntegerArgumentType.getInteger(ctx, "required"));
-        if (hasSkill) {
-            String skillId = StringArgumentType.getString(ctx, "skill");
-            if (WeaponSkill.byId(skillId) == WeaponSkill.NONE && !skillId.equalsIgnoreCase("none")) throw INVALID.create(skillId);
-            data = data.withSkill(skillId.toLowerCase());
-        }
+        if (!WeaponClass.AVAILABLE.contains(wc)) throw INVALID.create(wc.getSerializedName());
+        WeaponData data = WeaponData.defaultFor(wc);
 
         ItemStack stack = ModularWeaponItem.create(ModItems.get(wc), data);
         ItemStack previous = player.getMainHandItem();
@@ -227,16 +209,7 @@ public final class ModTestCommand {
         }
         StatsLogic.applyLockedWeaponPenalty(player);
 
-        WeaponData finalData = data;
-        ctx.getSource().sendSuccess(() -> Component.literal("Arma criada: ")
-                .append(stack.getHoverName())
-                .append(Component.literal(String.format(" | requer %d %s | %s | habilidade: %s",
-                        finalData.requiredStatValue(), finalData.requiredStatType().name(),
-                        finalData.elementType().name(), finalData.skillId()))), false);
-        if (tier == MobTier.NORMAL && element != ElementType.NONE) {
-            ctx.getSource().sendSuccess(() -> Component.literal("Aviso: armas NORMAL não têm elemento; elemento ignorado.")
-                    .withStyle(ChatFormatting.GRAY), false);
-        }
+        ctx.getSource().sendSuccess(() -> Component.translatable("message.solomod.normal_weapon_created", stack.getHoverName()), false);
         return 1;
     }
 

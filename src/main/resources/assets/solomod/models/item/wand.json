@@ -1,33 +1,22 @@
 {
-  "parent": "minecraft:item/handheld",
+  "loader": "neoforge:separate_transforms",
+  "gui_light": "front",
   "textures": {
-    "layer0": "solomod:item/wand",
-    "layer1": "solomod:item/wand_overlay"
+    "particle": "solomod:item/wand"
   },
-  "overrides": [
-    {
-      "predicate": {
-        "solomod:element": 1
-      },
-      "model": "solomod:item/wand_water"
-    },
-    {
-      "predicate": {
-        "solomod:element": 2
-      },
-      "model": "solomod:item/wand_earth"
-    },
-    {
-      "predicate": {
-        "solomod:element": 3
-      },
-      "model": "solomod:item/wand_fire"
-    },
-    {
-      "predicate": {
-        "solomod:element": 4
-      },
-      "model": "solomod:item/wand_air"
+  "base": {
+    "parent": "minecraft:item/handheld",
+    "textures": {
+      "layer0": "solomod:item/wand",
+      "layer1": "solomod:item/wand_overlay"
     }
-  ]
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "solomod:item/wand_icon"
+      }
+    }
+  }
 }

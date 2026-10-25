@@ -2,6 +2,7 @@ package com.tarcitani.solomod.skill;
 
 import com.tarcitani.solomod.event.StatsLogic.Dodge;
 import com.tarcitani.solomod.network.RollAnimationPayload;
+import com.tarcitani.solomod.network.RollCooldownPayload;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -32,7 +33,8 @@ import java.util.UUID;
  * Só começa com apoio físico, sem veículo, voo, natação, uso de item ou outra habilidade em andamento.
  * Move por 8 ticks e recupera até 12; entre os ticks 2 e 7 esquiva de dano de combate. Queda, ambiente,
  * void e fontes que ignoram invulnerabilidade continuam valendo. Não muda a hitbox nem destrói blocos.
- * A direção real é enviada aos observadores para a cambalhota. Valores em {@link Dodge}.
+ * A direção real é enviada aos observadores; a recarga vai ao dono para a barra sobre o XP vanilla.
+ * Valores em {@link Dodge}.
  */
 public final class DodgeRoll {
     private DodgeRoll() {}
@@ -50,6 +52,7 @@ public final class DodgeRoll {
                 || player.serverLevel().noBlockCollision(player, player.getBoundingBox().move(0, -0.08, 0))) return;
         long now = player.level().getGameTime();
         if (now < READY_AT.getOrDefault(player.getUUID(), 0L)) {
+            PacketDistributor.sendToPlayer(player, new RollCooldownPayload((int) (READY_AT.get(player.getUUID()) - now)));
             player.displayClientMessage(Component.translatable("message.solomod.roll_cooldown"), true);
             return;
         }
@@ -60,6 +63,7 @@ public final class DodgeRoll {
         direction = direction.normalize();
         ACTIVE.put(player.getUUID(), new Rolling(now, direction, player.level().dimension()));
         READY_AT.put(player.getUUID(), now + Dodge.COOLDOWN_TICKS);
+        PacketDistributor.sendToPlayer(player, new RollCooldownPayload(Dodge.COOLDOWN_TICKS));
         player.setSprinting(false);
         player.causeFoodExhaustion(Dodge.EXHAUSTION);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player,
@@ -121,9 +125,15 @@ public final class DodgeRoll {
 
     private static void clear(UUID id) { ACTIVE.remove(id); READY_AT.remove(id); }
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { clear(event.getEntity().getUUID()); }
-    @SubscribeEvent public static void onDimension(PlayerEvent.PlayerChangedDimensionEvent event) { clear(event.getEntity().getUUID()); }
+    @SubscribeEvent public static void onDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        clear(event.getEntity().getUUID());
+        if (event.getEntity() instanceof ServerPlayer player) PacketDistributor.sendToPlayer(player, new RollCooldownPayload(0));
+    }
     @SubscribeEvent public static void onDeath(LivingDeathEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) clear(player.getUUID());
+        if (event.getEntity() instanceof ServerPlayer player) {
+            clear(player.getUUID());
+            PacketDistributor.sendToPlayer(player, new RollCooldownPayload(0));
+        }
     }
     @SubscribeEvent public static void onServerStopped(ServerStoppedEvent event) { ACTIVE.clear(); READY_AT.clear(); }
 }

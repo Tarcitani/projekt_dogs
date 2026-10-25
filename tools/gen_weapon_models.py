@@ -1,6 +1,8 @@
 """
-Gera os modelos 3D da rapieira, espada longa, adaga e martelo, a textura pixel art de peças que eles usam,
+Gera os modelos 3D da rapieira, espada longa, adaga e martelo, ícones pixel art exclusivos da GUI,
 o contorno "fantasma" da adaga arremessada e os modelos dos ovos das criaturas.
+O loader neoforge:separate_transforms troca SOMENTE a perspectiva gui das oito armas pelos
+sprites normais detalhados 32×32 de weapon_icons.py; não gera armas elementais. Mão, chão, moldura e projétil conservam o modelo original.
 
 Os modelos 3D são montados na vertical e inclinados -45° em Z: ficam na mesma diagonal dos sprites
 vanilla (cabo embaixo à esquerda, ponta em cima à direita), então reaproveitam as poses de mão da
@@ -13,7 +15,7 @@ import math
 import os
 from itertools import product
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(ROOT, "src/main/resources/assets/solomod")
@@ -212,7 +214,42 @@ def write_ghost_dagger():
     out.save(os.path.join(TEXTURES, "dagger_thrown.png"))
 
 
+def write_hammer_icon():
+    """Sprite 16×16: cabo diagonal, cabeça de aço e runa; não altera os cubos da arma."""
+    base = Image.new("RGBA", (16, 16))
+    d = ImageDraw.Draw(base)
+    d.line([(2, 14), (11, 5)], fill=(44, 29, 22), width=3)
+    d.line([(2, 13), (10, 5)], fill=(153, 105, 59), width=1)
+    d.point([(4, 11), (6, 9), (8, 7)], fill=(226, 177, 70))
+    d.polygon([(6, 2), (9, 0), (15, 6), (13, 9)], fill=(38, 43, 56))
+    d.polygon([(7, 2), (9, 1), (14, 6), (12, 8)], fill=(130, 147, 167))
+    d.line([(7, 2), (12, 7)], fill=(228, 238, 246), width=1)
+    d.line([(9, 1), (14, 6)], fill=(209, 162, 48), width=1)
+    base.save(os.path.join(TEXTURES, "hammer.png"))
+    overlay = Image.new("RGBA", (16, 16))
+    d = ImageDraw.Draw(overlay)
+    d.line([(10, 3), (12, 5)], fill=(255, 255, 255), width=1)
+    d.point((11, 5), fill=(222, 234, 255))
+    overlay.save(os.path.join(TEXTURES, "hammer_overlay.png"))
+
+
 def dump(name, data):
+    # O ícone é um modelo gerado plano; todas as outras perspectivas preservam o modelo 3D.
+    weapon = name.split("_")[0]
+    if weapon in ("rapier", "longsword", "dagger", "hammer", "greatsword", "axe", "kunai", "wand"):
+        if name == "dagger_thrown":
+            gui = {"parent": "minecraft:item/generated", "textures": {"layer0": "solomod:item/dagger_icon_thrown"}}
+        elif name == weapon:
+            gui = {"parent": "minecraft:item/generated", "textures": {"layer0": f"solomod:item/{weapon}_icon"}}
+        else:
+            suffix = name[len(weapon):]
+            gui = {"parent": "minecraft:item/generated", "textures": {"layer0": f"solomod:item/{weapon}_icon{suffix}"}}
+        overrides = data.pop("overrides", [])
+        data = {"loader": "neoforge:separate_transforms", "gui_light": "front",
+                "textures": {"particle": data["textures"].get("particle", data["textures"].get("layer0"))},
+                "base": data, "perspectives": {"gui": gui}}
+        if overrides:
+            data["overrides"] = overrides
     with open(os.path.join(MODELS, name + ".json"), "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=2)
         fh.write("\n")
@@ -221,10 +258,20 @@ def dump(name, data):
 FLAT = ("greatsword", "axe", "kunai", "wand")
 
 
-def element_overrides(name):
-    """Overrides por elemento (solomod:element = 1..4); o último que casa vence, então vão em ordem crescente."""
-    from gen_weapon_elements import ELEMENTS
-    return [{"predicate": {"solomod:element": i}, "model": f"solomod:item/{name}_{e}"} for i, e in enumerate(ELEMENTS, start=1)]
+def remove_elemental_weapon_assets():
+    """Remove apenas saídas de armas descontinuadas; ovos e assets dos mobs são preservados."""
+    from pathlib import Path
+    for element in ("water", "earth", "fire", "air"):
+        for name in ("rapier", "longsword", "dagger", "hammer") + FLAT:
+            for folder, filename in ((MODELS, f"{name}_{element}.json"),
+                                     (TEXTURES, f"{name}_{element}.png"),
+                                     (TEXTURES, f"{name}_icon_{element}.png")):
+                target = (Path(folder) / filename).resolve()
+                assert target.parent == Path(folder).resolve()
+                target.unlink(missing_ok=True)
+        target = (Path(TEXTURES) / f"weapon_parts_{element}.png").resolve()
+        assert target.parent == Path(TEXTURES).resolve()
+        target.unlink(missing_ok=True)
 
 
 def untinted(elements):
@@ -237,39 +284,29 @@ def untinted(elements):
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from gen_weapon_elements import ELEMENTS, restyle, parts_texture, extras
+    ELEMENTS = ("water", "earth", "fire", "air")  # Elementos continuam apenas nos ovos/criaturas.
+    from weapon_icons import write_icon_assets
 
+    remove_elemental_weapon_assets()
     write_parts_texture()
+    write_icon_assets(TEXTURES)
+    write_hammer_icon()
     write_ghost_dagger()
 
-    # Forma base (armas sem elemento: tier Normal ou elemento "nenhum"), com os overrides por elemento.
+    # Somente forma normal; a adaga preserva o override de arremesso.
     base_3d = {"rapier": rapier, "longsword": claymore, "dagger": dagger, "hammer": hammer}
     for name, build in base_3d.items():
-        model = dict(model_3d(build(), name), overrides=element_overrides(name))
+        model = dict(model_3d(build(), name), overrides=[])
         if name == "dagger":
             model["overrides"].append({"predicate": {"solomod:thrown": 1}, "model": "solomod:item/dagger_thrown"})
         dump(name, model)
     for name in FLAT:
         model = {"parent": "minecraft:item/handheld",
                  "textures": {"layer0": f"solomod:item/{name}", "layer1": f"solomod:item/{name}_overlay"},
-                 "overrides": element_overrides(name)}
+                 "overrides": []}
         if name == "dagger":  # adaga arremessada: o fantasma vence qualquer elemento (vem por último)
             model["overrides"].append({"predicate": {"solomod:thrown": 1}, "model": "solomod:item/dagger_thrown"})
         dump(name, model)
-
-    # Uma versão de cada arma por elemento.
-    for element in ELEMENTS:
-        parts_texture(element, os.path.join(TEXTURES, f"weapon_parts_{element}.png"))
-        for name, build in base_3d.items():
-            extra = extras("rapier" if name == "rapier" else "claymore", element, el) if name in ("rapier", "longsword") else []
-            model = model_3d(untinted(build() + extra), name)
-            model["textures"] = {"parts": f"solomod:item/weapon_parts_{element}", "particle": f"solomod:item/weapon_parts_{element}"}
-            dump(f"{name}_{element}", model)
-        for name in FLAT:
-            img = restyle(os.path.join(TEXTURES, f"{name}.png"), os.path.join(TEXTURES, f"{name}_overlay.png"), element, name)
-            img.save(os.path.join(TEXTURES, f"{name}_{element}.png"))
-            dump(f"{name}_{element}", {"parent": "minecraft:item/handheld",
-                                       "textures": {"layer0": f"solomod:item/{name}_{element}"}})
 
     ghost = Image.open(os.path.join(TEXTURES, "weapon_parts.png")).convert("RGBA")
     for y in range(ghost.height):

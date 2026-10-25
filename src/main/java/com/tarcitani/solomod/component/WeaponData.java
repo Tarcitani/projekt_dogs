@@ -17,13 +17,15 @@ import net.minecraft.network.codec.StreamCodec;
  * <p>É um record imutável: para "alterar" uma arma, crie uma cópia com os métodos {@code with...}
  * e grave de volta com {@code stack.set(...)}. Records são obrigatórios aqui porque o vanilla compara
  * componentes por {@code equals/hashCode} (empilhamento, sincronização de inventário etc.).
+ * Todos os exemplares são Normal/sem elemento, inclusive ao ler componentes antigos. Campos
+ * legados permanecem nos codecs para carregar mundos sem perder itens; habilidades vêm da árvore.
  *
- * @param mobTier           tier do mob de origem do material
+ * @param mobTier           campo legado, normalizado para NORMAL
  * @param weaponClass       formato da arma (espadão, adaga, varinha...)
  * @param requiredStatType  stat de Maestria exigido
  * @param requiredStatValue valor mínimo do stat exigido
- * @param elementType       elemento da arma (NONE em armas NORMAL)
- * @param skillId           id da habilidade ativa ("none" quando não há)
+ * @param elementType       campo legado, normalizado para NONE
+ * @param skillId           campo legado, normalizado para "none"; habilidades vêm da árvore
  */
 public record WeaponData(
         MobTier mobTier,
@@ -55,26 +57,22 @@ public record WeaponData(
     );
 
     /**
-     * Construtor canônico com normalização: aplica as regras de tier para que nenhum comando ou loot
-     * consiga criar uma arma inválida (ex.: NORMAL com elemento).
+     * Converte também armas antigas em Normal/sem elemento, sem tocar em dados de mobs.
      */
     public WeaponData {
-        if (requiredStatValue < 0) requiredStatValue = 0;
-        if (!mobTier.allowsElement()) elementType = ElementType.NONE;
-        if (!mobTier.allowsSkill() || skillId == null || skillId.isBlank()) skillId = WeaponSkill.NONE.id();
+        mobTier = MobTier.NORMAL;
+        elementType = ElementType.NONE;
+        requiredStatType = weaponClass.defaultStat();
+        requiredStatValue = MobTier.NORMAL.defaultRequirement();
+        skillId = WeaponSkill.NONE.id();
     }
 
     /**
-     * Fábrica com os padrões do tier/classe: stat da classe, requisito do tier
-     * e habilidade padrão (suprema para BOSS, a da classe para SUB_BOSS).
+     * Fábrica compatível com chamadas antigas; tier/elemento são ignorados. Só gera arma Normal.
      */
     public static WeaponData of(WeaponClass weaponClass, MobTier tier, ElementType element) {
-        String skill = switch (tier.skillLevel()) {
-            case 2 -> WeaponSkill.ELEMENTAL_BURST.id();
-            case 1 -> weaponClass.defaultSkillId();
-            default -> WeaponSkill.NONE.id();
-        };
-        return new WeaponData(tier, weaponClass, weaponClass.defaultStat(), tier.defaultRequirement(), element, skill);
+        return new WeaponData(MobTier.NORMAL, weaponClass, weaponClass.defaultStat(),
+                MobTier.NORMAL.defaultRequirement(), ElementType.NONE, WeaponSkill.NONE.id());
     }
 
     /** Usado quando um ModularWeaponItem não tem componente (ex.: pego do menu criativo). */
@@ -82,10 +80,12 @@ public record WeaponData(
         return of(weaponClass, MobTier.NORMAL, ElementType.NONE);
     }
 
+    /** Compatibilidade de API: o construtor preserva apenas o requisito padrão Normal da classe. */
     public WeaponData withRequirement(int value) {
         return new WeaponData(mobTier, weaponClass, requiredStatType, value, elementType, skillId);
     }
 
+    /** Compatibilidade de API: habilidades não são mais concedidas pelo ItemStack. */
     public WeaponData withSkill(String newSkillId) {
         return new WeaponData(mobTier, weaponClass, requiredStatType, requiredStatValue, elementType, newSkillId);
     }

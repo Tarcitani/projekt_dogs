@@ -22,7 +22,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
 /**
- * Identidade física de cada tier: tamanho, atributos, título e brilho.
+ * Identidade física de cada tier: tamanho, atributos e título. Chefes não recebem contorno luminoso.
  *
  * <table>
  *   <tr><th>Tier</th><th>Título</th><th>Tamanho</th><th>Vida</th><th>Dano</th><th>Armadura</th><th>Firmeza</th><th>Velocidade</th></tr>
@@ -129,9 +129,7 @@ public final class TierIdentity {
         if (living instanceof TierMob creature) creature.setElement(element);
         living.setCustomName(title(living, tier, element));
         living.setCustomNameVisible(true);
-        // Só o Monarca tem contorno brilhante: é visto através das paredes.
-        // O Soberano não: o contorno atravessando as paredes entregava a posição dele e poluía a cena.
-        living.setGlowingTag(tier == MobTier.BOSS && !(living instanceof Sovereign));
+        living.setGlowingTag(false);
 
         if (living instanceof PathfinderMob mob) TierBrain.install(mob);
         sync(living);

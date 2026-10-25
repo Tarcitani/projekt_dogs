@@ -43,49 +43,68 @@ O jogador tem 4 atributos de **Maestria**. Os pontos vêm do **XP Global**: cada
 
 ## 🏅 Tiers
 
-O tier é a "qualidade" do mob, e portanto do material e da arma que sai dele.
+Os tiers **NORMAL / OP / SUB_BOSS / BOSS** continuam sendo usados pelos mobs, com os mesmos atributos, ataques, elementos, XP e fases. Chefes e subchefes não foram alterados. Armas não têm variantes de tier: todas são **Normal e sem elemento**.
 
-| Tier | Nome | Dano | Bônus de stat | Elemento | Habilidade |
-|---|---|---|---|---|---|
-| `NORMAL` | Normal | 1x | — | nenhum | nenhuma |
-| `OP` | Elite | 1.25x | +3 | passiva leve | — |
-| `SUB_BOSS` | S. Chefe | 1.5x | +5 | **puro** (nunca cai abaixo de 1.0x) | habilidade menor |
-| `BOSS` | Chefe | 2x | +10 | passiva máxima | Explosão Elemental (suprema) |
-
-**Travamento**: se o jogador não tem o stat exigido pela arma, o golpe é básico (só o multiplicador do tier). Elemento, escalonamento (+2% por ponto no stat) e habilidade ficam **adormecidos**. Armas Pesadas e Médias ainda perdem 40% da velocidade de ataque.
-
-Fórmula do golpe com arma modular (`event/CombatEvents.java`):
-
-```
-travada:    dano_vanilla × tier
-destravada: dano_vanilla × tier × (1 + 2% × stat_efetivo) × multiplicador_elemental
-```
+Sem o stat exigido (5 FOR ou AGI, conforme a classe), o golpe não ganha o escalonamento de Maestria; armas pesadas/médias mantêm a penalidade de velocidade. Com o requisito, o dano escala com o stat como antes. Não há multiplicador nem passiva elemental da arma.
 
 ## ⚔️ Armas
 
-O catálogo atual tem **4 classes de arma**. Cada uma tem um item próprio (`solomod:<classe>`), e o tier, elemento, requisito e habilidade de cada exemplar ficam gravados no item. A aba criativa **Solo Mod: Armas** contém exatamente uma rapieira, uma espada longa, uma adaga e um martelo, neutros e de tier Normal. A aba Teste e o autocomplete de `/modtest weapon` também oferecem só essas quatro classes; tiers e elementos continuam configuráveis ali.
+O catálogo atual tem **4 classes de arma**. Cada uma tem um item próprio (`solomod:<classe>`), todos os exemplares são Normal/sem elemento. As habilidades pertencem à árvore do jogador. A aba criativa **Solo Mod: Armas** contém exatamente uma rapieira, uma espada longa, uma adaga e um martelo, neutros e de tier Normal. A aba Teste e o autocomplete de `/modtest weapon` também oferecem só essas quatro classes; o botão de gerar arma e `/modtest weapon <classe>` só geram Normal. Os seletores **Tier do mob** e **Elemento do mob** continuam afetando somente invocar/marcar mobs.
 
-| Classe | Peso | Stat | Habilidade de tier padrão | Habilidade de classe |
+| Classe | Peso | Stat | Habilidade avançada da árvore | Habilidade de classe |
 |---|---|---|---|---|
 | Espada longa (`longsword`) | Média | FOR | Investida | **Meia-Lua / Ascendente / Cruzado** (R alterna, clique direito usa) |
 | Adaga (`dagger`) | Leve | AGI | Investida | **Arremesso** (clique direito) |
 | Rapieira (`rapier`) | Leve | AGI | Investida | **Estocada Relâmpago** (clique direito) |
 | Martelo (`hammer`) | Pesada | FOR | Impacto Sísmico | **Salto Esmagador** (clique direito) |
 
-Velocidades base, antes de AGI e penalidades de requisito: **adaga 2,5 ataques/s**, **rapieira 2,2**, **espada longa 1,6** (igual às espadas vanilla) e **martelo 0,8**. O martelo tem +9 de dano base. Espadão, machado, kunai e varinha permanecem registrados para compatibilidade com mundos salvos e podem ser obtidos por comando, mas saíram do catálogo visível.
+Velocidades base, antes de AGI e penalidades de requisito: **adaga 2,5 ataques/s**, **rapieira 2,2**, **espada longa 1,6** (igual às espadas vanilla) e **martelo 0,8**. O martelo tem +9 de dano base. Espadão, machado, kunai e varinha permanecem registrados para compatibilidade com mundos salvos mas não são oferecidos pelo comando de teste nem pelo catálogo visível.
 
-### Habilidades de tier (gastam mana)
+### Habilidades avançadas da árvore (gastam mana)
 
 | Habilidade | Mana | Recarga | INT mínima |
 |---|---|---|---|
 | Investida (`dash_strike`) | 15 | 3 s | 5 |
 | Impacto Sísmico (`ground_slam`) | 25 | 5 s | 10 |
 | Disparo de Mana (`mana_bolt`) | 10 | 1,5 s | 5 |
-| Explosão Elemental (`elemental_burst`) | 40 | 10 s | 20 |
+| Explosão de Maestria (`elemental_burst`) | 40 | 10 s | 20 |
 
-Exigem Maestria + INT mínima + mana. A potência escala com o tier (habilidade menor = 1x, suprema = 2x). Nas armas com habilidade de classe, a de tier passa para **agachar + clique direito**. Com a adaga arremessada, essa combinação escolhe o teleporte: recolha a adaga para voltar a usar a habilidade de tier.
+Exigem desbloqueio na árvore da classe + Maestria + INT mínima + mana. A potência depende da habilidade (avançada = 1x, suprema = 2x), sem depender de tier da arma. Nas armas com habilidade de classe, a avançada fica em **agachar + clique direito**. Com a adaga arremessada, essa combinação escolhe o teleporte: recolha a adaga para voltar a usar a habilidade avançada.
 
-### Habilidades de classe (sem mana, qualquer tier)
+### Árvores de habilidades — K → Habilidades
+
+A árvore é **um único mapa radial**, sem abas nem filtros por arma. O rosto/skin do jogador fica no centro; somente as quatro armas da aba **Solo Mod: Armas** — rapieira, espada longa, adaga e martelo — formam um círculo ao redor dele, com ícones de tier Normal e sem elemento. De cada arma saem suas habilidades, com ramificações em raízes que crescem até as supremas. A tela mantém pedra, molduras, conexões e estados visuais das conquistas vanilla.
+
+Selecione um nó para consultar efeito, custo, mana e pré-requisito; clique em **Aprender** para liberar. Arraste nos dois eixos, use a roda ou **+ / −** para zoom, as quatro setas para navegar e **Home / Centralizar** para voltar ao jogador. O zoom acompanha o cursor. Selecionar uma arma não oculta as outras. Moldura dourada indica habilidade aprendida; marcador verde indica compra disponível.
+
+O jogador começa com **1 ponto de habilidade**, e ganha **mais 1 a cada 100 XP Global**. Esses pontos são separados dos pontos de atributos: aprender não retira FOR/AGI/INT/VIT nem XP. A árvore começa vazia também em mundos antigos; o XP que já existe concede os pontos correspondentes. Desbloqueios são por jogador/classe, compartilhados entre exemplares da mesma arma, salvos ao sair e preservados na morte. Resetar a Maestria também limpa a árvore.
+
+| Arma | Início (1 ponto) | Ramos (2 pontos cada) | Habilidade avançada (3 pontos) | Final (5 pontos) |
+|---|---|---|---|---|
+| Espada longa | Meia-Lua | Ascendente / Cruzado | Investida | Explosão de Maestria |
+| Rapieira | Estocada Relâmpago | Chuva de Agulhas / Passo do Vento | Investida | Explosão de Maestria |
+| Adaga | Arremesso | Passo Relâmpago (teleporte) | Investida | Explosão de Maestria |
+| Martelo | Salto Esmagador | Giro Demolidor / Ruptura Sísmica | Impacto no Chão | Explosão de Maestria |
+
+Ramos e habilidade avançada exigem o nó inicial; a suprema exige a habilidade avançada. Não é preciso comprar todos os ramos para alcançar a suprema. Espadão, machado, kunai e varinha legados não aparecem na árvore; seus dados permanecem preservados para compatibilidade com mundos antigos. Aprender uma habilidade avançada a disponibiliza na arma normal da classe por **Shift + direito**. Ao aprender a suprema, ela substitui a avançada nesse atalho; Maestria/INT, mana e recarga continuam validados no servidor.
+
+| Ativação | Mana |
+|---|---|
+| Meia-Lua / Estocada Relâmpago | 5 |
+| Ascendente / Passo do Vento | 7 |
+| Cruzado / Chuva de Agulhas / Giro Demolidor | 8 |
+| Salto Esmagador / Ruptura Sísmica | 10 |
+| Arremesso da adaga | 3 |
+| Teleporte da adaga | 8 |
+| Recolher a adaga | 0 (operação de recuperação) |
+
+As habilidades avançadas mantêm os custos da tabela anterior. Cada ativação válida cobra **uma vez**, mesmo sem acertar um alvo; múltiplos golpes da mesma técnica não cobram de novo. Carga cancelada da rapieira, bloqueio por recarga/estado, teleporte sem destino seguro e habilidade bloqueada não gastam mana. O dash cobra ao soltar, antes de avançar. Sem mana suficiente, o servidor recusa a ação, inclusive no Criativo. Trocar técnica não elimina a recarga.
+
+### Ícones das armas e modelos na mão
+
+**Somente a perspectiva GUI** (inventário, hotbar, tooltips com ícone, HUD e menus) usa pixel art: sprites detalhados **32×32** em todas as oito classes, somente normais, sem suavização. Aço facetado, guarda, cabo envolto, ouro, gemas e runas distinguem as armas; as variantes elementais e seus assets foram removidos. A rapieira, espada longa, adaga e martelo **continuam em 3D na mão**, em primeira/terceira pessoa, no chão, em molduras e no projétil da adaga. O fantasma da adaga arremessada também tem ícone separado. As classes legadas também recebem os novos ícones somente na GUI e preservam os modelos que já usavam fora dela. Os sprites vêm de `tools/weapon_icons.py`, chamado por `python tools/gen_weapon_models.py`; não editar os JSONs gerados.
+
+### Habilidades de classe (aprendidas, com mana, armas normais)
 
 | Arma | Habilidade |
 |---|---|
@@ -94,7 +113,7 @@ Exigem Maestria + INT mínima + mana. A potência escala com o tier (habilidade 
 | Espada longa | **Corte em Meia-Lua**: botão direito prepara por **6 ticks**, com a arma nos ombros e mão de apoio, e corta um semicírculo horizontal de **180° à frente**, alcançando **4,5 blocos**, com dano de 1,2× e empurrão. Uma **lâmina de luz volumétrica** revela o arco do golpe, com halo elemental, fio branco e dissipação na recuperação; acertos produzem clarão, faíscas, som pesado e tremor leve. Braços/mangas acompanham o corte em terceira pessoa; a arma tem preparação, varredura ampla e recuperação em primeira pessoa. A sequência dura **18 ticks**. Cada inimigo recebe um acerto; alvos atrás ou através de paredes não entram. Recarga de **1,2 s**. Clique esquerdo é ataque vanilla, inclusive para rebater bolas de fogo. |
 | Martelo | **Salto Esmagador**: botão direito no chão salta e mergulha; **no ar mergulha imediatamente**. O servidor registra a maior altura e considera a distância já caída ao ativar: multiplicador **2 + 0,12 × altura**, com teto de **24 blocos** (máximo **4,88×**). O raio começa em **4,5** e aumenta **0,08 por bloco** (máximo **6,42**). Poses de arma erguida até pousar, rastro de queda, poeira, anéis 3D, ondas elementais e tremor. Até **36 + 2 × altura** blocos naturais expostos saltam e voltam ao pousar, respeitando `mobGriefing`; com a regra desligada ficam os efeitos visuais. Recarga de **3,5 s** e proteção de queda durante a habilidade. Água/lava, voo criativo e elytra bloqueiam o início; limite de duração de 12 s. |
 
-Com **espada longa, rapieira ou martelo** equipado, **R** alterna a técnica selecionada (tecla configurável em Controles). A seleção aparece na faixa compacta da HUD, no tooltip e no painel K; **botão direito** executa. A seleção é independente para cada classe. Todas as técnicas de uma arma compartilham a recarga do item, sem reiniciá-la ao trocar. A seleção vale para a sessão; ao reconectar, volta à Meia-Lua, Estocada Relâmpago e Salto Esmagador. R durante uma habilidade, carga, rolamento ou menu não troca a seleção.
+Com **espada longa, rapieira ou martelo** equipado, **R** alterna apenas as técnicas aprendidas (tecla configurável em Controles). A seleção aparece na faixa compacta da HUD, no tooltip e no painel K; **botão direito** executa. A seleção é independente para cada classe. Todas as técnicas de uma arma compartilham a recarga do item, sem reiniciá-la ao trocar. A seleção vale para a sessão; ao reconectar, volta à Meia-Lua, Estocada Relâmpago e Salto Esmagador. R durante uma habilidade, carga, rolamento ou menu não troca a seleção.
 
 | Técnica da rapieira | Mecânica | Sequência / recarga |
 |---|---|---|
@@ -132,10 +151,10 @@ Nos **ticks 2–7**, esquiva de golpes de combate, projéteis e explosões. **Qu
 
 ### Visual das armas
 
-- Texturas em pixel art. Cada arma tem **textura própria por elemento**: Fogo (lâmina em brasa), Água (ondas e gotas), Terra (pedra, musgo e cristais) e Ar (prata, penas e vento).
+- Texturas normais em pixel art, sem variantes elementais de armas.
 - As quatro armas do catálogo têm **modelo 3D de cubos** com textura pixel art 16×16: rapieira com guarda dourada e arco de mão, espada longa com cabo de duas mãos, adaga com lâmina escalonada e martelo volumétrico com runa, aros dourados e molduras de aço salientes. O martelo usa iluminação lateral no inventário e poses próprias de mão para mostrar a face e a profundidade da cabeça. As variantes elementais têm paleta própria; rapieira e espada longa também ganham peças extras. O fantasma da adaga arremessada acompanha seu modelo 3D.
-- Armas de S. Chefe e Chefe brilham.
-- A aba **Solo Mod** contém os ovos; a aba **Solo Mod: Armas** mostra só os quatro exemplares, sem duplicatas. Para variantes, use **K → Teste** ou `/modtest weapon`.
+- Não há armas de S. Chefe/Chefe nem aura de tier; encantamentos vanilla mantêm seu brilho.
+- A aba **Solo Mod** contém os ovos; a aba **Solo Mod: Armas** mostra só os quatro exemplares, sem duplicatas. **K → Teste** e `/modtest weapon <classe>` também geram somente armas normais.
 
 ## 👹 Mobs por tier
 
@@ -146,7 +165,7 @@ Qualquer mob vira "mob do mod" ao receber um **perfil** (tier + elemento). O per
 | NORMAL | • Lacaio | 0.85x / 1x / 1x | corre curvado, trote | **bando**: grita chamando aliados, fica mais rápido com 2+ aliados, foge com <30% de vida | **Bote** |
 | OP | ★ Elite | 1.2x / 2.5x / 1.5x | balança os ombros | **duelista**: circula o alvo enquanto recarrega; **apara** 30% dos golpes de frente e contra-ataca | **Investida** telegrafada · **Golpe Triplo** em leque |
 | SUB_BOSS | ✦ Guardião | 1.6x / 6x / 2x, barra roxa | flutua, 3 motes orbitando | **mago**: recua se colam, aproxima se fogem, teleporta às costas de quem foge | **Rajada** de 3 orbes com mira preditiva · **Repulsão** · **Salto Esmagador** · **Translocar** · **Invocação** a 50% |
-| BOSS | ♛ Monarca | 2.3x / 14x / 2.8x, barra dourada, brilho | respiração pesada | **3 fases** (60% / 25%) com rugido invulnerável; lê se o jogador luta de perto ou de longe e escolhe ataques contra isso | **Golpe Sísmico** (pule) · **Chuva Elemental** · **Investida** 1/2/3x (parede = atordoado) · **Vórtice** · **Sopro** em cone · convoca Elites e Lacaios |
+| BOSS | ♛ Monarca | 2.3x / 14x / 2.8x, barra dourada, sem contorno luminoso | respiração pesada | **3 fases** (60% / 25%) com rugido invulnerável; lê se o jogador luta de perto ou de longe e escolhe ataques contra isso | **Golpe Sísmico** (pule) · **Chuva Elemental** · **Investida** 1/2/3x (parede = atordoado) · **Vórtice** · **Sopro** em cone · convoca Elites e Lacaios |
 
 Todo ataque especial é **telegrafado** (agachar/tremer + partículas na cor do elemento) e aplica a passiva do elemento do mob.
 
@@ -295,9 +314,12 @@ Cada conquista de derrota usa o **rosto do respectivo chefe em pixel art 16×16*
 ## 🖥️ Interface
 
 - **Tecla K**: tela de Maestria.
+  - **Habilidades**: abre o mapa radial único em estilo conquistas vanilla, com jogador ao centro e armas/raízes ao redor, com compra validada no servidor.
   - Aba **Maestria**: distribui pontos (+1/+5) e mostra o efeito de cada stat.
   - Aba **Teste**: atalhos dos comandos `/modtest` (gerar arma, invocar ou marcar mob, ±10 stats, +100 XP, mana, reset). Exige cheats/OP.
-- **HUD** (canto superior esquerdo): brasão facetado com coroa e runas orbitais, filigranas douradas, barras biseladas de vida/mana/XP suavizadas e reflexo animado. Área de aproximadamente **164×62 pixels de GUI com arma**, antes 182×139 ou mais; carga acrescenta só 12 pixels. Faixa da arma mostra ícone, técnica, tecla R e recarga; pontos livres viram um selo junto ao brasão. O brasão pulsa com vida baixa e brilha ao subir de nível. Informações extensas ficam em K/tooltip.
+- **HUD** (canto superior esquerdo): brasão facetado com coroa e runas orbitais, filigranas douradas, barras biseladas de vida/mana suavizadas, rolamento amarelo sob a mana e XP no contorno do escudo e reflexo animado. Área de aproximadamente **164×62 pixels de GUI com arma**, antes 182×139 ou mais; carga acrescenta só 12 pixels. Faixa da arma mostra ícone, técnica, tecla R e recarga; pontos livres viram um selo junto ao brasão. O brasão pulsa com vida baixa e brilha ao subir de nível. Informações extensas ficam em K/tooltip.
+- **Recarga do rolamento**: a barra amarela de 2 pixels **sob a mana**, no canto superior esquerdo, esvazia ao rolar e enche em 1,3 s. Só inicia após confirmação do servidor; morte/troca de dimensão limpam a recarga. Não há barra de rolamento sobre o XP vanilla.
+- **Progresso de nível**: XP Global preenche o **contorno do escudo do nível**, a partir do topo em sentido horário. Uma volta completa representa o próximo nível; o contorno completo pisca ao subir e recomeça com o progresso restante.
 - **Vida padrão**: só a camada dos **corações do jogador** é ocultada enquanto a HUD personalizada está visível. Absorção aparece como trilho dourado e número extra; veneno/wither mudam a cor da vida, e dano gera clarão curto. Armadura, fome, oxigênio e vida da montaria continuam nas camadas vanilla. F1 e espectador escondem a HUD normalmente.
 - **Painel K**: cartões de FOR/AGI/INT/VIT em duas colunas com efeitos e botões +1/+5, XP, mana, pontos e resumo da arma. Abas e botões seguem a mesma paleta da HUD, com foco de teclado visível.
 - **Feedback de combate**: números de dano flutuantes (na cor do elemento, maiores e com "!" na vantagem), som de crítico, partículas e efeitos 3D por habilidade: cortes da espada, velocidade da rapieira, raios dourados da adaga e salto/impacto do martelo.
@@ -306,22 +328,22 @@ Cada conquista de derrota usa o **rosto do respectivo chefe em pixel art 16×16*
 
 ### Com interface
 
-1. Crie um mundo Criativo **com cheats** e aperte **K** → aba **Teste**.
-2. Classe *Adaga*, Tier *S. Chefe*, Elemento *Fogo* → **Gerar arma na mão**. O HUD mostra "Adormecida (requer 30 AGI)".
+1. Crie um mundo Criativo **com cheats** e aperte **K** → aba **Teste**. Antes de usar técnicas, ganhe XP com **+100 XP** e libere os nós em **Habilidades**. As habilidades de tier também exigem desbloqueio.
+2. Classe *Adaga* → **Gerar arma normal**. Trocar Tier do mob/Elemento do mob não muda a arma gerada, que exige 5 AGI para escalonamento.
 3. Troque o Elemento para *Ar* → **Invocar mob**. Bata nele: números brancos, sem elemento.
-4. **+10 AGI** três vezes (e +10 INT uma vez). O estado da arma no HUD muda de adormecida para Fogo; bata de novo: números laranja com "!" e o alvo pegando fogo.
+4. **+10 AGI** e **+10 INT**. Aprenda a Investida na árvore: Shift + direito a usa na adaga normal, consumindo mana. O golpe da arma continua neutro.
 5. **Agachar + clique direito**: Investida com rastro de partículas; a barra de recarga esvazia e enche.
 6. **+100 XP** e volte à aba **Maestria** para gastar o ponto.
 
 ### Com comandos
 
 ```mcfunction
-/modtest weapon dagger sub_boss fire          # adaga de S. Chefe, Fogo, requer 30 AGI
+/modtest weapon dagger                        # adaga Normal, sem elemento
 /summon zombie ~ ~ ~3
 /modtest mob @e[type=zombie,limit=1,sort=nearest] op air   # zumbi Elite de Ar
 /modtest set agi 30
 /modtest set int 10                           # INT mínima da Investida é 5
-/modtest weapon hammer boss water             # martelo de Chefe, requer 50 FOR
+/modtest weapon hammer                        # martelo Normal, sem elemento
 /modtest spawn boss fire                      # Rei Vulcânico
 /modtest stats
 /modtest sovereign                            # Soberano no estágio 1
@@ -332,17 +354,31 @@ Para ver o Soberano lutar, saia do Criativo (`/gamemode survival`): como todo mo
 
 ### Habilidades e animações das quatro armas
 
-1. Em terreno aberto, gere cada classe por **K → Teste**, ou `/modtest weapon <classe> normal none`. Confira em primeira pessoa e com **F5**.
+1. Em **K → Habilidades**, aprenda os nós que serão testados; use **+100 XP** e **Encher mana** na aba Teste para preparar. Em terreno aberto, gere cada classe por **K → Teste**, ou `/modtest weapon <classe>`. Confira em primeira pessoa e com **F5**.
 2. **Espada longa**: coloque alvos à frente, atrás e separados por uma parede. Botão direito deve acertar vários à frente uma vez na Meia-Lua. Use **R** para Ascendente (impulso vertical) e Cruzado (dois acertos em sequência). Nenhuma técnica deve acertar os de trás ou atravessar a parede. Alterne durante a recarga para confirmar que ela não é zerada. Teste ataque esquerdo comum.
 3. **Adaga**: arremesse e chame com botão direito. Arremesse de novo e use Shift + botão direito para ir até ela, inclusive no voo. Teste parede/teto baixo, destino ocupado, água/lava, fora de 64 blocos e adaga em chunk descarregado: a falha não deve consumir a adaga; o botão direito continua recuperando.
 4. **Rapieira**: compare toque curto, meia carga e 1,5 s de carga; a distância e a barra devem aumentar até o limite. Segure por mais tempo para conferir o teto, teste contra uma parede e troque de item durante a carga/dash.
-5. **Martelo**: use sobre terra/pedra expostas e observe salto, mergulho, blocos e impacto; repita com `/gamerule mobGriefing false` para verificar que ficam apenas efeitos visuais. Compare ativações já no ar com quedas de 4, 12 e 24 blocos contra alvos iguais; 24 e 32 blocos devem ter o mesmo bônus máximo. Trocar a arma no ar cancela o golpe. Em grupo, confira se os demais veem efeitos/animações e sentem o tremor perto do impacto. Confira o volume/runa do modelo no inventário, em primeira pessoa e em F5, com e sem elemento.
-6. **Espada longa em F5**: confira mão de apoio, preparação, varredura e recuperação; as mangas e a armadura devem acompanhar os braços. Em primeira pessoa, veja o arco 3D revelado pelo corte. Teste as cinco formas elementais, alvos múltiplos e oclusão por parede.
+5. **Martelo**: use sobre terra/pedra expostas e observe salto, mergulho, blocos e impacto; repita com `/gamerule mobGriefing false` para verificar que ficam apenas efeitos visuais. Compare ativações já no ar com quedas de 4, 12 e 24 blocos contra alvos iguais; 24 e 32 blocos devem ter o mesmo bônus máximo. Trocar a arma no ar cancela o golpe. Em grupo, confira se os demais veem efeitos/animações e sentem o tremor perto do impacto. Confira o volume/runa do modelo no inventário, em primeira pessoa e em F5, sempre sem elemento.
+6. **Espada longa em F5**: confira mão de apoio, preparação, varredura e recuperação; as mangas e a armadura devem acompanhar os braços. Em primeira pessoa, veja o arco 3D revelado pelo corte. Teste a forma normal, alvos múltiplos e oclusão por parede.
 7. **Rolamento**: compare Ctrl isolado, Ctrl segurado e duplo Ctrl; só o último rola. Teste W/A/S/D, diagonais e sem direção, em primeira pessoa/F5 e com outro jogador observando. Teste parede, água, voo, menus e spam durante a recarga. Um golpe durante os ticks centrais deve ser evitado; golpes na recuperação e dano de queda/ambiente continuam valendo. Não deve ser possível combinar ataque/arma com a rolagem.
 8. **Efeitos em movimento**: na rapieira, veja faixas brancas/ciano acompanhando o caminho e parando junto à parede. Na adaga, veja rastro dourado no arremesso e retorno, raios e selo nas duas pontas do teleporte. Um observador junto ao destino também deve enxergar o clarão. Confira com a mão esquerda principal e em F5.
-9. **Interface e velocidade**: abra K nas duas abas, confira navegação por Tab e textos em pt-BR/en-US nas escalas de GUI. Adicione XP para ver a subida de nível, gaste mana e receba dano para ver a suavização/clarão das barras. Confira que somem só os corações vanilla: fome, armadura, oxigênio e montaria permanecem. Use maçã dourada/absorção, veneno e wither; confira trilho dourado, números e cores. Teste F1/espectador e GUI 320×240. Com AGI 0 e armas Normal sem elemento, confira os atributos de 2,5 / 2,2 / 1,6 / 0,8 ataques/s (adaga / rapieira / espada / martelo).
+9. **Interface e velocidade**: abra K nas duas abas, confira navegação por Tab e textos em pt-BR/en-US nas escalas de GUI. Adicione XP para ver o contorno do escudo completar a volta e a subida de nível, gaste mana e receba dano para ver a suavização/clarão das barras. Confira que somem só os corações vanilla: fome, armadura, oxigênio e montaria permanecem. Use maçã dourada/absorção, veneno e wither; confira trilho dourado, números e cores. Teste F1/espectador e GUI 320×240. Com AGI 0 e armas Normal sem elemento, confira os atributos de 2,5 / 2,2 / 1,6 / 0,8 ataques/s (adaga / rapieira / espada / martelo).
 10. **Rapieira com R**: alterne as três técnicas, confira seleção no tooltip/K/HUD. Compare segurar/soltar do dash com clique simples nas outras. Chuva de Agulhas deve acertar nos três tempos em inimigo frontal, sem atingir atrás ou por paredes. Passo do Vento deve estocar e recuar; teste parede atrás, água, borda e troca de item. Compare em F5 e com jogador observador.
 11. **Martelo com R**: no chão, compare Giro (área circular com empurrão) e Ruptura (onda frontal). Teste inimigos atrás/através de paredes, vários alvos, desníveis, penhasco e água. Apenas o Salto deve ativar no ar e escalar com a altura. Troque de arma, morra, mude de dimensão e tente rolar durante as sequências: ações devem cancelar/bloquear corretamente.
 12. **Seleção independente**: escolha Chuva na rapieira, Cruzado na espada e Giro no martelo, alterne os itens e confira que cada seleção é lembrada. R não deve zerar recargas nem funcionar durante carga/ação/menu. Reconectar deve restaurar os três padrões.
 
 Lista completa de comandos: [README](../README.md#-comandos-de-teste).
+
+### Árvores, mana, ícones e rolamento
+
+1. Com jogador novo, tente usar cada arma sem aprender: a ação deve ser recusada, sem mana/recarga. Gaste o ponto inicial numa raiz; tente comprar um filho sem pontos, comprar duas vezes e comprar a suprema antes do pai. As falhas não gastam pontos. Ganhe XP e confira que pontos de atributos e de habilidade crescem separadamente.
+2. Aprenda as técnicas, alterne com R e compare mana antes/depois, inclusive em golpes sem alvo e técnicas com vários acertos. Sem mana, nenhuma começa. Segurar a rapieira não cobra; soltar cobra uma vez. Cancelar trocando de item não cobra. Com a adaga, retorno é grátis, arremesso cobra 3 e teleporte seguro cobra 8; tente teleporte contra destino bloqueado ou fora de alcance.
+3. Reconecte, morra e troque de dimensão: as árvores devem persistir. Abra um mundo antigo com XP: árvores vazias, pontos de habilidade correspondentes ao nível e atributos preservados. Reset deve apagar os desbloqueios. Verifique também em servidor com dois jogadores: um não compartilha desbloqueios com o outro.
+4. Compare os quatro ícones normais no inventário/hotbar/K com os modelos em primeira pessoa/F5. Adaga voando e arma no chão continuam com geometria 3D. Confira o fantasma arremessado. Teste pt-BR/en-US e GUI 320×240; confira o rosto do jogador no centro e somente rapieira, espada longa, adaga e martelo normais no mesmo mapa, sem filtros; explore arrastando nos dois eixos, com zoom pela roda/+ /−, setas e Home e selecione nós usando Tab/Enter.
+5. Na Sobrevivência/Aventura, role com duplo Ctrl: a barra amarela sob a mana esvazia e recupera em 1,3 s; spam/ação recusada não reinicia a barra. Confira armadura, fome, montaria, F1, morte e troca de dimensão. Chefes novos e já salvos não devem exibir contorno branco através de paredes; aura de Fúria e detalhes emissivos próprios continuam.
+
+6. Com XP Global em 0/25/50/75/99 de cada centena, confira o contorno do escudo vazio e preenchendo em sentido horário. Ao completar 100, o número do nível sobe, o contorno completo pisca e a volta recomeça. O ganho de vários níveis de uma vez termina com o nível e restante corretos. Reset não deve simular uma subida. Rolamento nunca altera esse progresso.
+
+### Migração para armas normais
+
+Armas de saves antigos são lidas como Normal/sem elemento, com requisito normal da classe e sem habilidade gravada no item; os IDs de item e o formato dos codecs são mantidos para não perder as pilhas. Pontos e nós já aprendidos na árvore são preservados. Teste uma antiga arma Chefe/Fogo: deve aparecer como arma normal, sem bônus/aura/passiva elemental. Os mobs, ovos, chefes e subchefes continuam com seus tiers e elementos originais.

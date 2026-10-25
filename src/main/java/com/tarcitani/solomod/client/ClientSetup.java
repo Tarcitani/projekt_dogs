@@ -107,22 +107,10 @@ public final class ClientSetup {
         event.registerEntityRenderer(ModEntities.WATER_ORB.get(), WaterOrbRenderer::new);
     }
 
-    /**
-     * Propriedades que os modelos dos itens usam nos overrides:
-     * <ul>
-     *   <li>{@code solomod:element} (todas as armas): 0 = sem elemento, 1 água, 2 terra, 3 fogo, 4 ar —
-     *       cada elemento tem uma textura/modelo próprio da arma.</li>
-     *   <li>{@code solomod:thrown} (adaga): 1 enquanto ela está arremessada (contorno fantasma na mão).</li>
-     * </ul>
-     */
+    /** Só a adaga possui override de estado (arremessada). Armas não têm variantes elementais. */
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            ResourceLocation element = ResourceLocation.fromNamespaceAndPath(SoloMod.MOD_ID, "element");
-            for (WeaponClass wc : WeaponClass.values()) {
-                ItemProperties.register(ModItems.get(wc), element,
-                        (stack, level, entity, seed) -> ModularWeaponItem.getData(stack).elementType().ordinal());
-            }
             ItemProperties.register(ModItems.get(WeaponClass.DAGGER),
                     ResourceLocation.fromNamespaceAndPath(SoloMod.MOD_ID, "thrown"),
                     (stack, level, entity, seed) -> stack.has(ModDataComponents.THROWN_DAGGER.get()) ? 1.0F : 0.0F);

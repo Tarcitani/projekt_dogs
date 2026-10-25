@@ -55,8 +55,8 @@ import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Habilidade própria de cada FORMATO de arma, disponível em qualquer tier e sem custo de mana
- * (a habilidade de tier — Investida, Impacto, Explosão... — passa para agachar + clique direito):
+ * Habilidade própria de cada FORMATO de arma, aprendida na árvore e com custo de mana em armas normais
+ * (a habilidade avançada aprendida — Investida, Impacto, Explosão... — passa para agachar + clique direito):
  *
  * <ul>
  *   <li>Rapieira — R alterna dash carregado (3–14 blocos), Chuva de Agulhas (três acertos em cone)
@@ -96,14 +96,19 @@ public final class ClassAbility {
 
     public static WeaponTechnique technique(ServerPlayer player, WeaponClass weapon) {
         var selections = TECHNIQUES.get(player.getUUID());
-        return selections == null ? WeaponTechnique.defaultFor(weapon) : selections.getOrDefault(weapon, WeaponTechnique.defaultFor(weapon));
+        WeaponTechnique selected = selections == null ? WeaponTechnique.defaultFor(weapon) : selections.getOrDefault(weapon, WeaponTechnique.defaultFor(weapon));
+        if (com.tarcitani.solomod.event.StatsLogic.stats(player).hasTalent(SkillTree.forTechnique(selected).id())) return selected;
+        return WeaponTechnique.options(weapon).stream().filter(t -> com.tarcitani.solomod.event.StatsLogic.stats(player).hasTalent(SkillTree.forTechnique(t).id()))
+                .findFirst().orElse(WeaponTechnique.defaultFor(weapon));
     }
 
     /** Troca apenas a seleção desta sessão; o cooldown continua sendo o do item. */
     public static void cycleTechnique(ServerPlayer player) {
         if (!canStart(player) || player.isUsingItem() || !(player.getMainHandItem().getItem() instanceof ModularWeaponItem item)
                 || !WeaponTechnique.supports(item.weaponClass()) || ModularWeaponItem.getData(player.getMainHandItem()).weaponClass() != item.weaponClass()) return;
-        var options = WeaponTechnique.options(item.weaponClass());
+        var options = WeaponTechnique.options(item.weaponClass()).stream()
+                .filter(t -> com.tarcitani.solomod.event.StatsLogic.stats(player).hasTalent(SkillTree.forTechnique(t).id())).toList();
+        if (options.isEmpty()) return;
         WeaponTechnique old = technique(player, item.weaponClass());
         WeaponTechnique next = options.get((options.indexOf(old) + 1) % options.size());
         TECHNIQUES.computeIfAbsent(player.getUUID(), id -> new java.util.EnumMap<>(WeaponClass.class)).put(item.weaponClass(), next);
@@ -151,15 +156,18 @@ public final class ClassAbility {
             case RAPIER -> {
                 WeaponTechnique technique = technique(player, WeaponClass.RAPIER);
                 if (technique == WeaponTechnique.RAPIER_DASH) return false; // Uso contínuo vanilla.
+                if (!SkillTree.consume(player, SkillTree.forTechnique(technique))) return false;
                 startTechnique(player, stack, technique);
             }
             case DAGGER -> {
+                if (!SkillTree.consume(player, SkillTree.classNode(player, item.weaponClass()))) return false;
                 throwDagger(player, stack);
                 player.getCooldowns().addCooldown(item, WeaponAbilities.DAGGER_THROW_COOLDOWN);
             }
             case AXE, HAMMER -> {
                 if (item.weaponClass() == WeaponClass.HAMMER && technique(player, WeaponClass.HAMMER) != WeaponTechnique.HAMMER_LEAP) {
                     if (!grounded(player) || player.isInWaterOrBubble() || player.isInLava() || player.isFallFlying() || player.getAbilities().flying) return false;
+                    if (!SkillTree.consume(player, SkillTree.classNode(player, item.weaponClass()))) return false;
                     startTechnique(player, stack, technique(player, WeaponClass.HAMMER));
                     break;
                 }
@@ -168,10 +176,14 @@ public final class ClassAbility {
                     return false;
                 }
                 if (player.isInWaterOrBubble() || player.isInLava() || player.isFallFlying() || player.getAbilities().flying) return false;
+                if (!SkillTree.consume(player, SkillTree.classNode(player, item.weaponClass()))) return false;
                 startLeap(player, stack);
                 player.getCooldowns().addCooldown(item, WeaponAbilities.HAMMER_COOLDOWN);
             }
-            case LONGSWORD -> startCrescent(player, stack);
+            case LONGSWORD -> {
+                if (!SkillTree.consume(player, SkillTree.classNode(player, item.weaponClass()))) return false;
+                startCrescent(player, stack);
+            }
             default -> {
                 return false;
             }
@@ -207,6 +219,7 @@ public final class ClassAbility {
                 || !(stack.getItem() instanceof ModularWeaponItem item) || item.weaponClass() != WeaponClass.RAPIER
                 || technique(player, WeaponClass.RAPIER) != WeaponTechnique.RAPIER_DASH
                 || player.getCooldowns().isOnCooldown(item)) return;
+        if (!SkillTree.consume(player, SkillTree.forTechnique(WeaponTechnique.RAPIER_DASH))) return;
         double distance = rapierDistance(chargeTicks);
         int ticks = (int) Math.ceil(distance / WeaponAbilities.RAPIER_SPEED);
         Vec3 dir = flat(player.getLookAngle(), player);
@@ -304,6 +317,7 @@ public final class ClassAbility {
             player.displayClientMessage(Component.translatable("message.solomod.dagger_no_space").withStyle(ChatFormatting.RED), true);
             return false;
         }
+        if (!SkillTree.consume(player, SkillTree.byId("dagger.teleport"))) return false;
         ServerLevel level = player.serverLevel();
         Vec3 departure = player.position();
         ModNetwork.sendWeaponMotion(player, WeaponMotionPayload.Kind.DAGGER_BLINK, player.getId(), departure, destination, 1);

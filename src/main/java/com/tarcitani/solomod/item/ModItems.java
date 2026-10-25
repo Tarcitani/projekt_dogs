@@ -104,7 +104,7 @@ public final class ModItems {
             })
             .build());
 
-    /** Quatro armas sem duplicatas de tier/elemento; variantes continuam disponíveis pelo /modtest. */
+    /** Quatro armas normais sem variantes de tier/elemento; /modtest também gera somente essas versões. */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> WEAPONS_TAB = TABS.register("weapons", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.solomod.weapons"))
             .icon(() -> new ItemStack(get(WeaponClass.HAMMER)))

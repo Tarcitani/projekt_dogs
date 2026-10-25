@@ -11,13 +11,15 @@ import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
-/** Eventos de cliente: tela, HUD, dano e mundo. Cancela apenas os corações vanilla quando a HUD personalizada está visível. */
+/** Eventos de cliente: tela, HUD e mundo. Oculta só os corações; rolamento e XP ficam na HUD superior. */
 @EventBusSubscriber(modid = SoloMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public final class ClientGameEvents {
     private ClientGameEvents() {}
 
     @SubscribeEvent public static void onGuiLayer(RenderGuiLayerEvent.Pre event) {
-        if (event.getName().equals(VanillaGuiLayers.PLAYER_HEALTH) && SoloHud.visible()) event.setCanceled(true);
+        if (event.getName().equals(VanillaGuiLayers.PLAYER_HEALTH) && SoloHud.visible()) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) { SoloHud.reset(); }

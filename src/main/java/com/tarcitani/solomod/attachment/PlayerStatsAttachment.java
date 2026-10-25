@@ -14,8 +14,12 @@ import net.minecraft.util.Mth;
  * {@link com.tarcitani.solomod.event.StatsLogic#onStatsChanged} para reaplicar atributos e sincronizar.
  *
  * <p>Progressão: cada {@link #XP_PER_POINT} de XP Global acumulado concede 1 ponto para distribuir.
+ * Árvores usam pontos próprios (um inicial e um por nível) e IDs textuais de nós aprendidos,
+ * persistidos com default vazio para mundos antigos, copiados na morte e sincronizados com a mana.
  */
 public class PlayerStatsAttachment {
+    /** IDs estáveis dos nós aprendidos; mundos antigos começam com a árvore vazia. */
+    private final java.util.Set<String> talents = new java.util.HashSet<>();
     public static final int XP_PER_POINT = 100;
     public static final int BASE_MANA = 20;
     public static final int MANA_PER_INT = 5;
@@ -29,7 +33,8 @@ public class PlayerStatsAttachment {
             Codec.INT.optionalFieldOf("agilidade", 0).forGetter((PlayerStatsAttachment s) -> s.agilidade),
             Codec.INT.optionalFieldOf("inteligencia", 0).forGetter((PlayerStatsAttachment s) -> s.inteligencia),
             Codec.INT.optionalFieldOf("vitalidade", 0).forGetter((PlayerStatsAttachment s) -> s.vitalidade),
-            Codec.INT.optionalFieldOf("manaAtual", BASE_MANA).forGetter((PlayerStatsAttachment s) -> s.manaAtual)
+            Codec.INT.optionalFieldOf("manaAtual", BASE_MANA).forGetter((PlayerStatsAttachment s) -> s.manaAtual),
+            Codec.STRING.listOf().optionalFieldOf("habilidades", java.util.List.of()).forGetter((PlayerStatsAttachment s) -> s.talents.stream().sorted().toList())
     ).apply(instance, PlayerStatsAttachment::new));
 
     private int xpGlobal;
@@ -54,6 +59,22 @@ public class PlayerStatsAttachment {
         this.inteligencia = inteligencia;
         this.vitalidade = vitalidade;
         this.manaAtual = manaAtual;
+    }
+
+    public PlayerStatsAttachment(int xp, int points, int str, int agi, int intel, int vit, int mana, java.util.List<String> learned) {
+        this(xp, points, str, agi, intel, vit, mana);
+        learned.stream().filter(id -> com.tarcitani.solomod.skill.SkillTree.byId(id) != null).forEach(talents::add);
+    }
+
+    /** Pontos próprios da árvore: um inicial e um por nível, independentes dos atributos. */
+    public int getSkillPoints() {
+        return Math.max(0, getLevel() - talents.stream().map(com.tarcitani.solomod.skill.SkillTree::byId)
+                .filter(java.util.Objects::nonNull).mapToInt(com.tarcitani.solomod.skill.SkillTree.Node::cost).sum());
+    }
+    public boolean hasTalent(String id) { return talents.contains(id); }
+    public boolean unlockTalent(String id) {
+        var node = com.tarcitani.solomod.skill.SkillTree.byId(id);
+        return node != null && com.tarcitani.solomod.skill.SkillTree.available(this, node) && talents.add(id);
     }
 
     // ---------------------------------------------------------------- stats
@@ -149,6 +170,8 @@ public class PlayerStatsAttachment {
     }
 
     public void copyFrom(PlayerStatsAttachment other) {
+        this.talents.clear();
+        this.talents.addAll(other.talents);
         this.xpGlobal = other.xpGlobal;
         this.pontosDisponiveis = other.pontosDisponiveis;
         this.forca = other.forca;
@@ -168,10 +191,11 @@ public class PlayerStatsAttachment {
         buf.writeVarInt(inteligencia);
         buf.writeVarInt(vitalidade);
         buf.writeVarInt(manaAtual);
+        buf.writeCollection(talents.stream().sorted().toList(), FriendlyByteBuf::writeUtf);
     }
 
     public static PlayerStatsAttachment read(FriendlyByteBuf buf) {
         return new PlayerStatsAttachment(buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
-                buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
+                buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readList(FriendlyByteBuf::readUtf));
     }
 }

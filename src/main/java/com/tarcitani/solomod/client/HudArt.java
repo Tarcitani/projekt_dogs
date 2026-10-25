@@ -3,17 +3,18 @@ package com.tarcitani.solomod.client;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.Mth;
 
-/** Arte procedural exclusiva da HUD: brasão facetado, coroa, runas, filigranas e barras com pontas em pixels. */
+/** Arte da HUD: escudo facetado com XP no perímetro, coroa, filigranas e barras em pixels. */
 final class HudArt {
     private HudArt() {}
-    static void crest(GuiGraphics g, int x, int y, int accent, float time) {
+    private static final java.util.List<int[]> XP_CONTOUR = shieldContour();
+    static void crest(GuiGraphics g, int x, int y, int accent, float progress) {
         // Silhueta simétrica de um escudo de metal, construída por linhas retas de pixels.
         for (int row = 0; row < 36; row++) {
             int inset = row < 4 ? 4 - row : row > 26 ? (row - 26) : 0;
             int left = x + inset, right = x + 30 - inset;
             g.fill(left + 1, y + row + 2, right + 2, y + row + 3, 0x65000000);
             g.fill(left, y + row, right, y + row + 1, row < 16 ? 0xFF1F2C3F : 0xFF0C1423);
-            g.fill(left, y + row, left + 1, y + row + 1, accent);
+            g.fill(left, y + row, left + 1, y + row + 1, 0xFF524A3F);
             g.fill(right - 1, y + row, right, y + row + 1, 0xFF79613E);
         }
         g.fill(x + 4, y, x + 26, y + 1, accent);
@@ -22,11 +23,28 @@ final class HudArt {
         for (int i = 0; i < 3; i++) g.fill(x + 8 + i * 6, y - 3 - (i == 1 ? 2 : 0), x + 10 + i * 6, y + 1, accent);
         g.fill(x + 14, y + 27, x + 16, y + 30, accent);
         g.fill(x + 13, y + 28, x + 17, y + 29, accent);
-        for (int i = 0; i < 4; i++) {
-            float angle = time * 0.035F + i * Mth.HALF_PI;
-            int px = x + 14 + Math.round(Mth.cos(angle) * 19), py = y + 15 + Math.round(Mth.sin(angle) * 17);
-            g.fill(px, py, px + 1, py + 2, i % 2 == 0 ? accent : RpgUi.CYAN);
+        int filled = Math.round(Mth.clamp(progress, 0, 1) * XP_CONTOUR.size());
+        for (int i = 0; i < XP_CONTOUR.size(); i++) {
+            int[] p = XP_CONTOUR.get(i);
+            g.fill(x + p[0], y + p[1], x + p[0] + 1, y + p[1] + 1, i < filled ? accent : 0xFF514839);
         }
+        if (filled > 0) {
+            int[] tip = XP_CONTOUR.get(filled - 1);
+            g.fill(x + tip[0], y + tip[1], x + tip[0] + 1, y + tip[1] + 1, 0xFFFFF2C4);
+        }
+    }
+
+    /** Percurso horário fechado a partir do topo, sem duplicar os pixels dos vértices. */
+    private static java.util.List<int[]> shieldContour() {
+        int[][] corners = {{15, 0}, {25, 0}, {29, 4}, {29, 26}, {20, 35}, {9, 35}, {0, 26}, {0, 4}, {4, 0}, {15, 0}};
+        var pixels = new java.util.ArrayList<int[]>();
+        for (int i = 1; i < corners.length; i++) {
+            int[] a = corners[i - 1], b = corners[i];
+            int steps = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
+            for (int step = 0; step < steps; step++) pixels.add(new int[]{
+                    a[0] + (b[0] - a[0]) * step / steps, a[1] + (b[1] - a[1]) * step / steps});
+        }
+        return java.util.List.copyOf(pixels);
     }
 
     static void rail(GuiGraphics g, int x, int y, int w, int h, float value, int color, float time) {

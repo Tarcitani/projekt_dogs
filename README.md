@@ -19,9 +19,9 @@
 
 ## 📖 Sobre
 
-O **Solo Mod** transforma o Minecraft num RPG de progressão. O jogador fica mais forte distribuindo pontos de **Maestria**, e as armas valem pelo que **são**: de que tier de monstro vieram, que elemento carregam e que habilidade guardam.
+O **Solo Mod** transforma o Minecraft num RPG de progressão. O jogador fica mais forte distribuindo pontos de **Maestria**, e aprende habilidades numa árvore compartilhada pelas quatro armas normais: rapieira, espada longa, adaga e martelo.
 
-Uma arma poderosa não serve a qualquer um. Sem o stat exigido, o elemento e a habilidade ficam **adormecidos** e ela bate como uma arma comum. Para despertá-la, é preciso caçar monstros mais fortes, ganhar XP, subir de Maestria e acertar o elemento certo no inimigo certo.
+As armas são sempre Normal e sem elemento. Cumprir o requisito de Maestria libera o escalonamento de dano; habilidades são aprendidas na árvore e gastam mana. Caçar monstros concede XP para evoluir atributos e desbloqueios.
 
 Os inimigos acompanham: cada **tier** de monstro tem corpo, IA e ataques próprios. Lacaios que caçam em bando, Elites que aparam golpes, Guardiões que teleportam e Monarcas com três fases que **leem o seu estilo de luta**.
 
@@ -42,7 +42,7 @@ Quatro atributos (**FOR · AGI · INT · VIT**) que mudam dano, velocidade, mana
 <td width="50%" valign="top">
 
 ### 🗡️ Armas Modulares
-**4 classes no catálogo**: rapieira, espada longa, adaga e martelo, todas com **modelos 3D em cubos e texturas pixel art**. Aba criativa **Solo Mod: Armas** com uma de cada, sem duplicatas; tiers e elementos podem ser configurados pela aba Teste. Carregue o dash da rapieira com rastros de velocidade, alterne três técnicas da espada longa, escolha entre chamar a adaga de volta ou teleportar num relâmpago dourado e mergulhe com o martelo: mais altura gera mais dano e blocos erguidos no impacto.
+**4 classes no catálogo**: rapieira, espada longa, adaga e martelo, todas com **ícones pixel art nos menus e modelos 3D em cubos na mão**. Aba criativa **Solo Mod: Armas** com uma de cada, sem duplicatas; a aba Teste gera somente as armas normais; tier e elemento ficam exclusivos dos mobs. Carregue o dash da rapieira com rastros de velocidade, alterne três técnicas da espada longa, escolha entre chamar a adaga de volta ou teleportar num relâmpago dourado e mergulhe com o martelo: mais altura gera mais dano e blocos erguidos no impacto.
 
 </td>
 </tr>
@@ -223,17 +223,21 @@ Todos exigem OP (nível 2), ou seja, cheats ligados no singleplayer.
 | `/modtest points <qtd>` | define os pontos disponíveis |
 | `/modtest mana` | enche a mana |
 | `/modtest reset` | zera tudo |
-| `/modtest weapon <classe> <tier> [elemento] [requisito] [habilidade]` | cria a arma na mão |
+| `/modtest weapon <classe>` | cria uma das quatro armas normais, sem elemento |
 | `/modtest mob <alvos> <tier> <elemento>` | transforma mobs vanilla em mobs do mod |
 | `/modtest unmark <alvos>` | remove o perfil do mob |
 | `/modtest spawn <tier> <elemento>` | invoca a criatura própria do tier |
 | `/modtest sovereign [estágio]` | invoca o Soberano (chefe final), opcionalmente já no estágio 1–6 |
 
-<sub>Classes atuais: `rapier` `longsword` `dagger` `hammer` · Tiers: `normal` `op` `sub_boss` `boss` · Elementos: `none` `fire` `water` `earth` `air`. Classes legadas (`greatsword`, `axe`, `kunai`, `wand`) continuam aceitas por comando para compatibilidade.</sub>
+<sub>Classes atuais: `rapier` `longsword` `dagger` `hammer` · Tiers: `normal` `op` `sub_boss` `boss` · Elementos: `none` `fire` `water` `earth` `air`. Tiers e elementos são exclusivos dos mobs. Classes legadas permanecem registradas para carregar saves antigos.</sub>
 
 No criativo, **Solo Mod: Armas** contém uma arma de cada classe atual; os ovos ficam em **Solo Mod**. Para conferir os novos ataques, use `/modtest spawn boss fire` (ou `water`, `earth`, `air`, `none`) e passe para Sobrevivência. Os ícones são regenerados por `python tools/gen_boss_icons.py` e os modelos das armas por `python tools/gen_weapon_models.py`.
 
-Controles das armas: **espada longa → R** alterna **Meia-Lua, Ascendente e Cruzado**, **botão direito** executa (esquerdo é ataque comum); **adaga → botão direito** para arremessar/retornar e **Shift + botão direito com ela arremessada** para teleportar até ela; **rapieira → segurar botão direito e soltar**, com distância aproximada de 3–14 blocos indicada no HUD; **martelo → botão direito** para salto no chão ou mergulho imediato no ar. A queda aumenta dano/raio até 24 blocos. A habilidade de tier fica em **Shift + botão direito** (na adaga, depois de recolhê-la). Animações e roteiro de teste em [docs/GAMEPLAY.md](docs/GAMEPLAY.md#habilidades-e-animações-das-quatro-armas).
+**Árvores de habilidades:** abra **K → Habilidades**: um mapa único no estilo das conquistas vanilla, com o rosto do jogador no centro, as quatro armas normais da aba Armas em círculo (rapieira, espada longa, adaga e martelo) e habilidades ramificadas como raízes. Não há filtros por arma; arraste para navegar e use a roda para zoom. Há 1 ponto inicial + 1 a cada 100 XP Global, separado dos atributos; todas as ativações de habilidades cobram mana (recolher a adaga é gratuito). Desbloqueios persistem no jogador. Habilidades avançadas aprendidas funcionam na arma normal por Shift + direito; a suprema substitui a anterior nesse atalho. Detalhes e custos em [GAMEPLAY](docs/GAMEPLAY.md#árvores-de-habilidades--k--habilidades).
+
+**Apresentação:** os ícones de GUI das oito armas são pixel art detalhada 32×32, com aço, ouro e gemas, sem variantes elementais; os modelos 3D na mão e no mundo foram preservados. A barra amarela sob a mana mostra a recarga do rolamento. O XP Global preenche o contorno do escudo de nível; uma volta completa indica o próximo nível. Chefes novos e salvos não usam contorno branco.
+
+Controles das armas (após aprender): **espada longa → R** alterna **Meia-Lua, Ascendente e Cruzado**, **botão direito** executa (esquerdo é ataque comum); **adaga → botão direito** para arremessar/retornar e **Shift + botão direito com ela arremessada** para teleportar até ela; **rapieira → segurar botão direito e soltar**, com distância aproximada de 3–14 blocos indicada no HUD; **martelo → botão direito** para salto no chão ou mergulho imediato no ar. A queda aumenta dano/raio até 24 blocos. A habilidade avançada aprendida fica em **Shift + botão direito** (na adaga, depois de recolhê-la). Animações e roteiro de teste em [docs/GAMEPLAY.md](docs/GAMEPLAY.md#habilidades-e-animações-das-quatro-armas).
 
 **Duplo Ctrl → rolamento** na direção de WASD (sem direção, para a frente), com cambalhota, poeira, breve janela de esquiva e recuperação entre usos. Ctrl isolado mantém a corrida normal. O **Corte em Meia-Lua** agora tem preparação de duas mãos, poses dos braços e mangas, lâmina de luz 3D com cor elemental, clarões e som pesado no impacto.
 
@@ -256,3 +260,5 @@ Detalhes, convenções e as áreas com risco de conflito: **[CONTRIBUTING.md](CO
 <div align="center">
 <sub>Feito com ☕ e muitos blocos por <b>Tarcitani</b> e amigos · NeoForge 1.21.1</sub>
 </div>
+
+As quatro armas são exclusivamente **Normal/sem elemento**, inclusive na aba Teste e em `/modtest weapon <classe>`. Armas antigas são normalizadas ao carregar; desbloqueios da árvore são preservados. Esta mudança não altera os tiers, elementos, ataques ou atributos de mobs, chefes e subchefes.

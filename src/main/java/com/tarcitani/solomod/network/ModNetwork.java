@@ -9,11 +9,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-/** Registro de pacotes e helper de sincronização. */
+/** Registro do protocolo 5: stats com árvores, pedidos de desbloqueio e recarga de rolamento, além do combate. */
 public final class ModNetwork {
     private ModNetwork() {}
 
-    private static final String PROTOCOL_VERSION = "4";
+    private static final String PROTOCOL_VERSION = "5";
 
     /** Listener do mod bus (registrado em SoloMod). */
     public static void register(RegisterPayloadHandlersEvent event) {
@@ -29,7 +29,9 @@ public final class ModNetwork {
         registrar.playToClient(CrescentSlashPayload.TYPE, CrescentSlashPayload.STREAM_CODEC, CrescentSlashPayload::handle);
         registrar.playToClient(WeaponMotionPayload.TYPE, WeaponMotionPayload.STREAM_CODEC, WeaponMotionPayload::handle);
         registrar.playToClient(TechniqueSelectionPayload.TYPE, TechniqueSelectionPayload.STREAM_CODEC, TechniqueSelectionPayload::handle);
+        registrar.playToClient(RollCooldownPayload.TYPE, RollCooldownPayload.STREAM_CODEC, RollCooldownPayload::handle);
         // Cliente -> servidor (Maestria e pedido legado da espada longa; uso das armas segue o ciclo vanilla)
+        registrar.playToServer(UnlockTalentPayload.TYPE, UnlockTalentPayload.STREAM_CODEC, UnlockTalentPayload::handle);
         registrar.playToServer(SpendPointsPayload.TYPE, SpendPointsPayload.STREAM_CODEC, SpendPointsPayload::handle);
         registrar.playToServer(TestActionPayload.TYPE, TestActionPayload.STREAM_CODEC, TestActionPayload::handle);
         registrar.playToServer(SpinAttackPayload.TYPE, SpinAttackPayload.STREAM_CODEC, SpinAttackPayload::handle);

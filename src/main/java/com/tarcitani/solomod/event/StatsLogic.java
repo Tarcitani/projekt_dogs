@@ -42,7 +42,22 @@ public final class StatsLogic {
     /** Penalidade de velocidade de ataque para armas Pesadas/Médias sem Maestria (-40%). */
     public static final double LOCKED_HEAVY_SPEED_PENALTY = -0.40;
 
-    /** Técnicas de classe sem mana: dash/rajada/recuo, cortes da espada e salto/giro/onda do martelo; ticks, blocos e multiplicadores. */
+    /** Custos da árvore e mana por ativação das técnicas de classe. */
+    public static final class Talents {
+        private Talents() {}
+        public static final int ROOT_COST = 1, BRANCH_COST = 2, TIER_COST = 3, ULTIMATE_COST = 5;
+        public static final int THROW_MANA = 3, TELEPORT_MANA = 8, LEAP_MANA = 10;
+        public static int techniqueMana(com.tarcitani.solomod.skill.WeaponTechnique technique) {
+            return switch (technique) {
+                case CRESCENT, RAPIER_DASH -> 5;
+                case RISING, RAPIER_RETREAT -> 7;
+                case CROSS, RAPIER_FLURRY, HAMMER_SWEEP -> 8;
+                case HAMMER_LEAP, HAMMER_QUAKE -> LEAP_MANA;
+            };
+        }
+    }
+
+    /** Técnicas de classe com mana: dash/rajada/recuo, cortes da espada e salto/giro/onda do martelo; ticks, blocos e multiplicadores. */
     public static final class WeaponAbilities {
         private WeaponAbilities() {}
 

@@ -3,7 +3,6 @@ package com.tarcitani.solomod.item;
 import com.tarcitani.solomod.attachment.PlayerStatsAttachment;
 import com.tarcitani.solomod.component.ModDataComponents;
 import com.tarcitani.solomod.component.WeaponData;
-import com.tarcitani.solomod.core.ElementType;
 import com.tarcitani.solomod.core.WeaponClass;
 import com.tarcitani.solomod.event.StatsLogic;
 import com.tarcitani.solomod.skill.ClassAbility;
@@ -31,8 +30,9 @@ import java.util.List;
 
 /**
  * Item base de todas as armas modulares. Existe um item registrado por {@link WeaponClass}
- * (o formato define dano/velocidade vanilla); tudo que varia por exemplar (tier, elemento, requisito,
- * habilidade) vem do Data Component {@link WeaponData} no ItemStack.
+ * (o formato define dano/velocidade vanilla). Só existem exemplares Normal/sem elemento;
+ * componentes antigos são normalizados por {@link WeaponData} no ItemStack.
+ * Técnicas e habilidades avançadas exigem desbloqueio pessoal na SkillTree e cobram mana no servidor.
  * A técnica de dash da rapieira usa o ciclo vanilla de segurar/soltar; as outras usam clique simples.
  * A escolha por classe é confirmada pelo servidor e alternada por R, sem alterar componentes da arma.
  * Shift + clique com a adaga arremessada tem prioridade sobre a habilidade de tier e teleporta até ela.
@@ -78,21 +78,19 @@ public class ModularWeaponItem extends Item {
 
     // ------------------------------------------------------------------ nome
 
-    /** Prefixa o nome com o tier e pinta na cor dele, ex.: "[Chefe] Adaga". */
+    /** Nome normal da arma; só acrescenta o estado arremessado da adaga. */
     @Override
     public Component getName(ItemStack stack) {
         WeaponData data = getData(stack);
-        MutableComponent name = Component.empty()
-                .append(Component.literal("[").append(data.mobTier().displayName()).append("] ").withStyle(data.mobTier().color()))
-                .append(super.getName(stack).copy().withStyle(data.mobTier().color()));
+        MutableComponent name = super.getName(stack).copy();
         if (ClassAbility.isThrown(stack)) name.append(Component.translatable("item.solomod.dagger.thrown").withStyle(ChatFormatting.GRAY));
         return name;
     }
 
-    /** Brilho de encantamento como "aura" de armas de S. Chefe e Chefe. */
+    /** Mantém apenas o brilho vanilla de encantamentos, sem aura de tier. */
     @Override
     public boolean isFoil(ItemStack stack) {
-        return getData(stack).mobTier().hasPureElement() || super.isFoil(stack);
+        return super.isFoil(stack);
     }
 
     // ------------------------------------------------------------------ tooltip
@@ -117,19 +115,7 @@ public class ModularWeaponItem extends Item {
         }
         tooltip.add(requirement.withStyle(unlocked ? ChatFormatting.GREEN : ChatFormatting.RED));
 
-        if (data.mobTier().statBonus() > 0) {
-            tooltip.add(Component.translatable("tooltip.solomod.stat_bonus",
-                    data.mobTier().statBonus(), data.requiredStatType().shortName().getString())
-                    .withStyle(unlocked ? ChatFormatting.BLUE : ChatFormatting.DARK_GRAY));
-        }
-
-        if (data.elementType() != ElementType.NONE) {
-            MutableComponent element = Component.translatable("tooltip.solomod.element", data.elementType().displayName());
-            if (data.mobTier().hasPureElement()) element.append(Component.translatable("tooltip.solomod.pure"));
-            if (!unlocked) element = Component.translatable("tooltip.solomod.dormant", element).withStyle(ChatFormatting.DARK_GRAY);
-            tooltip.add(element);
-        }
-
+        tooltip.add(Component.translatable("tooltip.solomod.skill_tree").withStyle(ChatFormatting.DARK_AQUA));
         if (ClassAbility.hasAbility(weaponClass)) {
             tooltip.add(Component.translatable("tooltip.solomod.class_ability", ClassAbility.displayName(weaponClass))
                     .withStyle(ChatFormatting.GOLD));
@@ -139,11 +125,13 @@ public class ModularWeaponItem extends Item {
                 tooltip.add(com.tarcitani.solomod.client.ClientAccess.techniqueHint(weaponClass).copy().withStyle(ChatFormatting.AQUA));
         }
 
-        if (data.hasSkill()) {
-            WeaponSkill skill = data.skill();
+        WeaponSkill learnedSkill = player == null ? WeaponSkill.NONE
+                : com.tarcitani.solomod.skill.SkillTree.activeSkill(StatsLogic.stats(player), weaponClass);
+        if (learnedSkill != WeaponSkill.NONE) {
+            WeaponSkill skill = learnedSkill;
             MutableComponent line = Component.translatable("tooltip.solomod.skill", skill.displayName(),
                     skill.manaCost(), skill.minInt());
-            if (unlocked) {
+            if (unlocked && player != null && StatsLogic.stats(player).hasTalent(weaponClass.getSerializedName() + "." + skill.id())) {
                 tooltip.add(line.withStyle(ChatFormatting.LIGHT_PURPLE));
                 String hint = weaponClass == WeaponClass.DAGGER && ClassAbility.isThrown(stack)
                         ? "tooltip.solomod.skill_hint_after_recall"
@@ -170,9 +158,10 @@ public class ModularWeaponItem extends Item {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResultHolder.pass(stack);
         if (player instanceof ServerPlayer server && !ClassAbility.canStart(server)) return InteractionResultHolder.fail(stack);
 
-        // Habilidade de classe no botão direito; a de tier fica em agachar + clique.
+        WeaponSkill skill = com.tarcitani.solomod.skill.SkillTree.activeSkill(StatsLogic.stats(player), weaponClass);
+        // Técnica no direito; habilidade avançada aprendida em Shift + direito.
         boolean classAbility = ClassAbility.hasRightClick(weaponClass)
-                && (!player.isShiftKeyDown() || !data.hasSkill() || ClassAbility.isThrown(stack));
+                && (!player.isShiftKeyDown() || skill == WeaponSkill.NONE || ClassAbility.isThrown(stack));
         if (classAbility) {
             boolean rapierDash = weaponClass == WeaponClass.RAPIER && (player instanceof ServerPlayer server
                     ? ClassAbility.technique(server, weaponClass) == com.tarcitani.solomod.skill.WeaponTechnique.RAPIER_DASH
@@ -182,6 +171,12 @@ public class ModularWeaponItem extends Item {
                         || player.isPassenger() || (player instanceof ServerPlayer server && !ClassAbility.canStart(server))) {
                     return InteractionResultHolder.fail(stack);
                 }
+                if (player instanceof ServerPlayer server) {
+                    var node = com.tarcitani.solomod.skill.SkillTree.forTechnique(com.tarcitani.solomod.skill.WeaponTechnique.RAPIER_DASH);
+                    if (!StatsLogic.stats(server).hasTalent(node.id())) return fail(player, stack, Component.translatable("message.solomod.talent_locked"));
+                    if (StatsLogic.stats(server).getManaAtual() < node.mana()) return fail(player, stack,
+                            Component.translatable("message.solomod.no_mana", StatsLogic.stats(server).getManaAtual(), node.mana()));
+                }
                 player.startUsingItem(hand);
                 return InteractionResultHolder.consume(stack);
             }
@@ -189,8 +184,8 @@ public class ModularWeaponItem extends Item {
             return ClassAbility.use((ServerPlayer) player, stack, this)
                     ? InteractionResultHolder.consume(stack) : InteractionResultHolder.fail(stack);
         }
-        // Habilidade de tier: só se a arma tiver uma.
-        if (!data.hasSkill()) {
+        // Habilidade avançada: vem do jogador, nunca do tier/elemento da arma.
+        if (skill == WeaponSkill.NONE) {
             return InteractionResultHolder.pass(stack);
         }
         // O cliente só anima o braço; a validação real acontece no servidor.
@@ -200,7 +195,10 @@ public class ModularWeaponItem extends Item {
 
         ServerPlayer serverPlayer = (ServerPlayer) player;
         PlayerStatsAttachment stats = StatsLogic.stats(player);
-        WeaponSkill skill = data.skill();
+
+        var talent = com.tarcitani.solomod.skill.SkillTree.forSkill(weaponClass, skill);
+        if (data.weaponClass() != weaponClass || talent == null || !stats.hasTalent(talent.id()))
+            return fail(player, stack, Component.translatable("message.solomod.talent_locked"));
 
         // 1) Maestria da arma.
         if (!StatsLogic.meetsRequirement(player, data)) {

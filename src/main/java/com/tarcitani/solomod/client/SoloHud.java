@@ -17,17 +17,24 @@ import net.minecraft.world.entity.player.Player;
 import java.util.UUID;
 
 /**
- * HUD compacta (164 × 62 com arma): brasão rúnico, vida/mana/XP e faixa da técnica.
+ * HUD compacta (164 × 62 com arma): vida/mana, rolamento abaixo da mana e faixa da técnica.
  * Vida inclui absorção e cores de veneno/wither; substitui só PLAYER_HEALTH, via ClientGameEvents.
  * Barras são suavizadas, o brasão pulsa em perigo/subida de nível e a carga da rapieira expande só 12 px.
+ * XP Global percorre o contorno do escudo de nível: uma volta completa representa a subida de nível.
+ * A barra amarela sob a mana indica o rolamento confirmado pelo servidor; não há barra junto ao XP vanilla.
  */
 public final class SoloHud {
     private SoloHud() {}
     private static float mana, health, xp, lastHealth;
     private static UUID owner;
     private static int ticks, lastLevel, levelFlash, hurtFlash;
+    private static long rollReadyAt;
 
-    public static void reset() { owner = null; }
+    public static void reset() { owner = null; rollReadyAt = 0; }
+    public static void rollCooldown(int remaining) {
+        var player = Minecraft.getInstance().player;
+        if (player != null) rollReadyAt = player.level().getGameTime() + Math.max(0, remaining);
+    }
     public static boolean visible() {
         Minecraft mc = Minecraft.getInstance();
         return mc.player != null && !mc.options.hideGui && !mc.player.isSpectator();
@@ -41,7 +48,7 @@ public final class SoloHud {
             owner = player.getUUID(); mana = stats.getManaAtual(); health = lastHealth = player.getHealth(); xp = nextXp;
             lastLevel = stats.getLevel(); levelFlash = hurtFlash = 0;
         }
-        if (stats.getLevel() != lastLevel) { levelFlash = 30; xp = 0; lastLevel = stats.getLevel(); }
+        if (stats.getLevel() != lastLevel) { levelFlash = stats.getLevel() > lastLevel ? 30 : 0; xp = 0; lastLevel = stats.getLevel(); }
         if (player.getHealth() < lastHealth) hurtFlash = 10;
         lastHealth = player.getHealth();
         mana = Mth.lerp(0.22F, mana, stats.getManaAtual());
@@ -67,7 +74,7 @@ public final class SoloHud {
         float time = ticks + delta.getGameTimeDeltaPartialTick(false);
         float hp = player.getHealth() / Math.max(1, player.getMaxHealth());
         int accent = levelFlash > 0 ? 0xFFFFF0B8 : hp < 0.3F && Mth.sin(time * 0.3F) > 0 ? 0xFFEF6961 : RpgUi.GOLD;
-        HudArt.crest(g, x + 2, y + 4, accent, time);
+        HudArt.crest(g, x + 2, y + 4, accent, levelFlash > 0 ? 1 : xp);
         Component level = Component.literal(String.valueOf(s.getLevel()));
         float scale = Math.min(1.1F, 23F / Math.max(1, font.width(level)));
         RpgUi.fit(g, font, level, x + 17 - Math.round(font.width(level) * scale / 2), y + 18, 23, RpgUi.TEXT, scale);
@@ -81,7 +88,9 @@ public final class SoloHud {
         if (player.getAbsorptionAmount() > 0) g.fill(bx, y + 3, bx + Math.max(1, (int) ((bw - 2) * Math.min(1, player.getAbsorptionAmount() / player.getMaxHealth()))), y + 4, RpgUi.GOLD);
         HudArt.rail(g, bx, y + 22, bw, 8, mana / Math.max(1, s.getMaxMana()), RpgUi.CYAN, time);
         RpgUi.fit(g, font, Component.translatable("hud.solomod.mana_compact", s.getManaAtual(), s.getMaxMana()), bx + 5, y + 22, bw - 10, RpgUi.TEXT, 0.75F);
-        RpgUi.bar(g, bx, y + 33, bw - 1, 2, xp, RpgUi.GOLD, time);
+        float rollRemaining = Math.max(0, rollReadyAt - player.level().getGameTime() - delta.getGameTimeDeltaPartialTick(false));
+        RpgUi.bar(g, bx, y + 33, bw - 1, 2,
+                1 - rollRemaining / com.tarcitani.solomod.event.StatsLogic.Dodge.COOLDOWN_TICKS, RpgUi.GOLD, time);
         // Pequenas aletas ligam os trilhos ao brasão sem um painel retangular ocupando a tela.
         g.fill(x + 31, y + 11, bx - 2, y + 12, RpgUi.GOLD);
         g.fill(x + 30, y + 27, bx - 2, y + 28, 0xFF60778A);
@@ -99,6 +108,9 @@ public final class SoloHud {
             boolean selectable = WeaponTechnique.supports(data.weaponClass());
             Component technique = selectable ? WeaponControls.selected(data.weaponClass()).displayName()
                     : ClassAbility.hasAbility(data.weaponClass()) ? ClassAbility.displayName(data.weaponClass()) : data.weaponClass().displayName();
+            String talentId = selectable ? com.tarcitani.solomod.skill.SkillTree.forTechnique(WeaponControls.selected(data.weaponClass())).id()
+                    : data.weaponClass().getSerializedName() + (data.weaponClass() == WeaponClass.DAGGER ? ".throw" : ".leap");
+            if (ClassAbility.hasAbility(data.weaponClass()) && !s.hasTalent(talentId)) technique = Component.translatable("hud.solomod.talent_locked");
             RpgUi.fit(g, font, technique, bx + 20, row + 1, bw - 37, RpgUi.TEXT, 0.85F);
             if (selectable) {
                 g.fill(bx + bw - 12, row, bx + bw - 1, row + 10, 0xFF3A3440);

@@ -83,7 +83,7 @@ flowchart LR
 
 | Arquivo | O que é |
 |---|---|
-| `PlayerStatsAttachment.java` | Stats, XP, pontos e mana do jogador. Constantes `XP_PER_POINT=100`, `BASE_MANA=20`, `MANA_PER_INT=5`, `MAX_STAT=999`. Depois de alterar, **sempre** chame `StatsLogic.onStatsChanged(player)`. |
+| `PlayerStatsAttachment.java` | Stats, XP, pontos, mana e IDs de habilidades aprendidas do jogador. Pontos de habilidade = nível menos custos dos nós aprendidos; independentes dos atributos. Campo NBT opcional `habilidades` e lista no buffer de sync. Constantes `XP_PER_POINT=100`, `BASE_MANA=20`, `MANA_PER_INT=5`, `MAX_STAT=999`. Depois de alterar, **sempre** chame `StatsLogic.onStatsChanged(player)`. |
 | `MobProfile.java` | Record `(tier, element)` que marca um mob como "do mod". |
 | `ModAttachments.java` | Registro de `PLAYER_STATS` (salvo com a entidade e copiado na morte; o sync com o cliente é **manual** via `SyncStatsPayload`) e `MOB_PROFILE` (só existe em mobs marcados: teste com `hasData`). |
 
@@ -97,7 +97,7 @@ flowchart LR
 
 | Arquivo | O que é |
 |---|---|
-| `ModularWeaponItem.java` | Item base de todas as armas. Tooltip (verde/vermelho conforme o requisito), clique direito (habilidade de classe ou de tier), `create(...)` para fabricar uma pilha configurada. |
+| `ModularWeaponItem.java` | Item base de todas as armas. Tooltip (verde/vermelho conforme o requisito), clique direito (técnica de classe) e Shift + direito (habilidade avançada aprendida), `create(...)` para fabricar uma pilha configurada. |
 | `ModItems.java` | Registra 1 item por `WeaponClass`, 20 ovos elementais, o ovo do Soberano e os itens-ícones dos seis chefes. Aba **Solo Mod** para ovos; **Solo Mod: Armas** contém só os quatro itens de `WeaponClass.AVAILABLE`, neutros e de tier Normal. |
 
 ### `event/` — regras do servidor
@@ -113,8 +113,9 @@ flowchart LR
 
 | Arquivo | O que é |
 |---|---|
-| `WeaponSkill.java` | Enum das habilidades de **tier** (`DASH_STRIKE, GROUND_SLAM, MANA_BOLT, ELEMENTAL_BURST`) com custo de mana, recarga e INT mínima. Cada constante implementa `perform(...)`. |
-| `ClassAbility.java` | Habilidades de **classe** (sem mana): três técnicas da espada, três da rapieira, três do martelo e arremesso/retorno/teleporte da adaga. Seleção em EnumMap por jogador/classe; pico de queda limitado a 24 blocos. `TechniqueAction` controla tempos/acertos, recuo com colisão e onda com vítimas únicas e alcance apoiado, sem atravessar paredes. Valida item, dono, destino/recarga; cancela ações em troca de arma/dimensão, morte e logout. Constantes em `StatsLogic.WeaponAbilities`. |
+| `SkillTree.java` | Catálogo imutável por classe: IDs estáveis, pai, custos e mana; geometria radial exclusivamente no cliente. `consume` valida desbloqueio e cobra uma vez; `PlayerStatsAttachment.unlockTalent` valida pré-requisitos/pontos. Balanceamento em `StatsLogic.Talents`. |
+| `WeaponSkill.java` | Enum das habilidades **avançadas da árvore** (`DASH_STRIKE, GROUND_SLAM, MANA_BOLT, ELEMENTAL_BURST`) com custo de mana, recarga e INT mínima. Cada constante implementa `perform(...)`. |
+| `ClassAbility.java` | Habilidades de **classe** (árvore pessoal + mana): três técnicas da espada, três da rapieira, três do martelo e arremesso/retorno/teleporte da adaga. Seleção em EnumMap por jogador/classe; pico de queda limitado a 24 blocos. `TechniqueAction` controla tempos/acertos, recuo com colisão e onda com vítimas únicas e alcance apoiado, sem atravessar paredes. Valida item, dono, destino/recarga; cancela ações em troca de arma/dimensão, morte e logout. Constantes em `StatsLogic.WeaponAbilities`. |
 | `WeaponTechnique.java` | Técnicas por classe, mantendo os três primeiros ordinais da espada; novos valores de rapieira e martelo no fim. Nomes, lista/padrão por classe, animação e consultas ao balanceamento central. Sem persistência no ItemStack. |
 | `SkillVfx.java` | Padrões de partículas do servidor (anel, linha e arco horizontal relativo à direção frontal). |
 | `PlayerAnim.java` | Enum de animações: preserva os ordinais anteriores; estocadas/recuo da rapieira e giro/ruptura do martelo foram acrescentados após `CROSS_CUT`. Tocado por `client/PlayerAnimations`. |
@@ -136,7 +137,7 @@ flowchart LR
 
 | Arquivo | O que é |
 |---|---|
-| `TierIdentity.java` | Aplica ou remove a **identidade** de um tier em qualquer `LivingEntity`: grava o `MobProfile`, escala (só mobs vanilla; as criaturas já têm o tamanho do modelo), atributos, título colorido, brilho (só BOSS) e instala o brain. `apply(entity, tier, element)` é o jeito oficial de transformar um mob; `clear` desfaz tudo. A tabela de números por tier está no Javadoc. |
+| `TierIdentity.java` | Aplica ou remove a **identidade** de um tier em qualquer `LivingEntity`: grava o `MobProfile`, escala (só mobs vanilla; as criaturas já têm o tamanho do modelo), atributos, título colorido, sem contorno luminoso de chefes e instala o brain. `apply(entity, tier, element)` é o jeito oficial de transformar um mob; `clear` desfaz tudo. A tabela de números por tier está no Javadoc. |
 | `TierBrain.java` | Classe abstrata (`Goal` de prioridade 0) que substitui a IA de combate vanilla enquanto há alvo. Sistema de **`Move`** (ataque com recarga, peso, `usable(dist)` e `tick(t)`), **Fúria** a 1/4 da vida (`addRageMove`), exaustão e invulnerabilidade em rugidos. Ganchos para chefes especiais: `rageThreshold`, `beginRage`, `endlessRage`, `interrupt`. `install(mob)` escolhe o brain pelo tier (BOSS: `SovereignBrain` se for a entidade `Sovereign`, senão `MonarchBrain`) / `uninstall(mob)` / `of(entity)`. |
 | `MinionBrain.java` | NORMAL: bando, grito de alerta, fuga, Bote. |
 | `EliteBrain.java` | OP: guarda lateral, aparar e contra-atacar, Investida, Golpe Triplo. |
@@ -149,7 +150,7 @@ flowchart LR
 
 ### `network/` — pacotes
 
-Todos registrados em `ModNetwork.register` (protocolo `"4"`; cliente e servidor precisam desta versão dos pacotes).
+Todos registrados em `ModNetwork.register` (protocolo `"5"`; cliente e servidor precisam desta versão dos pacotes).
 
 | Pacote | Direção | Para quê |
 |---|---|---|
@@ -158,6 +159,8 @@ Todos registrados em `ModNetwork.register` (protocolo `"4"`; cliente e servidor 
 | `MobAnimPayload` | S → C | identidade do mob (tier, elemento, fase, fúria) + animação de ação |
 | `PlayerAnimPayload` | S → C | animação de habilidade de um jogador |
 | `CinematicPayload` | S → C | cinemática de chefe: `kind` (`DEFEAT` morte do Monarca, `CLOSE_UP` agonia do Soberano, `FINALE` morte do Soberano + créditos, `LAUGH` risada dele ao matar um jogador), cabeçalho e título |
+| `UnlockTalentPayload` | C → S | ID do nó solicitado; servidor valida existência, duplicata, pontos e dependência antes de sincronizar stats |
+| `RollCooldownPayload` | S → C | ticks restantes ao aceitar/recusar por recarga o rolamento; zero na morte/troca de dimensão |
 | `SpendPointsPayload` | C → S | botões +1/+5 da tela de Maestria (o servidor revalida) |
 | `TestActionPayload` | C → S | botões da aba Teste (exige OP); também tem `spawnTierMob` e `mark` |
 | `ShakePayload` | S → C | tremor de câmera (`client/ScreenShake`): força inicial e duração; `ModNetwork.sendShake` envia a quem está perto, mais fraco com a distância |
@@ -183,6 +186,8 @@ Todos registrados em `ModNetwork.register` (protocolo `"4"`; cliente e servidor 
 | `ClientSetup.java` | Mod bus: tecla **K**, camada do HUD, cores dos itens (tinta por elemento), layers dos modelos e renderers. |
 | `ClientGameEvents.java` | Game bus: tela K, tick/render do dano e cancelamento de `RenderGuiLayerEvent.Pre` só para `VanillaGuiLayers.PLAYER_HEALTH`, condicionado à visibilidade da HUD. Logout reinicia interpolação. |
 | `ClientAccess.java` | Único ponto em que o código comum toca classes de cliente (`localPlayer()`). |
+| `SkillTreeLayout.java` | Coordenadas radiais em quatro setores de 90°, catálogo `WeaponClass.AVAILABLE` e seus 19 nós visíveis. Classes legadas ficam fora do mapa; dados persistidos são preservados. Nenhum estado de gameplay ou filtro. |
+| `SkillTreeScreen.java` | Mapa radial único em K → Habilidades: skin no centro, quatro armas normais do catálogo em círculo, raízes com molduras vanilla, arraste nos dois eixos e zoom ancorado no cursor. Sem filtros. Tooltips e botão Aprender. |
 | `StatsScreen.java` | Tela K com cartões de atributos em duas colunas, resumo de mana/XP/arma/técnica e abas Maestria/Teste. Painel e cartões antes dos widgets, preservando clique/foco/narração. |
 | `RpgUi.java`, `RpgButton.java` | Paleta de aço escuro e ouro, painéis com cantos em pixels, cartões, barras segmentadas com reflexo, texto dimensionado e botões com navegação/narração vanilla. |
 | `SoloHud.java`, `HudArt.java` | HUD compacta com brasão facetado, coroa, runas orbitais, barras biseladas e faixa de arma/técnica/recarga. Vida mostra absorção/veneno/wither/dano, mana/XP têm suavização/reflexo. Aproximadamente 164×62 com arma; carga acrescenta 12 px. Detalhes ficam no painel/tooltip. |
@@ -218,8 +223,8 @@ Todos registrados em `ModNetwork.register` (protocolo `"4"`; cliente e servidor 
 | Pasta | Conteúdo | Origem |
 |---|---|---|
 | `lang/` | `pt_br.json`, `en_us.json` | manual |
-| `models/item/` | modelos das armas (2D, 3D, variantes elementais) e dos ovos | parte gerada por `tools/gen_weapon_models.py` |
-| `textures/item/` | sprites das armas, `*_overlay` (parte tingida), variantes `_fire/_water/_earth/_air`, `weapon_parts*` (textura dos modelos 3D) | gerada por `tools/gen_weapon_models.py` / `gen_weapon_elements.py` |
+| `models/item/` | modelos normais das armas (2D, 3D) e dos ovos | parte gerada por `tools/gen_weapon_models.py` |
+| `textures/item/` | sprites normais das armas, `*_overlay` (parte tingida), `weapon_parts*` (textura dos modelos 3D) | gerada por `tools/gen_weapon_models.py` / `gen_weapon_elements.py` |
 | `textures/entity/` | `<mob>[_<elemento>].png` + `<mob>[_<elemento>]_glow.png` (emissiva) | gerada por `tools/gen_mob_art.py` |
 
 Dados do servidor ficam em `src/main/resources/data/solomod/`:
@@ -238,8 +243,9 @@ Dados do servidor ficam em `src/main/resources/data/solomod/`:
 | `mob_variants.py` | — (importado por `gen_mob_art.py`) | as 16 formas elementais e o Soberano (`sovereign()`) |
 | `gen_boss_icons.py` | `textures/item/monarch_*_head.png`, `sovereign_head.png`, `unknown_boss.png` e respectivos modelos de item | Rostos dos seis chefes em pixel art 16×16 RGBA; reutiliza a matriz do Soberano de `gen_sovereign_icons.py`. `gen_boss_icons.ps1` redireciona para este gerador. |
 | `gen_royal_fireball.ps1` | `textures/entity/royal_fireball.png` e `royal_fireball_core.png` | Texturas originais 16×16 de pixels grandes (crosta de basalto com lava e núcleo de magma), determinísticas, para a malha de cubos; não reutilizam arte do Ghast. |
-| `gen_weapon_models.py` | modelos 3D (rapieira, espada longa, adaga, martelo) e variantes elementais, textura pixel art de peças, fantasma 3D da adaga e modelos dos ovos | ponto de entrada das armas; mantém modelos 2D das classes legadas |
-| `gen_weapon_elements.py` | — (importado por `gen_weapon_models.py`) | versões elementais das armas 2D e 3D |
+| `gen_weapon_models.py` | modelos 3D normais (rapieira, espada longa, adaga, martelo), textura pixel art de peças, fantasma 3D da adaga, ícones GUI separados e modelos dos ovos | ponto de entrada das armas; mantém os modelos das classes legadas fora da GUI |
+| `weapon_icons.py` | 9 sprites GUI 32×32 (oito classes normais + fantasma da adaga) | aço facetado, ouro, couro, gemas e ornamentos; apenas pixel art sem suavização |
+| `gen_weapon_elements.py` | utilitário legado sem chamada no pipeline atual | variantes elementais de armas desativadas |
 | `gen_sovereign_effects.py` | `textures/entity/sovereign_tornado.png`, `water_orb.png`, `water_orb_core.png` | texturas 16x16 de pixels grandes dos efeitos 3D do Soberano (a mesma saída sempre: ruído por hash de x, y) |
 | `gen_sovereign_icons.py` | `textures/item/sovereign_head.png` e `unknown_boss.png` | ícones 16x16 das conquistas do Soberano (a cabeça e o "???"); o desenho são as matrizes no próprio script |
 
@@ -291,7 +297,7 @@ sequenceDiagram
 ### Mob vira "mob do mod"
 
 1. `/modtest mob`, o botão da aba Teste ou um `TierMob` nascendo chamam `TierIdentity.apply(entity, tier, element)`.
-2. `apply` grava o `MobProfile`, aplica escala, atributos, título e brilho e chama `TierBrain.install(mob)`, que escolhe o brain pelo tier e adiciona os goals de alvo (todo mob do mod fica hostil ao jogador).
+2. `apply` grava o `MobProfile`, aplica escala, atributos e título (sem contorno luminoso) e chama `TierBrain.install(mob)`, que escolhe o brain pelo tier e adiciona os goals de alvo (todo mob do mod fica hostil ao jogador).
 3. Quando um mob salvo é carregado do mundo, `MobEvents.onJoin` reinstala o brain, porque os goals não são salvos, só o perfil.
 4. A cada ataque especial o brain envia `MobAnimPayload` → `client/MobAnimations` anima.
 5. Na morte, `PlayerEvents.onKill` dá XP ao jogador conforme o tier. Se for o Monarca, `MonarchBrain.onDeath` dispara a cinemática e `ModAdvancements.awardBossDefeat` para quem causou dano a ele.
@@ -302,3 +308,19 @@ sequenceDiagram
 1. O cliente aperta +1 → `SpendPointsPayload` → o servidor valida e altera `PlayerStatsAttachment`.
 2. `StatsLogic.onStatsChanged(player)` reaplica modificadores de atributo e chama `ModNetwork.syncStats`.
 3. O cliente recebe `SyncStatsPayload` → HUD, tela e tooltips se atualizam.
+
+### Árvores, ícones e barra do rolamento
+
+`PlayerStatsAttachment` salva IDs textuais únicos em `habilidades` (default vazio para saves antigos), copia-os na morte e transmite-os em `SyncStatsPayload`. Há 1 ponto inicial + 1/100 XP Global; o saldo é derivado de nível e custos aprendidos, sem consumir pontos dos stats. `UnlockTalentPayload` só pede um ID, sem escolher custo nem saldo. `ModularWeaponItem` bloqueia habilidades avançadas não aprendidas; `ClassAbility` filtra R e cobra mana ao iniciar cada ação válida, ao soltar o dash ou após validar destino do teleporte. Recolher a adaga é grátis. Reset limpa a árvore e seleções com técnica bloqueada recuam ao padrão. O protocolo é **5**, incompatível com clientes da versão 4.
+
+`gen_weapon_models.py` gera wrappers `neoforge:separate_transforms` nas **oito classes**: `base` conserva o modelo/poses anteriores e `perspectives.gui` usa `minecraft:item/generated` com os sprites 32×32 de `weapon_icons.py`. A base mantém sua iluminação e geometria; só o override de adaga arremessada permanece; variantes/overrides elementais de armas foram removidos. Nenhuma textura antiga de arma legada é trocada na mão. O fantasma da adaga tem ícone GUI próprio. **Nunca substituir o modelo inteiro por sprite para alterar somente o ícone.**
+
+`DodgeRoll` manda `RollCooldownPayload` ao dono; `SoloHud` calcula os ticks restantes e usa a barra amarela de 2 px **sob a mana** para o rolamento. `HudArt.crest` percorre os pixels do perímetro do escudo em sentido horário: XP Global/100 determina a fração preenchida. Subida de nível mostra o perímetro completo durante o clarão e depois o restante. A barra inferior antiga de rolamento foi removida. `ClientGameEvents` cancela só `PLAYER_HEALTH`, sem reservar linha para uma barra inferior. A recarga continua independente de tentativa local/animações de observadores. `TierIdentity.apply` não liga o contorno dos chefes; `MobEvents.onJoin` limpa a flag persistida de chefes antigos sem reaplicar vida/atributos.
+
+### Armas exclusivamente normais
+
+`WeaponData` mantém o esquema NBT/rede anterior, mas seu construtor normaliza `mobTier=NORMAL`, `elementType=NONE`, requisito padrão normal da classe e `skillId=none`. Isso também migra saves antigos sem remover itens. `SkillTree.activeSkill` consulta os nós do jogador: avançada da classe, ou suprema se aprendida, para Shift + direito nas armas normais. Mana/INT/recarga continuam no servidor. O campo de habilidade do item não concede poderes.
+
+`/modtest weapon <classe>` e `TestActionPayload.GIVE_WEAPON` aceitam apenas o catálogo atual e usam `WeaponData.defaultFor`; argumentos b/c antigos do pacote são ignorados. Os seletores da tela Teste se chamam Tier do mob/Elemento do mob e só são usados por SPAWN_MOB/MARK_NEAREST. A geração de ovos e toda lógica/arte das entidades permanece igual.
+
+`gen_weapon_models.py` gera apenas formas normais e remove por nomes exatos suas antigas saídas elementais de modelos/texturas de item. Nunca remove ovos, rostos de chefes ou texturas de entidade. `ClientSetup` não registra mais `solomod:element` em armas. Geometria/poses normais e ícones pixel art são preservados.
