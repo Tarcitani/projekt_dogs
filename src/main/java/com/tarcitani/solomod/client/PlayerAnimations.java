@@ -42,6 +42,8 @@ import java.util.Map;
  *   <li>Martelo: salto/mergulho, giro de duas mãos e preparação vertical da onda sísmica.</li>
  *   <li>Adaga: arremesso, puxada de retorno e reaparição no teleporte.</li>
  *   <li>Rolamento: recolhe braços/pernas e dá uma cambalhota na direção validada do deslocamento.</li>
+ *   <li>Arma + escudo: golpe de uma mão por classe, com o outro braço apoiando o escudo;
+ *       primeira/terceira pessoa respeitam mão secundária e jogador canhoto.</li>
  * </ul>
  * O clique esquerdo continua vanilla. As habilidades vêm do servidor; só a pose de carga da rapieira
  * acompanha o estado de uso nativo do jogador. Nenhuma pose de câmera causa dano ou movimento.
@@ -194,6 +196,8 @@ public final class PlayerAnimations {
                 pose.scale(1F, 1F - 0.22F * arc, 1F);
                 pose.translate(0, -0.65, 0);
             }
+            case SHIELD_STRIKE -> pose.mulPose(new Quaternionf().rotateAxis(5F * arc * Mth.DEG_TO_RAD,
+                    Mth.cos(yaw), 0, Mth.sin(yaw)));
         }
     }
 
@@ -211,7 +215,36 @@ public final class PlayerAnimations {
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null || event.getHand() != InteractionHand.MAIN_HAND) return;
+        if (player == null) return;
+        Playing shieldMove = PLAYING.get(player.getId());
+        if (shieldMove != null && shieldMove.anim() == PlayerAnim.SHIELD_STRIKE) {
+            float t = progress(player, PlayerAnim.SHIELD_STRIKE, event.getPartialTick());
+            var gear = com.tarcitani.solomod.skill.ShieldAbility.equipment(player);
+            if (t < 0 || gear == null) return;
+            var spec = com.tarcitani.solomod.event.StatsLogic.ShieldSkills.forWeapon(gear.weaponClass());
+            float jab = jabPulse(t * shieldMove.duration(), spec.hitTick());
+            float weight = Mth.sin(t * Mth.PI);
+            boolean right = (event.getHand() == InteractionHand.MAIN_HAND) == (player.getMainArm() == HumanoidArm.RIGHT);
+            float handSide = right ? 1 : -1;
+            PoseStack handPose = event.getPoseStack();
+            if (event.getHand() != gear.weaponHand()) {
+                handPose.translate(-handSide * 0.12F * weight, 0.12F * weight, -0.08F * weight);
+                handPose.mulPose(Axis.YP.rotationDegrees(handSide * 12F * weight));
+            } else if (gear.weaponClass() == WeaponClass.LONGSWORD) {
+                handPose.translate(-handSide * 0.3F * jab, 0, -0.22F * jab);
+                handPose.mulPose(Axis.YP.rotationDegrees(handSide * (25F * weight - 65F * jab)));
+                handPose.mulPose(Axis.ZP.rotationDegrees(-handSide * 35F * jab));
+            } else if (gear.weaponClass() == WeaponClass.HAMMER) {
+                float wind = smooth(t * shieldMove.duration() / spec.hitTick()) * (1 - recovery(t * shieldMove.duration(), shieldMove.duration()));
+                handPose.translate(0, 0.2F * wind - 0.35F * jab, -0.2F * jab);
+                handPose.mulPose(Axis.XP.rotationDegrees(-65F * wind + 90F * jab));
+            } else {
+                handPose.translate(-handSide * 0.08F * weight, 0.02F * weight, -0.6F * jab);
+                handPose.mulPose(Axis.XP.rotationDegrees(-15F * jab));
+            }
+            return;
+        }
+        if (event.getHand() != InteractionHand.MAIN_HAND) return;
         PoseStack pose = event.getPoseStack();
         float side = player.getMainArm() == HumanoidArm.RIGHT ? 1F : -1F;
         float charge = rapierCharge(player, event.getPartialTick());
@@ -336,6 +369,8 @@ public final class PlayerAnimations {
 
     private static boolean matchesWeapon(Player player, PlayerAnim anim) {
         if (anim == PlayerAnim.ROLL) return true;
+        if (anim == PlayerAnim.SHIELD_STRIKE) return com.tarcitani.solomod.skill.ShieldAbility.equipment(player) != null;
+        if (com.tarcitani.solomod.skill.ShieldAbility.hasShield(player)) return false;
         if (!(player.getMainHandItem().getItem() instanceof ModularWeaponItem item)) return false;
         return switch (anim) {
             case CRESCENT, RISING_CUT, CROSS_CUT, SPIN -> item.weaponClass() == WeaponClass.LONGSWORD;
@@ -344,6 +379,7 @@ public final class PlayerAnimations {
             case DAGGER_THROW, DAGGER_RECALL, DAGGER_BLINK -> item.weaponClass() == WeaponClass.DAGGER;
             case LEAP_FLIP, HAMMER_DIVE, SLAM -> item.weaponClass() == WeaponClass.HAMMER || item.weaponClass() == WeaponClass.AXE;
             case ROLL -> true;
+            case SHIELD_STRIKE -> true;
         };
     }
 
@@ -391,6 +427,32 @@ public final class PlayerAnimations {
         float t = progress(player, playing.anim(), partial);
         if (t < 0) return;
         float k = Mth.sin(t * Mth.PI);
+        if (playing.anim() == PlayerAnim.SHIELD_STRIKE) {
+            var gear = com.tarcitani.solomod.skill.ShieldAbility.equipment(player);
+            if (gear == null) return;
+            boolean weaponRight = (gear.weaponHand() == InteractionHand.MAIN_HAND) == right;
+            var strikingArm = weaponRight ? model.rightArm : model.leftArm;
+            var shieldArm = weaponRight ? model.leftArm : model.rightArm;
+            float direction = weaponRight ? 1 : -1;
+            var spec = com.tarcitani.solomod.event.StatsLogic.ShieldSkills.forWeapon(gear.weaponClass());
+            float elapsed = t * playing.duration(), jab = jabPulse(elapsed, spec.hitTick());
+            shieldArm.xRot = Mth.lerp(k, shieldArm.xRot, -1.15F);
+            shieldArm.yRot = direction * 0.35F * k;
+            shieldArm.zRot = -direction * 0.08F * k;
+            if (gear.weaponClass() == WeaponClass.LONGSWORD) {
+                strikingArm.xRot = Mth.lerp(k, strikingArm.xRot, -1.25F + 0.55F * jab);
+                strikingArm.yRot = direction * (0.5F * k - 1.1F * jab);
+                strikingArm.zRot = -direction * 0.35F * jab;
+            } else if (gear.weaponClass() == WeaponClass.HAMMER) {
+                float wind = smooth(elapsed / spec.hitTick()) * (1 - recovery(elapsed, playing.duration()));
+                strikingArm.xRot = -2.6F * wind + 1.8F * jab;
+                strikingArm.yRot = -direction * 0.2F * wind;
+            } else {
+                strikingArm.xRot = Mth.lerp(k, strikingArm.xRot, -1.25F - 0.5F * jab);
+                strikingArm.yRot = -direction * 0.12F * k;
+            }
+            return;
+        }
         if (swordAnimation(playing.anim())) {
             float elapsed = t * playing.duration(), stroke = stroke(elapsed);
             float wind = Mth.clamp(elapsed / WeaponAbilities.CRESCENT_WINDUP, 0, 1);

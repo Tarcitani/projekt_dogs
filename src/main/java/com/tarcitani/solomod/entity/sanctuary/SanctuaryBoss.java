@@ -26,12 +26,19 @@ import java.util.UUID;
  * e um ciclo de golpes. Sem golpe em andamento, espera o {@code cooldown} e pede um golpe a {@link #chooseAttack};
  * durante o golpe, {@link #tickAttack} roda a cada tick até devolver false. Na fase 3 o intervalo cai para 1,5 s.
  * Todos os golpes devem ser telegrafados (anel, linha, partículas ou som) antes do dano.
+ * Aparada agenda recuperação; ataque -1 impede os goals corpo a corpo durante a pausa.
  */
 public abstract class SanctuaryBoss extends SanctuaryMob {
     private final ServerBossEvent bossBar;
     /** Jogadores que feriram o chefe nesta luta: recebem a conquista dele. */
     private final Set<UUID> fighters = new HashSet<>();
     private int cooldown = 60;
+    private int parryRecovery;
+
+    /** O ataque atual só é encerrado no próximo passo da IA, sem reentrância em tickAttack. */
+    public final void onParried(int ticks) {
+        parryRecovery = Math.max(parryRecovery, ticks);
+    }
 
     protected SanctuaryBoss(EntityType<? extends Monster> type, Level level, BossEvent.BossBarColor color) {
         super(type, level);
@@ -62,6 +69,15 @@ public abstract class SanctuaryBoss extends SanctuaryMob {
     protected void customServerAiStep() {
         super.customServerAiStep();
         bossBar.setProgress(getHealth() / getMaxHealth());
+        if (parryRecovery > 0) {
+            // Um projétil antigo pode ser aparado enquanto o Caçador está sumido.
+            setInvisible(false);
+            setAttack(-1);
+            getNavigation().stop();
+            setDeltaMovement(0, Math.min(0, getDeltaMovement().y), 0);
+            if (--parryRecovery == 0) finishAttack();
+            return;
+        }
         LivingEntity target = getTarget();
         if (attackId() == 0) {
             if (cooldown > 0) cooldown--;

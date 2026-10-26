@@ -7,7 +7,7 @@ import net.minecraft.util.ByIdMap;
 
 import java.util.function.IntFunction;
 
-/** Animações de corpo inteiro do jogador ao usar as habilidades das armas (client/PlayerAnimations). */
+/** Animações das armas e técnicas com escudo (client/PlayerAnimations); ordinais antigos são preservados. */
 public enum PlayerAnim {
     /** Espada longa: giro completo de 360° com a claymore. */
     SPIN,
@@ -40,7 +40,9 @@ public enum PlayerAnim {
     /** Martelo: giro de duas mãos com varredura circular. */
     HAMMER_SWEEP,
     /** Martelo: preparação sobre a cabeça e golpe que abre uma onda no chão. */
-    HAMMER_QUAKE;
+    HAMMER_QUAKE,
+    /** Técnica de uma mão; a classe e a mão da arma vêm do equipamento sincronizado. */
+    SHIELD_STRIKE;
 
     private static final IntFunction<PlayerAnim> BY_ID =
             ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.ZERO);

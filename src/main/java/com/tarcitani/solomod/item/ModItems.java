@@ -31,7 +31,9 @@ import java.util.function.Supplier;
 /**
  * Itens do mod: uma arma por classe (solomod:greatsword, solomod:dagger...), um ovo por criatura e elemento,
  * o ovo do Soberano e os rostos dos seis chefes em pixel art. A aba Solo Mod reúne criaturas;
- * a aba Armas contém só rapieira, espada longa, adaga e martelo, uma unidade neutra de cada.
+ * a aba Armas contém rapieira, espada longa, adaga, martelo e Escudo de Aparada.
+ * A aba Pixel Art 3D oferece quatro armas extrudadas e uma espada adicional, Juramento do Eco,
+ * de fantasia em camadas. Todas reutilizam classes, talentos e recargas existentes.
  */
 public final class ModItems {
     private ModItems() {}
@@ -52,6 +54,12 @@ public final class ModItems {
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, SoloMod.MOD_ID);
 
     public static final Map<WeaponClass, DeferredItem<ModularWeaponItem>> WEAPONS = new EnumMap<>(WeaponClass.class);
+    public static final Map<WeaponClass, DeferredItem<ModularWeaponItem>> PIXEL_WEAPONS = new EnumMap<>(WeaponClass.class);
+    /** Modelo original inspirado no estilo de fantasia do Blades of Majestica; é uma espada longa normal. */
+    public static final DeferredItem<ModularWeaponItem> ECHO_OATHBLADE = ITEMS.register("echo_oathblade",
+            () -> new ModularWeaponItem(WeaponClass.LONGSWORD, new Item.Properties()));
+    public static final DeferredItem<ParryShieldItem> PARRY_SHIELD = ITEMS.register("parry_shield",
+            () -> new ParryShieldItem(new Item.Properties()));
     /** Ovos: tier -> elemento -> item. O de elemento NONE nasce sem elemento. */
     public static final Map<MobTier, Map<ElementType, DeferredItem<DeferredSpawnEggItem>>> EGGS = new EnumMap<>(MobTier.class);
     /** O Soberano não tem elemento: um ovo só (preto com manchas douradas). */
@@ -67,6 +75,10 @@ public final class ModItems {
     static {
         for (WeaponClass wc : WeaponClass.values()) {
             WEAPONS.put(wc, ITEMS.register(wc.getSerializedName(), () -> new ModularWeaponItem(wc, new Item.Properties())));
+        }
+        for (WeaponClass wc : WeaponClass.AVAILABLE) {
+            PIXEL_WEAPONS.put(wc, ITEMS.register("pixel_" + wc.getSerializedName(),
+                    () -> new ModularWeaponItem(wc, new Item.Properties())));
         }
         egg(MobTier.NORMAL, "minion", ModEntities.MINION, 0x5B2A4A);
         egg(MobTier.OP, "elite", ModEntities.ELITE, 0x262433);
@@ -167,12 +179,26 @@ public final class ModItems {
             })
             .build());
 
-    /** Quatro armas normais sem variantes de tier/elemento; /modtest também gera somente essas versões. */
+    /** Quatro armas normais sem variantes de tier/elemento e o escudo de parry. */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> WEAPONS_TAB = TABS.register("weapons", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.solomod.weapons"))
             .icon(() -> new ItemStack(get(WeaponClass.HAMMER)))
-            .displayItems((params, output) -> WeaponClass.AVAILABLE.forEach(wc ->
-                    output.accept(ModularWeaponItem.create(get(wc), WeaponData.of(wc, MobTier.NORMAL, ElementType.NONE)))))
+            .displayItems((params, output) -> {
+                WeaponClass.AVAILABLE.forEach(wc ->
+                        output.accept(ModularWeaponItem.create(get(wc), WeaponData.defaultFor(wc))));
+                output.accept(new ItemStack(PARRY_SHIELD.get()));
+            })
+            .build());
+
+    /** Protótipos visuais jogáveis; reutilizam stats/talentos e não criam novas classes de arma. */
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> PIXEL_WEAPONS_TAB = TABS.register("pixel_weapons", () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.solomod.pixel_weapons"))
+            .icon(() -> new ItemStack(PIXEL_WEAPONS.get(WeaponClass.LONGSWORD).get()))
+            .displayItems((params, output) -> {
+                WeaponClass.AVAILABLE.forEach(wc ->
+                        output.accept(ModularWeaponItem.create(PIXEL_WEAPONS.get(wc).get(), WeaponData.defaultFor(wc))));
+                output.accept(ModularWeaponItem.create(ECHO_OATHBLADE.get(), WeaponData.defaultFor(WeaponClass.LONGSWORD)));
+            })
             .build());
 
     public static ModularWeaponItem get(WeaponClass wc) {

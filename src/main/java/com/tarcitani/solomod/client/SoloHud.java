@@ -22,6 +22,7 @@ import java.util.UUID;
  * Barras são suavizadas, o brasão pulsa em perigo/subida de nível e a carga da rapieira expande só 12 px.
  * XP Global percorre o contorno do escudo de nível: uma volta completa representa a subida de nível.
  * A barra amarela sob a mana indica o rolamento confirmado pelo servidor; não há barra junto ao XP vanilla.
+ * Arma + escudo mostra a técnica exclusiva e sua tecla Z, inclusive com arma na mão secundária.
  */
 public final class SoloHud {
     private SoloHud() {}
@@ -67,6 +68,9 @@ public final class SoloHud {
         var font = mc.font;
         var s = player.getData(ModAttachments.PLAYER_STATS);
         var held = player.getMainHandItem();
+        var shieldGear = com.tarcitani.solomod.skill.ShieldAbility.equipment(player);
+        boolean shieldEquipped = com.tarcitani.solomod.skill.ShieldAbility.hasShield(player);
+        if (shieldGear != null) held = shieldGear.weapon();
         boolean weapon = held.getItem() instanceof ModularWeaponItem;
         boolean charging = weapon && ((ModularWeaponItem) held.getItem()).weaponClass() == WeaponClass.RAPIER
                 && player.isUsingItem() && player.getUseItem() == held;
@@ -105,16 +109,18 @@ public final class SoloHud {
             g.fill(bx - 2, row - 2, bx + bw + 2, row + 20, 0xA0080E18);
             g.fill(bx - 2, row - 2, bx + 14, row - 1, accent);
             g.renderItem(held, bx, row);
-            boolean selectable = WeaponTechnique.supports(data.weaponClass());
-            Component technique = selectable ? WeaponControls.selected(data.weaponClass()).displayName()
+            boolean selectable = !shieldEquipped && WeaponTechnique.supports(data.weaponClass());
+            Component technique = shieldGear != null ? com.tarcitani.solomod.skill.ShieldAbility.name(data.weaponClass())
+                    : shieldEquipped ? Component.translatable("hud.solomod.shield_blocked")
+                    : selectable ? WeaponControls.selected(data.weaponClass()).displayName()
                     : ClassAbility.hasAbility(data.weaponClass()) ? ClassAbility.displayName(data.weaponClass()) : data.weaponClass().displayName();
             String talentId = selectable ? com.tarcitani.solomod.skill.SkillTree.forTechnique(WeaponControls.selected(data.weaponClass())).id()
                     : data.weaponClass().getSerializedName() + (data.weaponClass() == WeaponClass.DAGGER ? ".throw" : ".leap");
-            if (ClassAbility.hasAbility(data.weaponClass()) && !s.hasTalent(talentId)) technique = Component.translatable("hud.solomod.talent_locked");
+            if (!shieldEquipped && ClassAbility.hasAbility(data.weaponClass()) && !s.hasTalent(talentId)) technique = Component.translatable("hud.solomod.talent_locked");
             RpgUi.fit(g, font, technique, bx + 20, row + 1, bw - 37, RpgUi.TEXT, 0.85F);
-            if (selectable) {
+            if (selectable || shieldGear != null) {
                 g.fill(bx + bw - 12, row, bx + bw - 1, row + 10, 0xFF3A3440);
-                RpgUi.fit(g, font, WeaponControls.CYCLE.getTranslatedKeyMessage(), bx + bw - 10, row + 2, 8, accent, 0.85F);
+                RpgUi.fit(g, font, (shieldGear != null ? WeaponControls.SHIELD_SKILL : WeaponControls.CYCLE).getTranslatedKeyMessage(), bx + bw - 10, row + 2, 8, accent, 0.85F);
             }
             float cd = player.getCooldowns().getCooldownPercent(held.getItem(), delta.getGameTimeDeltaPartialTick(false));
             RpgUi.bar(g, bx + 20, row + 13, bw - 24, 2, 1 - cd, cd > 0 ? 0xFF8E7FB8 : accent, time);

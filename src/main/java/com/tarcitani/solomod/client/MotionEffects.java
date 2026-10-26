@@ -25,6 +25,7 @@ import java.util.List;
  * Efeitos 3D em pixels: teleporte amarelo com raios quebrados e selo, adaga com rastro elétrico,
  * linhas/agulhas/recuo da rapieira, giro, fissura e impacto do martelo. Só desenha: não causa dano, fogo,
  * raio real nem teleporte. Rastros seguem posições reais das entidades, sem prever travessia de paredes.
+ * CombatVfx complementa esta malha com flipbooks, selos e lâminas de luz; técnicas com escudo são desenhadas lá.
  */
 @EventBusSubscriber(modid = SoloMod.MOD_ID, value = Dist.CLIENT)
 public final class MotionEffects {
@@ -47,11 +48,14 @@ public final class MotionEffects {
             case RAPIER_RETREAT -> WeaponAbilities.RETREAT_TICKS;
             case HAMMER_SWEEP -> WeaponAbilities.HAMMER_SWEEP_TICKS;
             case HAMMER_QUAKE -> 20;
+            case SHIELD_SWORD, SHIELD_RAPIER, SHIELD_DAGGER, SHIELD_HAMMER -> Math.max(12, (int) data.power());
         }; }
     }
     private static final List<Effect> ACTIVE = new ArrayList<>();
 
     public static void start(WeaponMotionPayload payload) {
+        CombatVfx.start(payload);
+        if (CombatVfx.isShield(payload.kind())) return;
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return;
         ACTIVE.removeIf(e -> e.level != level || (e.data.entityId() == payload.entityId()

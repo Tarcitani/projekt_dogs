@@ -44,6 +44,7 @@ import java.util.UUID;
  * <p>São simulados no servidor e desenhados com partículas: não precisam de entidade, modelo nem renderer.
  * O rastro da investida de Fogo também converte piso natural exposto em magma permanente; respeita
  * mobGriefing, preserva blocos com dados e registra o conjurador para a risada após mortes no magma.
+ * Empurrões respeitam a graça de impacto de uma aparada do escudo, antes dos efeitos da Fauna Pacífica.
  */
 public final class Hazards {
     private Hazards() {}
@@ -141,6 +142,7 @@ public final class Hazards {
 
     /** Empurrão que também chega ao cliente quando o alvo é um jogador. */
     public static void push(Entity e, Vec3 velocity) {
+        if (com.tarcitani.solomod.skill.ParryGuard.deflectedImpact(e)) return;
         // Bolha de Ancoragem da Tartaruga: o empurrão de um Maremoto perde força sobre o jogador.
         velocity = PassiveEchoTriggers.dampenPush(e, velocity);
         e.push(velocity.x, velocity.y, velocity.z);

@@ -40,6 +40,20 @@ flowchart LR
     HUD -- "SpendPoints / TestAction / SpinAttack" --> Servidor
 ```
 
+### Escudo de parry e equipamentos experimentais
+
+`item/ParryShieldItem` herda BLOCK e desgaste de `ShieldItem`; o uso vanilla sincroniza a mão ativa. A recarga começa no servidor ao levantar, impedindo spam por troca de mão/item, e é renovada ao soltar/aparar. `skill/ParryGuard`, registrado no game bus em `SoloMod`, intercepta `LivingIncomingDamageEvent` em HIGHEST: valida janela, direção horizontal, autoria BOSS/SUB_BOSS ou `SanctuaryBoss`, mão/stack e estado do jogador. Não exige esperar os 5 ticks do bloqueio vanilla. Não acrescenta pacote de rede nem altera codecs/ordinais.
+
+Uma aparada cancela o dano antes de `Hazards.hit` aplicar passivas, encerra o uso, desgasta o escudo e guarda 2 ticks de graça por jogador/chefe. `Hazards.push` respeita essa graça para o empurrão imediato. O estado transitório é removido ao expirar, desconectar, trocar dimensão ou parar o servidor. `TierBrain.onParried` agenda o stun em `baseTick`, fora de `Move.tick`, preservando imunidade na Fúria/transições; não reutiliza a exceção de bola de fogo do Soberano. `SanctuaryBoss.onParried` pausa a IA com ataque -1 e depois retoma o ciclo. Números ficam em `StatsLogic.Parry`.
+
+`ModularWeaponItem.use` retorna PASS (inclusive com Shift) quando há escudo equipado; `ClassAbility` também bloqueia os caminhos de pacote legado, carga/soltura e R, cancelando ações ao equipar um escudo. `ShieldAbility.isShield` usa `ItemAbilities.SHIELD_BLOCK`, aceitando escudos vanilla/modificados. `ModItems.PIXEL_WEAPONS` registra quatro `ModularWeaponItem` adicionais das classes existentes e `PIXEL_WEAPONS_TAB` os expõe separadamente. `ClientSetup` registra predicates de adaga lançada para ambas as versões e `minecraft:blocking` para o escudo.
+
+`WeaponControls.SHIELD_SKILL` registra Z, livre entre os defaults do vanilla 1.21.1, e só envia `ShieldAbilityPayload` quando há arma + escudo. O pacote unitário não informa classe, mão, dano nem alvo: `skill/ShieldAbility` resolve as pilhas reais nas duas ordens de mãos, valida Maestria/mana/recarga/chão/estado e mantém a ação no servidor. Cada classe tem um único `StatsLogic.ShieldSkills.Spec`. Guarda baixa ao iniciar; trocar pilha/mão/dimensão, morrer ou sair cancela a ação. `ClassAbility.canStart` impede sobreposição com rolamento/armas/parry. Dano agendado usa `playerAttack`; durante essa chamada `strikingWeapon` permite a `CombatEvents` resolver a arma secundária e aplicar escalonamento uma vez. Golpes vanilla adicionais durante a ação são cancelados. O recuo da adaga consulta colisão e apoio. `PlayerAnim.SHIELD_STRIKE` é acrescentado no fim; `PlayerAnimations` deriva a mão real e posa o braço de apoio com o escudo. HUD/tooltips substituem R/técnicas comuns pela técnica exclusiva e mostram a tecla remapeada. Protocolo **7** para cliente e servidor.
+
+`tools/pixel_equipment.py`, chamado por `gen_weapon_models.py`, conserva o escudo/wrapper e delega as quatro armas a `majestica_weapons.py`: atlas 32×64, ícones 32×32, aço biselado, canais ciano e bronze, com profundidade física por peça. Reutiliza a malha parametrizada `gen_oathblade.model(sprite, texture_name, depth_at)`, sem alterar a Juramento do Eco. A adaga reconstrói silhueta/proporções da Twilight Dagger de Minecraft Dungeons II: lâmina curva estreita, guarda curta e cabo inclinado, com materiais da família. Os polígonos são definidos no gerador; a imagem de referência não é lida nem distribuída. `compact_dagger` preserva o encaixe do cabo com escala 0,9. Rapieira/espada mantêm guardas próprias; martelo tem cabeça de até 7 unidades de profundidade e poses nas duas mãos. Valida conexão da silhueta. O fantasma da adaga conserva os mesmos elementos e troca apenas atlas/render_type. Modelos usam `neoforge:separate_transforms`: GUI sprite e base volumétrica sem parent `item/handheld`/`item/generated`. Não altera itens, protocolo, estatísticas ou habilidades. `python tools/majestica_weapons.py --preview` projeta os JSON reais em `build/previews/majestica_weapons.png`; `pixel_equipment.py --preview` também atualiza `build/previews/pixel_equipment.png`.
+
+`ModItems.ECHO_OATHBLADE` adiciona somente `solomod:echo_oathblade` (Juramento do Eco), um `ModularWeaponItem(LONGSWORD)` na aba experimental. Não altera enum, protocolo ou árvore. `ModularWeaponItem.applyCooldown` inclui esse item no grupo da espada longa normal/Pixel Art 3D. `tools/gen_oathblade.py` gera atlas 32×64, ícone 32×32 e modelo original de fantasia em camadas, com espessura por material e rotação diagonal compartilhada; referência visual: galeria pública de Blades of Majestica, de Eftann (https://realm-of-majestica.webflow.io/). Não reutiliza arquivos do resource pack. É chamado por `gen_weapon_models.py`; `python tools/gen_oathblade.py --preview` projeta os cubos do JSON em duas vistas em `build/previews/echo_oathblade.png`.
+
 ### Os três dados centrais
 
 | Dado | Tipo | Onde vive | Para quê |
@@ -54,6 +68,16 @@ flowchart LR
 - **Game bus** (`NeoForge.EVENT_BUS`): dano, morte, tick, comandos. Servidor/comum: registrado em `SoloMod.java` (`CombatEvents`, `PlayerEvents`, `MobEvents`, `ClassAbility`, `ModTestCommand`). Cliente: `@EventBusSubscriber(value = Dist.CLIENT, bus = GAME)`.
 
 ---
+
+## Apresentação do jogador e progressão unificada
+
+`client/PlayerAnimations` conserva as poses de habilidades, guarda e rolamento; `poseModel` é chamado pelo mixin após `HumanoidModel.setupAnim`. Movimentação cotidiana, saque e balanço das mãos usam as animações vanilla, sem camada adicional de locomoção.
+
+`client/CombatVfx` recebe os mesmos `WeaponMotionPayload` que `MotionEffects`, com quatro `Kind.SHIELD_*` acrescentados no fim. `ShieldAbility` envia a sequência ao iniciar, mantendo toda a lógica de dano no servidor. O renderer combina barras/cubos (`RenderType.lightning`) e quads emissivos com profundidade (`entityTranslucentEmissive`, sem culling), UV manual de oito quadros, até 32 ações/256 sprites e distância de 80 blocos; carga da rapieira deriva do uso vanilla sincronizado. Rastros amostram posições reais e estocadas fazem clip no cliente para apresentar o limite das paredes. `MotionEffects` conserva seus efeitos anteriores e delega as técnicas do escudo à nova camada. Protocolo **7**, sem reordenar ordinais anteriores.
+
+`SkillTreeLayout.stat` acrescenta quatro posições cardinais internas. `SkillTreeScreen.StatButton` seleciona o atributo; o botão inferior solicita `SpendPointsPayload` (+1 ou até +5 com Shift), reutilizando validação, `StatsLogic.onStatsChanged` e sync existentes. Não há novos campos salvos nem mistura de saldos: `UnlockTalentPayload` continua para habilidades. `TalentIcons` desenha os PNG próprios pelo sufixo estável do ID de cada nó; armas-raiz continuam com seus itens. `centerMap` usa limites reais para enquadrar a árvore. As classes legadas não ganham novos nós visíveis.
+
+`tools/gen_player_presentation.py` gera 20 ícones 16×16 em `textures/gui/talents/` e três flipbooks 32×256 (rune/streak/burst) em `textures/effect/`. O renderer seleciona os quadros por UV, sem `.mcmeta`, CIT ou resource pack externo. Arte original em pixels, sem suavização. `--preview` produz pranchas em `build/previews/`.
 
 ## Mapa de arquivos
 
@@ -86,7 +110,7 @@ flowchart LR
 | `PlayerStatsAttachment.java` | Stats, XP, pontos, mana e IDs de habilidades aprendidas do jogador. Pontos de habilidade = nível menos custos dos nós aprendidos; independentes dos atributos. Campo NBT opcional `habilidades` e lista no buffer de sync. Constantes `XP_PER_POINT=100`, `BASE_MANA=20`, `MANA_PER_INT=5`, `MAX_STAT=999`. Depois de alterar, **sempre** chame `StatsLogic.onStatsChanged(player)`. |
 | `ActiveEchoAttachment.java` | Record `(echo)` com o UUID do companheiro ativo da Fauna Pacífica (Ressonância de Alma Única). `NONE` quando não há companheiro. Salvo com o jogador. |
 | `MobProfile.java` | Record `(tier, element)` que marca um mob como "do mod". |
-| `ModAttachments.java` | Registro de `PLAYER_STATS` (salvo com a entidade e copiado na morte; o sync com o cliente é **manual** via `SyncStatsPayload`) e `MOB_PROFILE` (só existe em mobs marcados: teste com `hasData`). |
+| `ModAttachments.java` | Registro de `PLAYER_STATS` (salvo/copiado na morte, sync manual via `SyncStatsPayload`), `MOB_PROFILE` (só em mobs marcados), `ACTIVE_ECHO` e `GUIDE_RECEIVED` (boolean salvo/copiado na morte, só servidor). |
 
 ### `era/` — pós-jogo
 
@@ -102,6 +126,10 @@ flowchart LR
 
 ### `item/` — itens
 
+`StarterGuide` monta o livro vanilla escrito com `WRITTEN_BOOK_CONTENT`, nome traduzível, autor anônimo e oito páginas `Component.translatable` já resolvidas, exclusivamente narrativas e sem tutorial/spoilers. `refreshLegacyCopies` identifica a edição anterior por item, autor/título e sequência exata das 14 chaves de página; substitui apenas o conteúdo, preservando geração e demais componentes. A verificação ocorre no login e a cada 40 ticks, inclusive para cópias recolhidas de baús. A inserção acontece somente no servidor e a marca `GUIDE_RECEIVED` só é salva após sucesso; inventário cheio aguarda a próxima tentativa de `PlayerEvents`, sem descartar itens.
+
+`client/GuideBookModel` registra `item/echo_guide` como modelo adicional e envolve o modelo carregado de written_book em `ModelEvent.ModifyBakingResult`. O override escolhe a capa quando `StarterGuide.isGuide` reconhece item, autor/título e sequência das páginas; nomes personalizados e geração não interferem. Outros livros delegam aos overrides anteriores. Continua um item vanilla, sem novos registros, componentes ou pacotes e sem sobrescrever assets minecraft; leitura, cópia e púlpitos permanecem nativos. `tools/gen_echo_guide.py` gera textura 32×32 e modelo, integrado ao gerador geral. `--preview` salva `build/previews/echo_guide.png`. A capa usa couro escuro, cantoneiras de bronze e selo de Eco ciano, sem spoilers.
+
 | Arquivo | O que é |
 |---|---|
 | `ModularWeaponItem.java` | Item base de todas as armas. Tooltip (verde/vermelho conforme o requisito), clique direito (técnica de classe) e Shift + direito (habilidade avançada aprendida), `create(...)` para fabricar uma pilha configurada. |
@@ -115,7 +143,7 @@ flowchart LR
 | `CombatEvents.java` | **Coração do combate.** Em `LivingIncomingDamageEvent` (antes da armadura) aplica tier, escalonamento de stat e elemento ao golpe do jogador. Também redução de dano por VIT e envio dos números de dano. |
 | `ElementalCombat.java` | Regras elementais compartilhadas: elemento de uma entidade, multiplicador, vantagem, passivas (fogo, lentidão etc.) e partículas. |
 | `StatsLogic.java` | **Todo o balanceamento numérico** (constantes `FOR_FLAT_DAMAGE`, `AGI_*`, `VIT_*`, `WEAPON_STAT_SCALING`, `LOCKED_HEAVY_SPEED_PENALTY`) e a aplicação dos modificadores de atributo vanilla. `onStatsChanged` reaplica atributos e sincroniza. |
-| `PlayerEvents.java` | Ciclo de vida: XP por abate de mob com perfil, regeneração de mana, reaplicar atributos em login, respawn e troca de dimensão. |
+| `PlayerEvents.java` | Ciclo de vida: XP por abate de mob com perfil, regeneração de mana, reaplicar atributos em login, respawn e troca de dimensão. Chama `StarterGuide` no login e a cada 40 ticks para entregar o guia quando houver espaço. |
 
 ### `skill/` — habilidades
 
@@ -174,7 +202,7 @@ flowchart LR
 
 ### `network/` — pacotes
 
-Todos registrados em `ModNetwork.register` (protocolo `"5"`; cliente e servidor precisam desta versão dos pacotes).
+Todos registrados em `ModNetwork.register` (protocolo `"7"`; cliente e servidor precisam desta versão dos pacotes).
 
 | Pacote | Direção | Para quê |
 |---|---|---|
@@ -348,7 +376,7 @@ sequenceDiagram
 
 ### Árvores, ícones e barra do rolamento
 
-`PlayerStatsAttachment` salva IDs textuais únicos em `habilidades` (default vazio para saves antigos), copia-os na morte e transmite-os em `SyncStatsPayload`. Há 1 ponto inicial + 1/100 XP Global; o saldo é derivado de nível e custos aprendidos, sem consumir pontos dos stats. `UnlockTalentPayload` só pede um ID, sem escolher custo nem saldo. `ModularWeaponItem` bloqueia habilidades avançadas não aprendidas; `ClassAbility` filtra R e cobra mana ao iniciar cada ação válida, ao soltar o dash ou após validar destino do teleporte. Recolher a adaga é grátis. Reset limpa a árvore e seleções com técnica bloqueada recuam ao padrão. O protocolo é **5**, incompatível com clientes da versão 4.
+`PlayerStatsAttachment` salva IDs textuais únicos em `habilidades` (default vazio para saves antigos), copia-os na morte e transmite-os em `SyncStatsPayload`. Há 1 ponto inicial + 1/100 XP Global; o saldo é derivado de nível e custos aprendidos, sem consumir pontos dos stats. `UnlockTalentPayload` só pede um ID, sem escolher custo nem saldo. `ModularWeaponItem` bloqueia habilidades avançadas não aprendidas; `ClassAbility` filtra R e cobra mana ao iniciar cada ação válida, ao soltar o dash ou após validar destino do teleporte. Recolher a adaga é grátis. Reset limpa a árvore e seleções com técnica bloqueada recuam ao padrão. Com escudo, essas técnicas ficam bloqueadas e Z usa `ShieldAbility`. O protocolo atual é **7**, incompatível com clientes anteriores.
 
 `gen_weapon_models.py` gera wrappers `neoforge:separate_transforms` nas **oito classes**: `base` conserva o modelo/poses anteriores e `perspectives.gui` usa `minecraft:item/generated` com os sprites 32×32 de `weapon_icons.py`. A base mantém sua iluminação e geometria; só o override de adaga arremessada permanece; variantes/overrides elementais de armas foram removidos. Nenhuma textura antiga de arma legada é trocada na mão. O fantasma da adaga tem ícone GUI próprio. **Nunca substituir o modelo inteiro por sprite para alterar somente o ícone.**
 

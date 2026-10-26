@@ -1,13 +1,14 @@
 package com.tarcitani.solomod.client;
 
 import com.tarcitani.solomod.core.WeaponClass;
+import com.tarcitani.solomod.core.StatType;
 import com.tarcitani.solomod.skill.SkillTree;
 import com.tarcitani.solomod.skill.WeaponSkill;
 import java.util.List;
 
 /**
  * Geometria do mapa único: jogador na origem, as quatro armas do catálogo no círculo e habilidades
- * crescendo para fora em raízes. Apenas apresentação; IDs, custos e dependências ficam no catálogo.
+ * crescendo para fora em raízes; quatro atributos no círculo interno cardinal. Apenas apresentação.
  * Cada setor ocupa 90 graus; classes legadas não aparecem no mapa, mas seus dados são preservados.
  */
 final class SkillTreeLayout {
@@ -22,6 +23,14 @@ final class SkillTreeLayout {
         return new Point(Math.cos(angle) * radius, Math.sin(angle) * radius);
     }
     static Point weapon(WeaponClass weapon) { return polar(weapon, 84, 0); }
+    static Point stat(StatType stat) {
+        return switch (stat) {
+            case FOR -> new Point(-48, 0);
+            case AGI -> new Point(0, -48);
+            case INT -> new Point(48, 0);
+            case VIT -> new Point(0, 48);
+        };
+    }
     static Point node(SkillTree.Node node) {
         if (node.skill() == WeaponSkill.ELEMENTAL_BURST) return polar(node.weapon(), 322, 0);
         if (node.skill() != null) return polar(node.weapon(), node.parent().isEmpty() ? 156 : 248, 0);

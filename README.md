@@ -31,7 +31,29 @@ Fora da história principal, o mundo guarda **seis Santuários de Eco**: masmorr
 
 > 🧪 **Status:** MVP jogável. Os sistemas centrais estão prontos; há uma tela de testes (tecla **K**) e o comando `/modtest` para experimentar tudo no modo criativo.
 
+### Efeitos e árvore unificada
+
+Movimentação e saque usam as animações vanilla. As animações de combate das habilidades, da guarda e do rolamento continuam ativas.
+
+Os efeitos das armas combinam geometria em pixels com flipbooks originais: selos giratórios, agulhas múltiplas, rastros de lâmina, clarões e impactos fragmentados. A rapieira tem carga, dash, rajada, recuo e técnica com escudo com efeitos próprios. As quatro técnicas do Z agora enviam sequências visuais sincronizadas; os efeitos não mudam dano nem hitbox. Cliente/servidor usam protocolo **7**.
+
+**K → Habilidades** agora reúne a árvore e os quatro atributos ao redor do jogador. Selecione Força, Agilidade, Inteligência ou Vitalidade e clique em **+1 atributo** (Shift + clique: até +5). Pontos de atributos e de habilidades continuam separados e aparecem no topo. Habilidades e atributos têm ícones pixel art próprios. Gere a arte com `python tools/gen_player_presentation.py --preview`; prévias em `build/previews/talent_icons.png` e `combat_flipbooks.png`.
+
+### Escudo e protótipos pixel art 3D
+
+Na aba criativa **Solo Mod: Armas**, o **Escudo de Aparada** (`solomod:parry_shield`) funciona na mão principal ou secundária, inclusive para canhotos. Levante com clique direito mirando o ataque do chefe: os primeiros **0,3 s** permitem um parry que anula o dano e deixa o chefe em recuperação por **1,5 s**. Durante Fúria/transições o golpe é defendido, mas o chefe não é interrompido. Segurar além da janela mantém o bloqueio comum; levantar/soltar/aparar inicia uma recarga de **1,2 s** para levantar de novo.
+
+Com **qualquer escudo equipado**, as técnicas comuns, R e Shift + direito ficam bloqueados. **Z** usa uma única técnica por arma: **Corte de Baluarte** (espada), **Estocada de Guarda** (rapieira), **Picada de Recuo** (adaga) ou **Quebra-Guarda** (martelo). Funciona com escudo/arma em qualquer ordem de mãos, exige Maestria, mana e recarga e baixa a guarda durante o golpe. Z está livre no vanilla 1.21.1 e pode ser remapeado em Controles; HUD/tooltips mostram a tecla configurada. Retire o escudo para voltar às habilidades da árvore. Cliente e servidor usam o protocolo **7**.
+
+A aba criativa **Solo Mod: Pixel Art 3D** traz rapieira, espada longa, adaga e martelo experimentais (`solomod:pixel_rapier`, `pixel_longsword`, `pixel_dagger`, `pixel_hammer`) no estilo de fantasia em camadas da Juramento do Eco, inspirado em Blades of Majestica. Usam aço biselado, canais ciano e bronze: rapieira fina com proteção de mão, espada longa com guarda em ganchos e martelo maciço com núcleo encaixado. A adaga reconstrói a silhueta e as proporções da [Twilight Dagger de Minecraft Dungeons II](https://dungeons2.minecraft-yutakura.com/en/weapons/equipment-0032/), com lâmina curva estreita, guarda curta e cabo inclinado; os materiais seguem a família do mod. Atlas 32×64 e espessuras reais por peça; ícones GUI 32×32. Atributos, talentos e recargas continuam os das mesmas classes normais. As armas originais permanecem na aba Armas. Gere a arte com `python tools/gen_weapon_models.py`; `python tools/majestica_weapons.py --preview` salva a prancha em `build/previews/majestica_weapons.png`. O atalho anterior `python tools/pixel_equipment.py --preview` também continua funcionando.
+
+**Uma arma adicional para comparação:** **Juramento do Eco** (`solomod:echo_oathblade`), na mesma aba Pixel Art 3D. É uma espada longa de fantasia em camadas, inspirada visualmente na galeria [Blades of Majestica, de Eftann](https://realm-of-majestica.webflow.io/), com arte e modelo originais: fio biselado, canal ciano, guarda assimétrica de bronze e cabo escuro. Usa atributos, talentos, Z com escudo e recargas compartilhadas da espada longa. Para obter diretamente: `/give @s solomod:echo_oathblade`. Gerador: `python tools/gen_oathblade.py --preview` (também integrado ao gerador geral).
+
 ## 📜 A história
+
+Ao entrar no mundo, cada jogador recebe **Ecos do Despertar**, um manuscrito anônimo de oito páginas sobre a Canção e os Ecos. A narrativa deixa lacunas e termina em suspense; mecânicas, locais, objetivos e revelações futuras ficam para o jogador descobrir. A entrega é única por jogador/mundo, inclusive em saves existentes; inventário cheio aguarda espaço. Cópias da antiga edição são atualizadas no inventário, sem entregar outro exemplar. Páginas em pt-BR/en-US acompanham o idioma do cliente.
+
+O livro tem capa pixel art própria: couro escuro, cantoneiras de bronze, marcador e selo de Eco ciano. As cópias já existentes recebem a aparência automaticamente, inclusive após renomear/copiar o livro. Gere com `python tools/gen_echo_guide.py --preview` (também integrado a `gen_weapon_models.py`); prévia em `build/previews/echo_guide.png`.
 
 > *Tudo o que vive canta. Quando algo morre, a sua canção fica no mundo como um **Eco**.*
 

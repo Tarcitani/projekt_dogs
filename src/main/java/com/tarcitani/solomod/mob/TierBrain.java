@@ -74,7 +74,9 @@ import java.util.function.Predicate;
  * Monarcas, Soberano e Guardiões que matam um jogador pausam para rir por 4 s; a comemoração
  * aguarda o fim de uma transição invulnerável e é simulada mesmo sem alvo vivo.
  *
- * <p>Fora de combate os goals vanilla (vagar, olhar ao redor) continuam funcionando.
+ * <p>Aparadas do escudo agendam recuperação no próximo baseTick, fora da execução de Move.tick;
+ * Fúria (inclusive do Soberano) e transições não recebem esse stun.
+ * Fora de combate os goals vanilla (vagar, olhar ao redor) continuam funcionando.
  */
 public abstract class TierBrain extends Goal {
     private static final Map<PathfinderMob, TierBrain> BRAINS = new WeakHashMap<>();
@@ -149,6 +151,7 @@ public abstract class TierBrain extends Goal {
     private int thinkDelay;
     private int pathDelay;
     private long stunnedUntil;
+    private int parryStun;
     private long laughingUntil;
     private Vec3 defeatedAt;
     private boolean victoryPending;
@@ -165,6 +168,11 @@ public abstract class TierBrain extends Goal {
     /** Janela de punição da bola devolvida, com a mesma imunidade a stun de todos os chefes. */
     public final boolean stunFromFireball(int ticks) {
         return stun(ticks);
+    }
+
+    /** Adia interrupção para evitar alterar current enquanto um ataque ainda está causando dano. */
+    public final void onParried(int ticks) {
+        if (!isRaging() && !invulnerable && mob.isAlive()) parryStun = Math.max(parryStun, ticks);
     }
 
     /** Stun compartilhado (inclusive colisão de investida): Fúria e transições nunca são interrompidas. */
@@ -307,6 +315,11 @@ public abstract class TierBrain extends Goal {
 
     /** Chamado pelo MobEvents a cada tick do mob vivo: contagem e visual da Fúria + {@link #passiveTick}. */
     public final void baseTick() {
+        if (parryStun > 0) {
+            int ticks = parryStun;
+            parryStun = 0;
+            if (!isRaging()) stun(ticks);
+        }
         if (victoryPending && !invulnerable) {
             victoryPending = false;
             interrupt();

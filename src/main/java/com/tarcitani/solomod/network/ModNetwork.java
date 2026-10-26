@@ -9,11 +9,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-/** Registro do protocolo 5: stats com árvores, pedidos de desbloqueio e recarga de rolamento, além do combate. */
+/** Registro do protocolo 7: inclui as quatro sequências visuais das técnicas com escudo. */
 public final class ModNetwork {
     private ModNetwork() {}
 
-    private static final String PROTOCOL_VERSION = "5";
+    private static final String PROTOCOL_VERSION = "7";
 
     /** Listener do mod bus (registrado em SoloMod). */
     public static void register(RegisterPayloadHandlersEvent event) {
@@ -40,6 +40,7 @@ public final class ModNetwork {
         registrar.playToServer(SpinAttackPayload.TYPE, SpinAttackPayload.STREAM_CODEC, SpinAttackPayload::handle);
         registrar.playToServer(DodgeRollPayload.TYPE, DodgeRollPayload.STREAM_CODEC, DodgeRollPayload::handle);
         registrar.playToServer(CycleTechniquePayload.TYPE, CycleTechniquePayload.STREAM_CODEC, CycleTechniquePayload::handle);
+        registrar.playToServer(ShieldAbilityPayload.TYPE, ShieldAbilityPayload.STREAM_CODEC, ShieldAbilityPayload::handle);
     }
 
     /** Mostra efeitos tanto para quem viu a partida quanto para quem está perto da chegada do teleporte. */

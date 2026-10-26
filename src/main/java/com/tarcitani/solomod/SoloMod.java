@@ -26,7 +26,7 @@ import org.slf4j.Logger;
  * <p>Dois barramentos de eventos:
  * <ul>
  *   <li>mod bus ({@code modBus}): registros e eventos de carregamento (DeferredRegister, pacotes, abas).</li>
- *   <li>game bus ({@code NeoForge.EVENT_BUS}): eventos de jogo (dano, morte, tick, comandos).</li>
+ *   <li>game bus ({@code NeoForge.EVENT_BUS}): dano, parry, técnicas com escudo, morte, tick e comandos.</li>
  * </ul>
  */
 @Mod(SoloMod.MOD_ID)
@@ -49,6 +49,8 @@ public class SoloMod {
         NeoForge.EVENT_BUS.register(MobEvents.class);
         NeoForge.EVENT_BUS.register(ClassAbility.class);
         NeoForge.EVENT_BUS.register(DodgeRoll.class);
+        NeoForge.EVENT_BUS.register(com.tarcitani.solomod.skill.ParryGuard.class);
+        NeoForge.EVENT_BUS.register(com.tarcitani.solomod.skill.ShieldAbility.class);
         NeoForge.EVENT_BUS.register(ModTestCommand.class);
         NeoForge.EVENT_BUS.register(PassiveEchoEvents.class);
 
