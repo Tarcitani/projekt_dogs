@@ -4,6 +4,8 @@ A história do Solo Mod: de onde vêm os elementos, os monstros, os Monarcas, o 
 
 Este documento é a fonte da verdade da narrativa. Textos dentro do jogo (falas, conquistas, cinemáticas, créditos, nomes) devem concordar com ele; se um precisar mudar, mude os dois juntos. As falas do Soberano ficam em `lang/*.json` (`dialogue.solomod.sovereign.*`) e são disparadas por `mob/SovereignStageDialogueManager.java`.
 
+O livro inicial **Ecos do Despertar** (`item/StarterGuide`, textos `book.solomod.guide.*`) é um manuscrito anônimo de oito páginas. Apresenta a Canção e os Ecos pela tradição oral e por fragmentos de um relato pessoal, com lacunas e um encerramento em suspense. O autor não é identificado com nenhum personagem do cânone; seu sonho não anuncia um evento de gameplay. Não há tutorial, nomes de chefes, locais, objetivos ou revelações da trama. O jogador descobre esses pontos durante a jornada. A entrega continua única por jogador/mundo, e exemplares antigos no inventário recebem a nova narrativa.
+
 - [O mundo em uma página](#-o-mundo-em-uma-página)
 - [Cosmologia: a Canção, o Eco e as Vozes](#-cosmologia-a-canção-o-eco-e-as-vozes)
 - [Linha do tempo](#-linha-do-tempo)

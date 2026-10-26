@@ -20,7 +20,8 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Regras numéricas centrais (fórmulas de stats) e aplicação dos atributos vanilla.
  * Tudo que é "balanceamento" fica aqui para ser ajustado em um só lugar.
- * {@link WeaponAbilities} centraliza tempos, alcance e força das habilidades de classe.
+ * {@link WeaponAbilities} centraliza habilidades de classe; {@link Parry} controla o escudo
+ * e {@link ShieldSkills} as quatro técnicas de arma com escudo.
  */
 public final class StatsLogic {
     private StatsLogic() {}
@@ -101,6 +102,36 @@ public final class StatsLogic {
         public static final int INVULNERABLE_FROM = 2, INVULNERABLE_UNTIL = 8;
         public static final double SPEED = 0.95;
         public static final float EXHAUSTION = 0.4F;
+    }
+
+    /** Escudo: janela ao levantar, recuperação e resistência; tempos em ticks (20 = 1 segundo). */
+    public static final class Parry {
+        private Parry() {}
+        public static final int WINDOW_TICKS = 6, COOLDOWN_TICKS = 24, STUN_TICKS = 30;
+        public static final int MULTIHIT_GRACE_TICKS = 2, DURABILITY = 672, DURABILITY_COST = 1;
+        public static final double FRONT_DOT = 0.0;
+    }
+
+    /** Técnicas de uma mão com escudo: custo, recarga, preparo, duração, alcance, cone, dano e empurrão. */
+    public static final class ShieldSkills {
+        private ShieldSkills() {}
+        public record Spec(int mana, int cooldown, int hitTick, int duration, double range,
+                           double coneDot, float damage, double push) {}
+        public static final Spec SWORD = new Spec(6, 44, 5, 16, 3.4, 0.35, 1.2F, 0.45);
+        public static final Spec RAPIER = new Spec(5, 38, 4, 14, 4.8, 0.94, 1.35F, 0.2);
+        public static final Spec DAGGER = new Spec(5, 42, 3, 15, 2.8, 0.8, 1.7F, 0.15);
+        public static final Spec HAMMER = new Spec(10, 70, 9, 24, 3.0, 0.65, 1.6F, 1.0);
+        public static final int RETREAT_TICKS = 4;
+        public static final double RETREAT_SPEED = 0.3;
+        public static Spec forWeapon(com.tarcitani.solomod.core.WeaponClass weapon) {
+            return switch (weapon) {
+                case LONGSWORD -> SWORD;
+                case RAPIER -> RAPIER;
+                case DAGGER -> DAGGER;
+                case HAMMER -> HAMMER;
+                default -> null;
+            };
+        }
     }
 
     // ------------------------------------------------------------------ ids dos modificadores

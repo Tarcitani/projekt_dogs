@@ -36,6 +36,8 @@ import java.util.List;
  * A técnica de dash da rapieira usa o ciclo vanilla de segurar/soltar; as outras usam clique simples.
  * A escolha por classe é confirmada pelo servidor e alternada por R, sem alterar componentes da arma.
  * Shift + clique com a adaga arremessada tem prioridade sobre a habilidade de tier e teleporta até ela.
+ * Escudo em qualquer mão bloqueia técnicas comuns (inclusive Shift); Z solicita ShieldAbility.
+ * Modelos normais, Pixel Art 3D e Juramento do Eco da mesma classe compartilham as recargas de habilidades.
  */
 public class ModularWeaponItem extends Item {
     private final WeaponClass weaponClass;
@@ -47,6 +49,14 @@ public class ModularWeaponItem extends Item {
 
     public WeaponClass weaponClass() {
         return weaponClass;
+    }
+
+    /** Trocar apenas o visual da arma não permite contornar a recarga da classe. */
+    public void applyCooldown(Player player, int ticks) {
+        player.getCooldowns().addCooldown(ModItems.get(weaponClass), ticks);
+        var pixel = ModItems.PIXEL_WEAPONS.get(weaponClass);
+        if (pixel != null) player.getCooldowns().addCooldown(pixel.get(), ticks);
+        if (weaponClass == WeaponClass.LONGSWORD) player.getCooldowns().addCooldown(ModItems.ECHO_OATHBLADE.get(), ticks);
     }
 
     /** Dano e velocidade vanilla da classe (mesmos ids que espadas usam, então substituem o "soco"). */
@@ -115,6 +125,19 @@ public class ModularWeaponItem extends Item {
         }
         tooltip.add(requirement.withStyle(unlocked ? ChatFormatting.GREEN : ChatFormatting.RED));
 
+        if (WeaponClass.AVAILABLE.contains(weaponClass)) {
+            var spec = StatsLogic.ShieldSkills.forWeapon(weaponClass);
+            Component key = FMLEnvironment.dist == Dist.CLIENT ? com.tarcitani.solomod.client.ClientAccess.shieldAbilityKey() : Component.literal("Z");
+            tooltip.add(Component.translatable("tooltip.solomod.shield_skill", key,
+                    com.tarcitani.solomod.skill.ShieldAbility.name(weaponClass), spec.mana()).withStyle(ChatFormatting.AQUA));
+            if (player != null && com.tarcitani.solomod.skill.ShieldAbility.hasShield(player)) {
+                tooltip.add(Component.translatable("shield_skill.solomod." + weaponClass.getSerializedName() + ".description")
+                        .withStyle(ChatFormatting.GRAY));
+                tooltip.add(Component.translatable("tooltip.solomod.shield_only").withStyle(ChatFormatting.GRAY));
+                return;
+            }
+        }
+
         tooltip.add(Component.translatable("tooltip.solomod.skill_tree").withStyle(ChatFormatting.DARK_AQUA));
         if (ClassAbility.hasAbility(weaponClass)) {
             tooltip.add(Component.translatable("tooltip.solomod.class_ability", ClassAbility.displayName(weaponClass))
@@ -156,6 +179,9 @@ public class ModularWeaponItem extends Item {
         WeaponData data = getData(stack);
 
         if (hand != InteractionHand.MAIN_HAND) return InteractionResultHolder.pass(stack);
+        if (com.tarcitani.solomod.skill.ShieldAbility.hasShield(player)) {
+            return InteractionResultHolder.pass(stack);
+        }
         if (player instanceof ServerPlayer server && !ClassAbility.canStart(server)) return InteractionResultHolder.fail(stack);
 
         WeaponSkill skill = com.tarcitani.solomod.skill.SkillTree.activeSkill(StatsLogic.stats(player), weaponClass);
@@ -221,7 +247,7 @@ public class ModularWeaponItem extends Item {
 
         int hits = skill.perform(serverPlayer, data);
         player.swing(hand, true); // animação de golpe vista por todos
-        player.getCooldowns().addCooldown(this, skill.cooldownTicks());
+        applyCooldown(player, skill.cooldownTicks());
         player.displayClientMessage(Component.translatable("message.solomod.skill_used",
                 skill.displayName(), hits, stats.getManaAtual(), stats.getMaxMana()).withStyle(ChatFormatting.AQUA), true);
         StatsLogic.onStatsChanged(serverPlayer); // mana mudou -> sincroniza

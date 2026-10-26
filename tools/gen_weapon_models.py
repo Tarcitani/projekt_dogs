@@ -1,8 +1,11 @@
 """
 Gera os modelos 3D da rapieira, espada longa, adaga e martelo, ícones pixel art exclusivos da GUI,
 o contorno "fantasma" da adaga arremessada e os modelos dos ovos das criaturas.
+Também gera o escudo de parry e as cópias experimentais pixel art 3D via pixel_equipment.py.
+Juramento do Eco é a única espada adicional de fantasia em camadas, gerada por gen_oathblade.py.
 O loader neoforge:separate_transforms troca SOMENTE a perspectiva gui das oito armas pelos
 sprites normais detalhados 32×32 de weapon_icons.py; não gera armas elementais. Mão, chão, moldura e projétil conservam o modelo original.
+Também chama gen_echo_guide.py para gerar a capa exclusiva do livro inicial.
 
 Os modelos 3D são montados na vertical e inclinados -45° em Z: ficam na mesma diagonal dos sprites
 vanilla (cabo embaixo à esquerda, ponta em cima à direita), então reaproveitam as poses de mão da
@@ -286,10 +289,16 @@ if __name__ == "__main__":
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     ELEMENTS = ("water", "earth", "fire", "air")  # Elementos continuam apenas nos ovos/criaturas.
     from weapon_icons import write_icon_assets
+    from pixel_equipment import write_pixel_assets
+    from gen_oathblade import write_oathblade
+    from gen_echo_guide import write_guide_assets
 
     remove_elemental_weapon_assets()
     write_parts_texture()
     write_icon_assets(TEXTURES)
+    write_pixel_assets(TEXTURES, MODELS)
+    write_oathblade(TEXTURES, MODELS)
+    write_guide_assets(TEXTURES, MODELS)
     write_hammer_icon()
     write_ghost_dagger()
 

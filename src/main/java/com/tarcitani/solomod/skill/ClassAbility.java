@@ -72,7 +72,9 @@ import org.jetbrains.annotations.Nullable;
  *       Seleção confirmada pelo servidor; todas compartilham a recarga do item.</li>
  * </ul>
  * O servidor guarda uma seleção por classe/sessão, valida carga, posse da adaga, destino e recargas. Ações em andamento são
- * canceladas ao morrer, trocar de arma/dimensão ou desconectar. Balanceamento em {@link WeaponAbilities}.
+ * canceladas ao morrer, trocar de arma/dimensão ou desconectar. Recargas são compartilhadas entre
+ * os visuais normal e Pixel Art 3D da mesma classe. Balanceamento em {@link WeaponAbilities}.
+ * Escudo equipado impede técnicas comuns e cancela ações em andamento; Z usa ShieldAbility.
  */
 public final class ClassAbility {
     private ClassAbility() {}
@@ -104,7 +106,7 @@ public final class ClassAbility {
 
     /** Troca apenas a seleção desta sessão; o cooldown continua sendo o do item. */
     public static void cycleTechnique(ServerPlayer player) {
-        if (!canStart(player) || player.isUsingItem() || !(player.getMainHandItem().getItem() instanceof ModularWeaponItem item)
+        if (!canStart(player) || ShieldAbility.hasShield(player) || player.isUsingItem() || !(player.getMainHandItem().getItem() instanceof ModularWeaponItem item)
                 || !WeaponTechnique.supports(item.weaponClass()) || ModularWeaponItem.getData(player.getMainHandItem()).weaponClass() != item.weaponClass()) return;
         var options = WeaponTechnique.options(item.weaponClass()).stream()
                 .filter(t -> com.tarcitani.solomod.event.StatsLogic.stats(player).hasTalent(SkillTree.forTechnique(t).id())).toList();
@@ -136,14 +138,15 @@ public final class ClassAbility {
     public static boolean canStart(ServerPlayer player) {
         UUID id = player.getUUID();
         return player.isAlive() && !player.isSpectator() && !player.isPassenger() && !player.isSleeping()
-                && !DodgeRoll.isRolling(player) && !LUNGES.containsKey(id) && !LEAPS.containsKey(id) && !CRESCENTS.containsKey(id) && !ACTIONS.containsKey(id);
+                && !DodgeRoll.isRolling(player) && !ShieldAbility.isActive(player)
+                && !LUNGES.containsKey(id) && !LEAPS.containsKey(id) && !CRESCENTS.containsKey(id) && !ACTIONS.containsKey(id);
     }
 
     // ------------------------------------------------------------------ clique direito
 
     /** Executa a habilidade do formato. Devolve false se não pôde (recarga, no ar...). */
     public static boolean use(ServerPlayer player, ItemStack stack, ModularWeaponItem item) {
-        if (!canStart(player) || player.getMainHandItem() != stack || stack.getItem() != item) return false;
+        if (!canStart(player) || ShieldAbility.hasShield(player) || player.getMainHandItem() != stack || stack.getItem() != item) return false;
         WeaponData data = ModularWeaponItem.getData(stack);
         if (data.weaponClass() != item.weaponClass()) return false;
         if (data.weaponClass() == WeaponClass.DAGGER && isThrown(stack)) {
@@ -162,7 +165,7 @@ public final class ClassAbility {
             case DAGGER -> {
                 if (!SkillTree.consume(player, SkillTree.classNode(player, item.weaponClass()))) return false;
                 throwDagger(player, stack);
-                player.getCooldowns().addCooldown(item, WeaponAbilities.DAGGER_THROW_COOLDOWN);
+                item.applyCooldown(player, WeaponAbilities.DAGGER_THROW_COOLDOWN);
             }
             case AXE, HAMMER -> {
                 if (item.weaponClass() == WeaponClass.HAMMER && technique(player, WeaponClass.HAMMER) != WeaponTechnique.HAMMER_LEAP) {
@@ -178,7 +181,7 @@ public final class ClassAbility {
                 if (player.isInWaterOrBubble() || player.isInLava() || player.isFallFlying() || player.getAbilities().flying) return false;
                 if (!SkillTree.consume(player, SkillTree.classNode(player, item.weaponClass()))) return false;
                 startLeap(player, stack);
-                player.getCooldowns().addCooldown(item, WeaponAbilities.HAMMER_COOLDOWN);
+                item.applyCooldown(player, WeaponAbilities.HAMMER_COOLDOWN);
             }
             case LONGSWORD -> {
                 if (!SkillTree.consume(player, SkillTree.classNode(player, item.weaponClass()))) return false;
@@ -201,7 +204,7 @@ public final class ClassAbility {
     }
 
     public static void tickRapierCharge(ServerPlayer player, ItemStack stack, int chargeTicks) {
-        if (player.getMainHandItem() != stack || !canStart(player) || technique(player, WeaponClass.RAPIER) != WeaponTechnique.RAPIER_DASH) {
+        if (ShieldAbility.hasShield(player) || player.getMainHandItem() != stack || !canStart(player) || technique(player, WeaponClass.RAPIER) != WeaponTechnique.RAPIER_DASH) {
             player.stopUsingItem();
             return;
         }
@@ -214,7 +217,7 @@ public final class ClassAbility {
     }
 
     public static void releaseRapier(ServerPlayer player, ItemStack stack, int chargeTicks) {
-        if (!canStart(player) || player.getMainHandItem() != stack || player.getUseItem() != stack
+        if (!canStart(player) || ShieldAbility.hasShield(player) || player.getMainHandItem() != stack || player.getUseItem() != stack
                 || player.getUsedItemHand() != InteractionHand.MAIN_HAND
                 || !(stack.getItem() instanceof ModularWeaponItem item) || item.weaponClass() != WeaponClass.RAPIER
                 || technique(player, WeaponClass.RAPIER) != WeaponTechnique.RAPIER_DASH
@@ -225,7 +228,7 @@ public final class ClassAbility {
         Vec3 dir = flat(player.getLookAngle(), player);
         LUNGES.put(player.getUUID(), new Lunge(dir, new HashSet<>(), new int[]{ticks}, distance / ticks,
                 stack, player.level().dimension()));
-        player.getCooldowns().addCooldown(item, WeaponAbilities.RAPIER_COOLDOWN);
+        item.applyCooldown(player, WeaponAbilities.RAPIER_COOLDOWN);
         ModNetwork.sendPlayerAnim(player, PlayerAnim.THRUST, ticks + 4, true);
         ModNetwork.sendWeaponMotion(player, WeaponMotionPayload.Kind.RAPIER, player.getId(), player.position(),
                 player.position().add(dir.scale(distance)), ticks);
@@ -329,7 +332,7 @@ public final class ClassAbility {
         player.fallDistance = 0;
         daggerCaught(player, dagger);
         dagger.discard();
-        player.getCooldowns().addCooldown(item, WeaponAbilities.DAGGER_TELEPORT_COOLDOWN);
+        item.applyCooldown(player, WeaponAbilities.DAGGER_TELEPORT_COOLDOWN);
         ModNetwork.sendPlayerAnim(player, PlayerAnim.DAGGER_BLINK, 10, true);
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, destination.x, destination.y + 1, destination.z, 45, 0.4, 0.8, 0.4, 0.12);
         level.sendParticles(ParticleTypes.FLASH, destination.x, destination.y + 1, destination.z, 1, 0, 0, 0, 0);
@@ -522,7 +525,7 @@ public final class ClassAbility {
         WeaponTechnique technique = technique(player, WeaponClass.LONGSWORD);
         CRESCENTS.put(player.getUUID(), new Crescent(player.level().getGameTime(), direction,
                 stack, player.level().dimension(), technique));
-        player.getCooldowns().addCooldown(stack.getItem(), technique.cooldown());
+        ((ModularWeaponItem) stack.getItem()).applyCooldown(player, technique.cooldown());
         player.resetAttackStrengthTicker();
         ModNetwork.sendPlayerAnim(player, technique.animation(), technique.duration(), true);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new CrescentSlashPayload(player.getId(),
@@ -590,7 +593,7 @@ public final class ClassAbility {
         Vec3 direction = flat(player.getLookAngle(), player);
         ACTIONS.put(player.getUUID(), new TechniqueAction(player.level().getGameTime(), direction, stack,
                 player.level().dimension(), technique, new HashSet<>(), new Vec3[]{player.position()}, new double[]{0}));
-        player.getCooldowns().addCooldown(stack.getItem(), technique.cooldown());
+        ((ModularWeaponItem) stack.getItem()).applyCooldown(player, technique.cooldown());
         player.resetAttackStrengthTicker();
         ModNetwork.sendPlayerAnim(player, technique.animation(), technique.duration(), true);
         WeaponMotionPayload.Kind kind = switch (technique) {
@@ -794,7 +797,7 @@ public final class ClassAbility {
 
     private static boolean validAction(ServerPlayer player, ItemStack stack, ResourceKey<Level> dimension) {
         return player.isAlive() && !player.isSpectator() && !player.isPassenger() && !player.isSleeping()
-                && player.getMainHandItem() == stack && player.level().dimension().equals(dimension);
+                && !ShieldAbility.hasShield(player) && player.getMainHandItem() == stack && player.level().dimension().equals(dimension);
     }
 
     private static boolean grounded(ServerPlayer player) {

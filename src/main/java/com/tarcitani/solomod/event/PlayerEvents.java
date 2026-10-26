@@ -7,6 +7,7 @@ import com.tarcitani.solomod.attachment.MobProfile;
 import com.tarcitani.solomod.attachment.ModAttachments;
 import com.tarcitani.solomod.attachment.PlayerStatsAttachment;
 import com.tarcitani.solomod.core.StatType;
+import com.tarcitani.solomod.item.StarterGuide;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,7 +17,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
-/** Ciclo de vida dos stats: XP por abate, regeneração de mana, atributos e sincronização. */
+/** Ciclo de vida: XP, mana, atributos/sync e entrega/atualização do livro inicial, com espera por espaço. */
 public final class PlayerEvents {
     private PlayerEvents() {}
 
@@ -46,10 +47,13 @@ public final class PlayerEvents {
     /**
      * A cada segundo: regenera mana (1 + INT/10) e sincroniza.
      * A cada 5 ticks: atualiza a penalidade da arma pesada (o jogador pode trocar de item a qualquer momento).
+     * A cada 40 ticks: atualiza cópias antigas do livro e tenta entregar se ainda faltar espaço no login.
      */
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+
+        if (player.tickCount % 40 == 0) StarterGuide.giveIfNeeded(player);
 
         if (player.tickCount % 5 == 0) {
             StatsLogic.applyLockedWeaponPenalty(player);
@@ -68,6 +72,7 @@ public final class PlayerEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             StatsLogic.onStatsChanged(player);
             EraSevenState.syncTo(player);
+            StarterGuide.giveIfNeeded(player);
         }
     }
 

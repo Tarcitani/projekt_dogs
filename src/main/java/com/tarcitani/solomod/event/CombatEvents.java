@@ -34,6 +34,7 @@ import net.minecraft.sounds.SoundSource;
  *   travada:    dano_vanilla x tier
  *   destravada: dano_vanilla x tier x (1 + 2% x stat_efetivo) x multiplicador_elemental
  * </pre>
+ * Durante ShieldAbility só o acerto agendado pode atacar; a arma real da ação pode estar na mão secundária.
  */
 public final class CombatEvents {
     private CombatEvents() {}
@@ -45,7 +46,7 @@ public final class CombatEvents {
         LivingEntity target = event.getEntity();
         if (target.level().isClientSide()) return;
 
-        // Só golpes corpo a corpo diretos (habilidades usam dano mágico e calculam o próprio elemento).
+        // Golpes físicos diretos; as técnicas com escudo também passam aqui para escalar só uma vez.
         if (!source.is(DamageTypes.PLAYER_ATTACK)) return;
         if (!(source.getEntity() instanceof Player player) || source.getDirectEntity() != player) return;
         if (player instanceof ServerPlayer server && DodgeRoll.isRolling(server)) {
@@ -54,6 +55,13 @@ public final class CombatEvents {
         }
 
         ItemStack weapon = player.getMainHandItem();
+        if (player instanceof ServerPlayer server && com.tarcitani.solomod.skill.ShieldAbility.isActive(server)) {
+            weapon = com.tarcitani.solomod.skill.ShieldAbility.strikingWeapon(server);
+            if (weapon.isEmpty()) {
+                event.setCanceled(true);
+                return;
+            }
+        }
         if (!(weapon.getItem() instanceof ModularWeaponItem)) return;
         // Adaga arremessada: a mão está vazia (só o "fantasma" da arma), o golpe vira um soco.
         if (ClassAbility.isThrown(weapon)) {

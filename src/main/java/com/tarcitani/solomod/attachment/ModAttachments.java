@@ -1,6 +1,7 @@
 package com.tarcitani.solomod.attachment;
 
 import com.tarcitani.solomod.SoloMod;
+import com.mojang.serialization.Codec;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -36,6 +37,13 @@ public final class ModAttachments {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<ActiveEchoAttachment>> ACTIVE_ECHO =
             ATTACHMENT_TYPES.register("active_echo", () -> AttachmentType.builder(() -> ActiveEchoAttachment.NONE)
                     .serialize(ActiveEchoAttachment.CODEC)
+                    .build());
+
+    /** Entrega única do guia inicial por jogador/mundo; persiste também após a morte, sem sync. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> GUIDE_RECEIVED =
+            ATTACHMENT_TYPES.register("guide_received", () -> AttachmentType.builder(() -> false)
+                    .serialize(Codec.BOOL)
+                    .copyOnDeath()
                     .build());
 
     public static void register(IEventBus modBus) {

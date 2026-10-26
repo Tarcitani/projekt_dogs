@@ -17,6 +17,18 @@ Referência completa do que o Solo Mod faz dentro do jogo. Para saber **onde** c
 
 ---
 
+## 📖 Livro inicial
+
+**Ecos do Despertar** chega ao inventário uma vez por jogador/mundo, também em saves antigos. São oito páginas de um manuscrito anônimo: a Canção, a memória deixada pelas vidas e trechos de um relato inquietante. Apresenta apenas a ambientação; não explica mecânicas, indica rotas/objetivos nem revela chefes ou acontecimentos futuros. O idioma das páginas acompanha o cliente.
+
+A capa própria em pixel art usa couro escuro, cantoneiras de bronze, marcador e um selo ciano da Canção/Eco. Distingue o livro no inventário, mãos, chão e molduras; também reconhece cópias e nomes personalizados. O item continua sendo um livro escrito vanilla: leitura, cópia e púlpitos mantêm o comportamento nativo; outros livros conservam sua aparência.
+
+Reconectar, mudar de dimensão e morrer não entregam outra cópia. Se o inventário estiver cheio na entrada, o servidor aguarda um espaço livre e tenta novamente a cada dois segundos. Cópias da antiga edição de 14 páginas são atualizadas no próprio inventário, preservando geração e componentes extras. Uma cópia guardada em baú é atualizada depois de recolhida.
+
+**Verificação em jogo:** entre com um jogador novo e confira nome/oito páginas em pt-BR e en-US. Reconecte, morra com e sem `keepInventory` e atravesse dimensões: não deve surgir outra cópia. Em um jogador ainda sem entrega, encha o inventário antes de instalar a atualização; libere um espaço e aguarde dois segundos. Recolha uma edição antiga de um baú: ela deve receber a história nova sem duplicação; outros livros escritos devem continuar intactos.
+
+Compare capa na hotbar/inventário e em ambas as mãos, chão e moldura. Renomeie e faça uma cópia vanilla: a capa deve continuar; um livro comum renomeado como Ecos do Despertar deve continuar comum. Abra o livro e coloque-o no púlpito. Recarregue recursos (F3 + T) e confira que a capa continua correta.
+
 ## 📊 Maestria (stats)
 
 O jogador tem 4 atributos de **Maestria**. Os pontos vêm do **XP Global**: cada **100 XP = 1 ponto** para distribuir.
@@ -30,6 +42,20 @@ O jogador tem 4 atributos de **Maestria**. Os pontos vêm do **XP Global**: cada
 
 - **XP Global**: só mobs com perfil (mobs do mod) dão XP. Por tier: **10 / 40 / 150 / 500**.
 - Valores de balanceamento ficam em `event/StatsLogic.java` e `attachment/PlayerStatsAttachment.java`.
+
+## 🎬 Apresentação do jogador e efeitos de combate
+
+**Movimento:** caminhada, corrida, saque, agachar, salto/queda, aterrissagem e escalada usam as animações vanilla. Permanecem as poses anteriores de técnicas, carga de rapieira, guarda e rolamento, em primeira/terceira pessoa.
+
+**Efeitos:** flipbooks originais de oito quadros em pixel art, selos angulares giratórios, agulhas sobrepostas, rastros de lâmina, clarões e fragmentos. A rapieira acende um selo durante a carga, deixa anéis/rastros na trajetória real do dash, revela múltiplas agulhas na Chuva e deixa um rastro no recuo. As técnicas com escudo têm preparação e acerto sincronizados: Corte de Baluarte em arco, Estocada de Guarda em feixes/anel de impacto, Picada dourada e Quebra-Guarda com selo/fissuras. Martelo e adaga ganham camadas extras de impacto e magia sem gerar projéteis, raios reais ou blocos. Estocadas visuais são limitadas por paredes; não mudam alcance/dano. Respeitam profundidade, têm duração/orçamento limitados e menos segmentos à distância.
+
+**Verificação em jogo:**
+
+1. Caminhe/corra/pare, faça curvas, agache, salte e aterrisse; troque as armas e as mãos. Confira que não há balanço ou poses adicionais à movimentação vanilla.
+2. Use comida, arco, escudo e ferramentas; nade, voe e monte. Execute técnicas e rolamento: as animações anteriores de combate devem continuar presentes.
+3. Confira carga/dash/rajada/recuo da rapieira, adaga lançada/retorno/teleporte e martelo. Teste Z com as quatro classes, nas duas ordens de mãos; efeitos surgem no preparo/acerto sem dano adicional.
+4. Na árvore, selecione cada atributo e gaste +1/até +5 com saldo parcial. Confira que o valor sincroniza, que pontos de habilidades não diminuem e que o botão desativa sem pontos. Habilidades devem continuar exigindo seus pré-requisitos/custos normais.
+5. Teste árvore em janela menor/zoom e Centralizar; confira ícones, tooltips, saldos separados e navegação. Troque dimensão/desconecte durante efeitos: rastros/poses transitórios devem ser limpos.
 
 ## 🔥 Elementos
 
@@ -51,7 +77,52 @@ Sem o stat exigido (5 FOR ou AGI, conforme a classe), o golpe não ganha o escal
 
 ## ⚔️ Armas
 
-O catálogo atual tem **4 classes de arma**. Cada uma tem um item próprio (`solomod:<classe>`), todos os exemplares são Normal/sem elemento. As habilidades pertencem à árvore do jogador. A aba criativa **Solo Mod: Armas** contém exatamente uma rapieira, uma espada longa, uma adaga e um martelo, neutros e de tier Normal. A aba Teste e o autocomplete de `/modtest weapon` também oferecem só essas quatro classes; o botão de gerar arma e `/modtest weapon <classe>` só geram Normal. Os seletores **Tier do mob** e **Elemento do mob** continuam afetando somente invocar/marcar mobs.
+O catálogo atual tem **4 classes de arma**. Cada uma tem um item próprio (`solomod:<classe>`), todos os exemplares são Normal/sem elemento. As habilidades pertencem à árvore do jogador. A aba criativa **Solo Mod: Armas** contém uma rapieira, uma espada longa, uma adaga e um martelo, neutros e de tier Normal, além do Escudo de Aparada. A aba Teste e o autocomplete de `/modtest weapon` também oferecem só essas quatro classes; o botão de gerar arma e `/modtest weapon <classe>` só geram Normal. Os seletores **Tier do mob** e **Elemento do mob** continuam afetando somente invocar/marcar mobs.
+
+### Escudo de Aparada
+
+- **Obter:** aba criativa Solo Mod: Armas ou `/give @s solomod:parry_shield`.
+- **Controle:** segure clique direito com o escudo em qualquer mão. O estado e tempo de uso são validados pelo servidor; funciona também com a mão principal esquerda.
+- **Timing:** os primeiros **6 ticks (0,3 s)** da guarda aparam dano frontal atribuído a chefes BOSS/SUB_BOSS, incluindo Guardiões, Monarcas, Soberano e chefes dos Santuários. Isso inclui magia atribuída ao chefe. Golpes pelas costas, queda, ambiente, espinhos e fontes que ignoram invulnerabilidade não recebem parry.
+- **Acerto:** cancela o dano e a passiva daquele acerto, emite faíscas/som e encerra a guarda. O chefe entra em recuperação por **30 ticks (1,5 s)**; Fúria e transições invulneráveis impedem essa interrupção, inclusive no Soberano. Perigos já lançados continuam existindo.
+- **Multihit:** **2 ticks** de graça anulam acertos adicionais do mesmo chefe e empurrões imediatos. A graça não protege de outros atacantes nem de dano ambiental.
+- **Recarga:** **24 ticks (1,2 s)** ao levantar, soltar ou aparar. A guarda que já começou continua; a recarga impede iniciar outra janela, inclusive trocando de mão ou de exemplar. Durabilidade: **672**, custo de **1** por parry; bloqueios comuns usam o desgaste vanilla. Sem custo de mana.
+- **Guarda longa:** depois da janela, funciona como escudo vanilla (inclusive seus limites contra magia), sem novo parry até soltar e levantar novamente.
+- **Arma + escudo:** direito (inclusive com Shift) defende. Com qualquer escudo em uma das mãos, técnicas comuns, habilidades avançadas e R ficam bloqueados; **Z** usa a única técnica permitida da arma. O escudo não começa durante rolamento ou ação de arma.
+
+### Técnicas com escudo — Z
+
+Z está livre por padrão no Minecraft 1.21.1 e é reconfigurável em **Controles → Solo Mod → Habilidade de arma com escudo**. A HUD e os tooltips exibem o atalho real. Pode usar escudo vanilla ou do mod em qualquer mão, com uma das quatro armas (normal ou Pixel Art 3D) na outra.
+
+| Arma | Técnica | Efeito | Mana | Recarga |
+|---|---|---|---|---|
+| Espada longa | Corte de Baluarte | Varredura frontal curta, dano ×1,2 e leve empurrão | 6 | 2,2 s |
+| Rapieira | Estocada de Guarda | Estocada estreita, primeiro alvo, até 4,8 blocos, dano ×1,35 | 5 | 1,9 s |
+| Adaga | Picada de Recuo | Primeiro alvo próximo, dano ×1,7, depois recua até 1,2 bloco | 5 | 2,1 s |
+| Martelo | Quebra-Guarda | Preparo mais lento, pancada frontal de uma mão, dano ×1,6 e empurrão forte | 10 | 3,5 s |
+
+São técnicas da combinação, liberadas sem outro nó de árvore; exigem o requisito normal de Maestria da arma. Mana é cobrada uma vez, mesmo ao errar, e a recarga é compartilhada com os modelos normais/experimentais. Dano é físico, recebe o escalonamento normal uma vez e respeita armadura, alcance, cone, paredes e hitbox. Não concede stun adicional nem ignora a Fúria. O servidor fixa a direção ao iniciar; as animações são de uma mão com o braço do escudo em apoio.
+
+A guarda baixa durante a execução, sem invulnerabilidade ou bloqueio automático. Z pode sair de uma guarda já levantada. Exige chão; não combina com rolamento, veículo, voo, natação ou outra ação. Trocar arma, escudo, mão ou dimensão cancela a ação, assim como morrer/sair. O recuo da adaga respeita colisões e apoio antes de bordas. Com adaga arremessada não há Picada: retire o escudo para chamá-la de volta/teleportar, ou recolha-a normalmente. As habilidades da árvore voltam ao retirar o escudo, com seus desbloqueios preservados.
+
+### Protótipos Pixel Art 3D
+
+A aba criativa **Solo Mod: Pixel Art 3D** contém quatro armas (`pixel_rapier`, `pixel_longsword`, `pixel_dagger`, `pixel_hammer`) com aço biselado, bronze e canais ciano, na linguagem de fantasia em camadas da Juramento do Eco/Blades of Majestica. A adaga reconstrói silhueta e proporções da Twilight Dagger de Minecraft Dungeons II: lâmina curva estreita, guarda curta e cabo inclinado, com materiais do mod e tamanho intermediário. Rapieira, espada longa e martelo mantêm seus desenhos anteriores. São atlas 32×64 no modelo, com ícones GUI separados 32×32. Mão, chão, molduras e projétil usam a geometria volumétrica; o martelo tem poses próprias para mostrar frente/lateral da cabeça. Atributos, requisitos, recargas e talentos pertencem às quatro classes existentes. A adaga preserva a mesma geometria no fantasma enquanto arremessada. Ciano é só uma cor visual, não um elemento de combate.
+
+**Juramento do Eco:** um único item adicional (`solomod:echo_oathblade`) na aba Pixel Art 3D, ou `/give @s solomod:echo_oathblade`. É uma interpretação original da fantasia em camadas de Blades of Majestica: lâmina longa de aço, canal ciano, guarda assimétrica de bronze, fio mais fino e cabo volumoso. Não é uma classe nova: segue integralmente a espada longa Normal/sem elemento, com o mesmo requisito de FOR, dano, técnicas, talentos e Corte de Baluarte no Z com escudo. Compartilha recarga com `longsword` e `pixel_longsword`, impedindo reiniciá-la ao trocar apenas de modelo. As quatro armas experimentais anteriores permanecem disponíveis.
+
+**Roteiro de teste em jogo:**
+
+1. Pegue escudo e armas das duas abas; compare GUI, primeira/terceira pessoa, chão e moldura. Na adaga, aprenda Arremesso e confira projétil, fantasma e retorno.
+2. Contra um Monarca fora da Fúria, levante o escudo pouco antes do golpe: deve aparecer “Aparada perfeita!”, sem perder vida, seguido de recuperação do chefe. Repita na mão principal, secundária e com a opção de mão principal esquerda.
+3. Espere mais de 0,3 s antes do impacto e receba também um ataque pelas costas: não devem produzir parry. Soltar/repetir ou trocar de mão durante a recarga não deve reabrir a janela.
+4. Repita com magia, Guardião, Soberano e um chefe de Santuário. Durante Fúria, o dano aparado é anulado, mas o chefe continua o ataque. Ondas/projéteis já lançados não desaparecem.
+5. Com arma + escudo, confirme direito/Shift + direito para guarda, R sem efeito e Z para a técnica exclusiva. Teste as quatro classes nas duas ordens de mãos, com escudo vanilla e do mod, canhoto e destro; a guarda baixa e somente o braço da arma golpeia. Remapeie Z e confira HUD/tooltips.
+6. Teste sem Maestria, sem mana e durante recarga: não deve haver golpe nem custo extra. Aperte Z repetidamente, tire/troque a arma ou escudo durante o preparo, salte e tente rolar/usar técnicas comuns durante a ação. Não deve haver sobreposição nem dano após cancelamento. Retirar o escudo deve restaurar as técnicas aprendidas.
+7. Teste alvo atrás de parede, alvo fora do cone/alcance, inimigo próximo dos pés do Soberano e recuo junto a bordas/paredes. Compare a barra de vida com a mesma técnica usando a arma em cada mão; o escalonamento não deve duplicar.
+8. Pegue Juramento do Eco; confira GUI, mão direita/esquerda, primeira/terceira pessoa, chão e moldura. Use uma técnica e troque entre ela, espada longa normal e Pixel Art 3D: as três devem continuar em recarga. Com escudo, Z usa Corte de Baluarte; sem escudo, conserva os talentos já aprendidos da espada longa.
+
+As técnicas normais abaixo exigem estar **sem escudo equipado**.
 
 | Classe | Peso | Stat | Habilidade avançada da árvore | Habilidade de classe |
 |---|---|---|---|---|
@@ -75,7 +146,7 @@ Exigem desbloqueio na árvore da classe + Maestria + INT mínima + mana. A potê
 
 ### Árvores de habilidades — K → Habilidades
 
-A árvore é **um único mapa radial**, sem abas nem filtros por arma. O rosto/skin do jogador fica no centro; somente as quatro armas da aba **Solo Mod: Armas** — rapieira, espada longa, adaga e martelo — formam um círculo ao redor dele, com ícones de tier Normal e sem elemento. De cada arma saem suas habilidades, com ramificações em raízes que crescem até as supremas. A tela mantém pedra, molduras, conexões e estados visuais das conquistas vanilla.
+A árvore é **um único mapa radial**, sem abas nem filtros por arma. O rosto/skin do jogador fica no centro. Um círculo interno contém **Força, Agilidade, Inteligência e Vitalidade**, com ícones próprios e o valor atual. Selecione um atributo e use **+1 atributo**; Shift + clique solicita até +5, limitado pelo saldo no servidor. Isso usa pontos de Maestria, sem gastar pontos de habilidades. Os dois saldos aparecem no topo. No círculo seguinte, somente as quatro armas da aba **Solo Mod: Armas** — rapieira, espada longa, adaga e martelo — formam as raízes das habilidades até as supremas. Cada habilidade possui uma imagem pixel art específica para o golpe/efeito. A tela mantém pedra, molduras e estados visuais das conquistas vanilla; Centralizar enquadra os limites reais da árvore.
 
 Selecione um nó para consultar efeito, custo, mana e pré-requisito; clique em **Aprender** para liberar. Arraste nos dois eixos, use a roda ou **+ / −** para zoom, as quatro setas para navegar e **Home / Centralizar** para voltar ao jogador. O zoom acompanha o cursor. Selecionar uma arma não oculta as outras. Moldura dourada indica habilidade aprendida; marcador verde indica compra disponível.
 

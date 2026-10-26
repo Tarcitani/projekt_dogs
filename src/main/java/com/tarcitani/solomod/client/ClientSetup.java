@@ -56,7 +56,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.lwjgl.glfw.GLFW;
 
-/** Registros só de cliente (mod bus): teclas, HUD, cores dos itens, modelos e renderers das entidades. */
+/** Registros só de cliente (mod bus): teclas, HUD, cores, modelos e renderers; estados da adaga e escudo. */
 @EventBusSubscriber(modid = SoloMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class ClientSetup {
     private ClientSetup() {}
@@ -71,6 +71,7 @@ public final class ClientSetup {
     public static void onRegisterKeys(RegisterKeyMappingsEvent event) {
         event.register(OPEN_STATS);
         event.register(WeaponControls.CYCLE);
+        event.register(WeaponControls.SHIELD_SKILL);
     }
 
     @SubscribeEvent
@@ -224,13 +225,20 @@ public final class ClientSetup {
                 ctx, layer("dimensional_rift_moth"), passiveTexture("dimensional_rift_moth"), 0.2F, 0x00E5FF, 1.4F));
     }
 
-    /** Só a adaga possui override de estado (arremessada). Armas não têm variantes elementais. */
+    /** Adagas normais/experimentais têm estado arremessado; escudo tem pose de bloqueio nas duas mãos. */
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             ItemProperties.register(ModItems.get(WeaponClass.DAGGER),
                     ResourceLocation.fromNamespaceAndPath(SoloMod.MOD_ID, "thrown"),
                     (stack, level, entity, seed) -> stack.has(ModDataComponents.THROWN_DAGGER.get()) ? 1.0F : 0.0F);
+            ItemProperties.register(ModItems.PIXEL_WEAPONS.get(WeaponClass.DAGGER).get(),
+                    ResourceLocation.fromNamespaceAndPath(SoloMod.MOD_ID, "thrown"),
+                    (stack, level, entity, seed) -> stack.has(ModDataComponents.THROWN_DAGGER.get()) ? 1.0F : 0.0F);
+            ItemProperties.register(ModItems.PARRY_SHIELD.get(),
+                    ResourceLocation.withDefaultNamespace("blocking"),
+                    (stack, level, entity, seed) -> entity != null && entity.isUsingItem()
+                            && entity.getUseItem() == stack ? 1.0F : 0.0F);
         });
     }
 

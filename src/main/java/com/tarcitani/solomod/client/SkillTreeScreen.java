@@ -2,9 +2,11 @@ package com.tarcitani.solomod.client;
 
 import com.tarcitani.solomod.attachment.PlayerStatsAttachment;
 import com.tarcitani.solomod.core.WeaponClass;
+import com.tarcitani.solomod.core.StatType;
 import com.tarcitani.solomod.event.StatsLogic;
 import com.tarcitani.solomod.item.ModItems;
 import com.tarcitani.solomod.network.UnlockTalentPayload;
+import com.tarcitani.solomod.network.SpendPointsPayload;
 import com.tarcitani.solomod.skill.SkillTree;
 import com.tarcitani.solomod.skill.WeaponSkill;
 import net.minecraft.client.gui.GuiGraphics;
@@ -16,7 +18,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
@@ -26,22 +27,25 @@ import java.util.List;
  * Árvore única em K → Habilidades: rosto no centro, quatro armas normais do catálogo em círculo e habilidades
  * ramificando como raízes. Não há abas/filtros por arma. Molduras e estados são das conquistas vanilla.
  * Arraste nos dois eixos, use roda para zoom e setas para navegar; centralizar restaura a visão geral.
- * Aprender apenas solicita a compra ao servidor, sem alterar progressão no cliente.
+ * Atributos FOR/AGI/INT/VIT ficam no círculo interno e usam os pontos de Maestria separados.
+ * Habilidades e atributos têm ícones próprios pixel art; compras só solicitam alterações ao servidor.
  */
 public final class SkillTreeScreen extends Screen {
     private static final ResourceLocation STONE = ResourceLocation.withDefaultNamespace("textures/block/stone.png");
     private final Screen parent;
     private SkillTree.Node selected;
     private WeaponClass inspectedWeapon;
+    private StatType selectedStat;
     private int left, top, panelW, panelH, mapX, mapY, mapW, mapH;
     private double panX, panY;
     private float zoom = 0.6F;
     private boolean initialized;
     private Button learn;
     private final List<MapButton> nodes = new ArrayList<>();
+    private final List<StatButton> attributes = new ArrayList<>();
 
     public SkillTreeScreen(Screen parent) {
-        super(Component.translatable("screen.solomod.tab_skills"));
+        super(Component.translatable("screen.solomod.tree_title"));
         this.parent = parent;
     }
     @Override public boolean isPauseScreen() { return false; }
@@ -53,6 +57,7 @@ public final class SkillTreeScreen extends Screen {
         left = (width - panelW) / 2; top = (height - panelH) / 2;
         mapX = left + 8; mapY = top + 31; mapW = panelW - 16; mapH = panelH - 91;
         nodes.clear();
+        attributes.clear();
         addRenderableWidget(Button.builder(Component.translatable("gui.back"), b -> onClose())
                 .bounds(left + panelW - 65, top + 7, 57, 18).build());
         addRenderableWidget(Button.builder(Component.literal("−"), b -> changeZoom(zoom / 1.2F, centerX(), centerY()))
@@ -64,8 +69,11 @@ public final class SkillTreeScreen extends Screen {
         center.setTooltip(Tooltip.create(Component.translatable("screen.solomod.tree_navigation")));
         for (var weapon : SkillTreeLayout.WEAPONS) nodes.add(addRenderableWidget(new MapButton(weapon, null)));
         for (var node : SkillTreeLayout.NODES) nodes.add(addRenderableWidget(new MapButton(node.weapon(), node)));
+        for (var stat : StatType.values()) attributes.add(addRenderableWidget(new StatButton(stat)));
         learn = addRenderableWidget(Button.builder(Component.translatable("screen.solomod.learn"), b -> {
-            if (selected != null && SkillTree.available(stats(), selected)) PacketDistributor.sendToServer(new UnlockTalentPayload(selected.id()));
+            if (selectedStat != null && stats().getPontosDisponiveis() > 0)
+                PacketDistributor.sendToServer(new SpendPointsPayload(selectedStat, hasShiftDown() ? 5 : 1));
+            else if (selected != null && SkillTree.available(stats(), selected)) PacketDistributor.sendToServer(new UnlockTalentPayload(selected.id()));
         }).bounds(left + panelW - 84, top + panelH - 49, 76, 20).build());
         if (!initialized) { centerMap(); initialized = true; } else updateNodes();
     }
@@ -75,7 +83,13 @@ public final class SkillTreeScreen extends Screen {
     private int screenY(SkillTreeLayout.Point p) { return (int) Math.round(centerY() + (p.y() + panY) * zoom); }
     private void centerMap() {
         panX = panY = 0;
-        zoom = Mth.clamp(Math.min(mapW, mapH - 26) / 352F, 0.35F, 0.9F);
+        double extentX = 80, extentY = 80;
+        for (var node : SkillTreeLayout.NODES) {
+            var point = SkillTreeLayout.node(node);
+            extentX = Math.max(extentX, Math.abs(point.x()) + 22);
+            extentY = Math.max(extentY, Math.abs(point.y()) + 22);
+        }
+        zoom = Mth.clamp((float) Math.min(mapW / (extentX * 2), (mapH - 26) / (extentY * 2)), 0.16F, 0.9F);
         updateNodes();
     }
     private void changeZoom(float target, double mouseX, double mouseY) {
@@ -98,8 +112,17 @@ public final class SkillTreeScreen extends Screen {
             button.visible = button.getX() + size > mapX && button.getX() < mapX + mapW
                     && button.getY() + size > mapY && button.getY() < mapY + mapH - 24;
         }
-        learn.active = selected != null && SkillTree.available(stats(), selected);
-        learn.setMessage(Component.translatable(selected != null && stats().hasTalent(selected.id()) ? "screen.solomod.learned" : "screen.solomod.learn"));
+        for (var button : attributes) {
+            int size = Math.max(4, Math.round(26 * zoom));
+            button.setWidth(size); button.setHeight(size);
+            button.setX(screenX(SkillTreeLayout.stat(button.stat)) - size / 2);
+            button.setY(screenY(SkillTreeLayout.stat(button.stat)) - size / 2);
+            button.visible = button.getX() + size > mapX && button.getX() < mapX + mapW
+                    && button.getY() + size > mapY && button.getY() < mapY + mapH - 24;
+        }
+        learn.active = selectedStat != null ? stats().getPontosDisponiveis() > 0 : selected != null && SkillTree.available(stats(), selected);
+        learn.setMessage(selectedStat != null ? Component.translatable("screen.solomod.stat_upgrade", hasShiftDown() ? 5 : 1)
+                : Component.translatable(selected != null && stats().hasTalent(selected.id()) ? "screen.solomod.learned" : "screen.solomod.learn"));
     }
     @Override public void tick() { if (minecraft.player != null) updateNodes(); }
 
@@ -115,6 +138,7 @@ public final class SkillTreeScreen extends Screen {
             g.blit(STONE, mapX + x + offsetX, mapY + y + offsetY, 0, 0, 16, 16, 16, 16);
         g.fill(mapX, mapY, mapX + mapW, mapY + mapH, 0xB8000000);
         var origin = new SkillTreeLayout.Point(0, 0);
+        for (var stat : StatType.values()) root(g, origin, SkillTreeLayout.stat(stat), stat.color().getColor() | 0xFF000000);
         for (var weapon : SkillTreeLayout.WEAPONS) root(g, origin, SkillTreeLayout.weapon(weapon), 0xFF97826A);
         for (var node : SkillTreeLayout.NODES) {
             var before = SkillTree.byId(node.parent());
@@ -146,16 +170,18 @@ public final class SkillTreeScreen extends Screen {
     }
     @Override public void render(GuiGraphics g, int mx, int my, float partial) {
         super.render(g, mx, my, partial);
-        g.drawString(font, title, left + 10, top + 11, 0xFF303030, false);
-        RpgUi.fit(g, font, Component.translatable("screen.solomod.skill_points", stats().getSkillPoints()),
-                left + panelW - 160, top + 12, 86, 0xFF303030, 0.85F);
-        Component name = selected != null ? selected.name() : inspectedWeapon != null ? inspectedWeapon.displayName()
+        RpgUi.fit(g, font, title, left + 10, top + 11, Math.max(65, panelW - 218), 0xFF303030, 0.9F);
+        RpgUi.fit(g, font, Component.translatable("screen.solomod.tree_balances", stats().getSkillPoints(), stats().getPontosDisponiveis()),
+                left + panelW - 195, top + 12, 124, 0xFF303030, 0.8F);
+        Component name = selectedStat != null ? statName(selectedStat).copy().append(": " + stats().get(selectedStat))
+                : selected != null ? selected.name() : inspectedWeapon != null ? inspectedWeapon.displayName()
                 : Component.translatable("screen.solomod.tree_player", minecraft.player.getName());
         RpgUi.fit(g, font, name, left + 10, top + panelH - 51, panelW - 102, 0xFF303030, 0.9F);
-        Component detail = selected != null ? Component.translatable("screen.solomod.node_cost", selected.cost(), selected.mana())
+        Component detail = selectedStat != null ? Component.translatable("screen.solomod.stat_effect." + selectedStat.getSerializedName())
+                : selected != null ? Component.translatable("screen.solomod.node_cost", selected.cost(), selected.mana())
                 : Component.translatable("screen.solomod.tree_hint");
         RpgUi.fit(g, font, detail, left + 10, top + panelH - 36, panelW - 102, 0xFF454545, 0.75F);
-        RpgUi.fit(g, font, Component.translatable("screen.solomod.tree_income"), left + 10, top + panelH - 17, panelW - 20, 0xFF454545, 0.65F);
+        RpgUi.fit(g, font, Component.translatable(selectedStat != null ? "screen.solomod.stat_spend_hint" : "screen.solomod.tree_income"), left + 10, top + panelH - 17, panelW - 20, 0xFF454545, 0.65F);
     }
     private boolean inMap(double x, double y) { return x >= mapX && x < mapX + mapW && y >= mapY && y < mapY + mapH - 24; }
     @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
@@ -182,7 +208,7 @@ public final class SkillTreeScreen extends Screen {
         private final SkillTree.Node node;
         MapButton(WeaponClass weapon, SkillTree.Node node) {
             super(0, 0, 26, 26, node == null ? weapon.displayName() : node.name(), b -> {
-                selected = node; inspectedWeapon = weapon; updateNodes();
+                selectedStat = null; selected = node; inspectedWeapon = weapon; updateNodes();
             }, Button.DEFAULT_NARRATION);
             this.weapon = weapon; this.node = node;
         }
@@ -197,29 +223,12 @@ public final class SkillTreeScreen extends Screen {
             g.pose().pushPose(); g.pose().translate(getX(), getY(), 0);
             float scale = getWidth() / 26F; g.pose().scale(scale, scale, 1);
             g.blitSprite(ResourceLocation.withDefaultNamespace("advancements/" + frame + "_frame_" + (learned ? "obtained" : "unobtained")), 0, 0, 26, 26);
-            g.renderItem(icon(), 5, 5);
+            if (node == null) g.renderItem(normalWeaponIcon(), 5, 5);
+            else TalentIcons.draw(g, node, 5, 5);
             if ((node != null && selected == node) || (isHoveredOrFocused() && inMap(mx, my))) g.renderOutline(-1, -1, 28, 28, 0xFFFFFFFF);
             if (node != null && !learned && SkillTree.available(stats(), node)) g.fill(19, 19, 24, 24, 0xFF55DD55);
             g.pose().popPose(); g.disableScissor();
             setTooltip(Tooltip.create(description()));
-        }
-        private ItemStack icon() {
-            if (node == null) return normalWeaponIcon();
-            if (node.skill() == WeaponSkill.ELEMENTAL_BURST) return new ItemStack(Items.NETHER_STAR);
-            if (node.skill() != null) return new ItemStack(Items.ENCHANTED_BOOK);
-            if (node.id().equals("dagger.teleport")) return new ItemStack(Items.ENDER_PEARL);
-            if (node.technique() != null) return new ItemStack(switch (node.technique()) {
-                case CRESCENT -> Items.IRON_SWORD;
-                case RISING -> Items.FEATHER;
-                case CROSS -> Items.DIAMOND_SWORD;
-                case RAPIER_DASH -> Items.SUGAR;
-                case RAPIER_FLURRY -> Items.ARROW;
-                case RAPIER_RETREAT -> Items.RABBIT_FOOT;
-                case HAMMER_LEAP -> Items.ANVIL;
-                case HAMMER_SWEEP -> Items.IRON_AXE;
-                case HAMMER_QUAKE -> Items.POINTED_DRIPSTONE;
-            });
-            return normalWeaponIcon();
         }
         private ItemStack normalWeaponIcon() {
             return com.tarcitani.solomod.item.ModularWeaponItem.create(ModItems.get(weapon),
@@ -238,6 +247,35 @@ public final class SkillTreeScreen extends Screen {
                     .append(Component.translatable("screen.solomod.node_cost", node.cost(), node.mana())).append("\n")
                     .append(requirement).append("\n").append(detail).append("\n")
                     .append(Component.translatable(stats().hasTalent(node.id()) ? "screen.solomod.learned" : SkillTree.available(stats(), node) ? "screen.solomod.available" : "screen.solomod.blocked"));
+        }
+    }
+
+    private static Component statName(StatType stat) { return Component.translatable("screen.solomod.stat_name." + stat.getSerializedName()); }
+
+    private final class StatButton extends Button {
+        private final StatType stat;
+        StatButton(StatType stat) {
+            super(0, 0, 26, 26, statName(stat), b -> {
+                selectedStat = stat; selected = null; inspectedWeapon = null; updateNodes();
+            }, Button.DEFAULT_NARRATION);
+            this.stat = stat;
+        }
+        @Override public boolean isMouseOver(double x, double y) { return inMap(x, y) && super.isMouseOver(x, y); }
+        @Override public boolean mouseClicked(double x, double y, int button) { return inMap(x, y) && super.mouseClicked(x, y, button); }
+        @Override protected void renderWidget(GuiGraphics g, int mx, int my, float partial) {
+            if (!inMap(mx, my)) isHovered = false;
+            g.enableScissor(mapX, mapY, mapX + mapW, mapY + mapH - 24);
+            g.pose().pushPose(); g.pose().translate(getX(), getY(), 0);
+            float scale = getWidth() / 26F; g.pose().scale(scale, scale, 1);
+            g.blitSprite(ResourceLocation.withDefaultNamespace("advancements/goal_frame_obtained"), 0, 0, 26, 26);
+            TalentIcons.draw(g, stat, 5, 4);
+            g.fill(3, 18, 23, 25, 0xDB121820);
+            RpgUi.fit(g, font, Component.literal(Integer.toString(stats().get(stat))), 5, 18, 18, 0xFFF6E2AC, 0.7F);
+            if (selectedStat == stat || isHoveredOrFocused()) g.renderOutline(-1, -1, 28, 28, 0xFFFFFFFF);
+            g.pose().popPose(); g.disableScissor();
+            setTooltip(Tooltip.create(statName(stat).copy().append(": " + stats().get(stat)).append("\n")
+                    .append(Component.translatable("screen.solomod.stat_effect." + stat.getSerializedName())).append("\n")
+                    .append(Component.translatable("screen.solomod.stat_spend_hint"))));
         }
     }
 }
